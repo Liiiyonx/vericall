@@ -119,14 +119,18 @@ async function load(){
     else{st.textContent='训练中';st.className='status st-run';document.getElementById('statusTxt').textContent=epochs.length?('当前 epoch'+String(cur.ep).padStart(3,'0')+'（loss '+cur.loss.toFixed(4)+'）'):'启动中…';}
     // ETA：用权重文件 epoch_{N}.pth 的 mtime 差推算单 epoch 耗时
     document.getElementById('eta').textContent='—';
+    let wf='';
     try{
-      const wf=await fetch('/weights?_='+Date.now()).then(r=>r.text());
+      wf=await fetch('/weights?_='+Date.now()).then(r=>r.text());
+    }catch(e){wf='';}
+    const wdir=wf;
+    try{
       const epochsTs={};
       for(const ln of wf.split('\n')){
         const parts=ln.split('\t');
         if(parts.length<3)continue;
         const m=parts[0].match(/^epoch_(\d+)\.pth$/);
-        if(m&&!parts[0].includes('_'))epochsTs[+m[1]]=new Date(parts[2].replace(/-/g,'/')).getTime();
+        if(m)epochsTs[+m[1]]=new Date(parts[2].replace(/-/g,'/')).getTime();
       }
       const keys=Object.keys(epochsTs).map(Number).sort((a,b)=>a-b);
       if(keys.length>=2){
@@ -138,16 +142,17 @@ async function load(){
         }
       }
     }catch(e){}
-    // 权重列表
+    // 权重列表（wdir 已在上方定义，不再 Undefined；文件名经转义防注入）
     const wt=document.getElementById('wt');
     wt.innerHTML='';
-    if(wdir){for(const ln of wdir.split('\n')){const p=ln.trim();if(!p)continue;const m=p.split('\t');if(m.length<3)continue;const tr=document.createElement('tr');let note='';const fn=m[0];if(fn==='best.pth')note='最终权重';else if(fn==='swa.pth')note='SWA平均';else if(/^epoch_\d+\.pth$/.test(fn))note='周期存档';else if(/_\d+\.\d+\.pth$/.test(fn))note='dev最佳';tr.innerHTML='<td>'+fn+'</td><td>'+(+m[1]/1024).toFixed(0)+' KB</td><td>'+m[2]+'</td><td style="color:var(--muted)">'+note+'</td>';wt.appendChild(tr);}}
+    if(wdir){for(const ln of wdir.split('\n')){const p=ln.trim();if(!p)continue;const m=p.split('\t');if(m.length<3)continue;const tr=document.createElement('tr');let note='';const fn=m[0];if(fn==='best.pth')note='最终权重';else if(fn==='swa.pth')note='SWA平均';else if(/^epoch_\d+\.pth$/.test(fn))note='周期存档';else if(/_\d+\.\d+\.pth$/.test(fn))note='dev最佳';tr.innerHTML='<td>'+esc(fn)+'</td><td>'+(+m[1]/1024).toFixed(0)+' KB</td><td>'+esc(m[2])+'</td><td style="color:var(--muted)">'+esc(note)+'</td>';wt.appendChild(tr);}}
   }catch(e){
     document.getElementById('status').textContent='读取失败';
     document.getElementById('statusTxt').textContent='需启动本地 HTTP 服务才能读到训练日志';
-    document.getElementById('statusDetail').textContent='在项目目录运行: python -m http.server 8080，然后浏览器打开 http://localhost:8080/training_dashboard.html';
+    document.getElementById('statusDetail').textContent='启动: python scripts/training_dashboard_server.py，然后浏览器打开 http://localhost:8001';
   }
 }
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 load(); setInterval(load,20000);
 </script>
 </body>

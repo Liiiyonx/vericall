@@ -4,7 +4,7 @@
 谛听 VeriCall — 训练实时看板 HTTP 服务。
 
 为什么需要它:
-  training_dashboard.html 里的浏览器 JS 无法直接读本地文件(D:/VeriCall_data/training_ep30.log、
+  training_dashboard.html 里的浏览器 JS 无法直接读本地文件(训练日志、
   桌面 exp_result/.../weights/), 必须通过 HTTP 拉取。本脚本是一个极简只读服务,
   仅暴露两个端点:
     /log     -> 训练日志全文 (text/plain)
@@ -14,6 +14,7 @@
 用法:
   python scripts/training_dashboard_server.py [port]   # 默认 8080
   然后浏览器打开 http://localhost:8080/training_dashboard.html
+  日志路径可用环境变量 VERICALL_TRAINING_LOG 覆盖。
 """
 import os
 import sys
@@ -23,7 +24,11 @@ import http.server
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WEBROOT = os.path.abspath(os.path.join(ROOT, ".."))          # 项目根(含 HTML)
-LOG = "D:/VeriCall_data/training_ep30.log"
+# 训练日志路径：默认 D 盘，可用 VERICALL_TRAINING_LOG 环境变量覆盖（见 src/paths.py）
+LOG = os.environ.get(
+    "VERICALL_TRAINING_LOG",
+    os.path.join(os.environ.get("VERICALL_DATA", "D:/VeriCall_data"),
+                 "training_ep30.log"))
 WEIGHTS = os.path.join(
     WEBROOT, "external", "aasist", "exp_result",
     "LA_AASIST_5060_ep24_bs16", "weights")

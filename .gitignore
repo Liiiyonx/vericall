@@ -1,6 +1,11 @@
 external/aasist/
 data/raw/
 data/redteam/**/*.wav
+# 隐私数据（家人声纹/上传音频/历史，勿入库）
+data/voiceprints/
+data/cache/
+data/history.jsonl
+data/uploads/
 assets/demo_audio/
 reports/
 evaluation/reports/

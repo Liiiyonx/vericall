@@ -517,6 +517,8 @@ body.elder .share-box .btn{font-size:22px; padding:16px 36px}
 <script src="/copy.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+/* XSS 防护：所有进入 innerHTML 的用户可控文本先经 esc() 转义 */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 const PROMPTS={
   putonghua:"请朗读：妈，是我。我在外面出了点事，急需五万块钱周转，先别告诉我爸。银行卡号是 6222 开头。妈你听出来是我了吧？——覆盖称谓 / 金额 / 紧迫话术的诈骗高频模式。",
   fangyan:"请用方言自然聊天 1 分钟以上（讲讲今天做了什么即可，无需朗读）。",
@@ -575,8 +577,8 @@ function renderVoices(vs){
   voiceNames=vs.map(v=>v.name);
   $("voiceSub").textContent=`已登记 ${vs.length} 位`;
   $("voiceList").innerHTML=vs.length?vs.map(v=>
-    `<div class="vrow"><span class="nm">${v.name}</span>
-     <span class="ct">${v.samples} SAMPLES</span><span class="st">已登记</span></div>`).join("")
+    `<div class="vrow"><span class="nm">${esc(v.name)}</span>
+     <span class="ct">${+v.samples||0} SAMPLES</span><span class="st">已登记</span></div>`).join("")
     :'<div class="vempty">暂无登记</div>';
 }
 
@@ -745,11 +747,11 @@ async function loadHistory(){
       (rs.length?rs.map((r,i)=>{
         const ch=(r.channels||[]).map(c=>c.score).join(" · ");
         return `<div class="hrow" style="animation-delay:${i*0.04}s">
-          <span class="t">${(r.time||"").slice(5)}</span>
-          <span class="n">${r.name||"--"}</span>
-          <span class="v ${r.final}">${VTXT[r.final]||r.final}</span>
-          <span class="s">${ch} ｜ Σ ${r.score}</span>
-          <span class="e">${r.elapsed_s}s</span></div>`;
+          <span class="t">${esc((r.time||"").slice(5))}</span>
+          <span class="n">${esc(r.name||"--")}</span>
+          <span class="v ${esc(r.final)}">${VTXT[r.final]||esc(r.final)}</span>
+          <span class="s">${esc(ch)} ｜ Σ ${esc(r.score)}</span>
+          <span class="e">${esc(r.elapsed_s)}s</span></div>`;
       }).join(""):'<div class="vempty">暂无记录</div>');
   }catch(e){}
 }

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -207,7 +208,21 @@ async def enroll(name: str = Form(...),
     name = name.strip()
     if not name:
         return JSONResponse({"error": "no_name"}, status_code=400)
+    # 安全：家人称谓白名单（中文/字母/数字/下划线/连字符，1-20 位），
+    # 防 `../../` 路径穿越写出 VOICE_DIR（安全竞赛作品自身不能有注入面）
+    if not re.fullmatch(r"[\w\u4e00-\u9fff-]{1,20}", name):
+        return JSONResponse(
+            {"error": "bad_name",
+             "message": "称谓仅支持中文/字母/数字/下划线/连字符，且 1-20 个字符"},
+            status_code=400)
+    if not re.fullmatch(r"[a-zA-Z0-9_-]{1,30}", session):
+        session = "session"
     dest_dir = VOICE_DIR / name
+    # 双保险：断言目标仍在 VOICE_DIR 内
+    dest_dir = dest_dir.resolve()
+    voice_root = VOICE_DIR.resolve()
+    if not str(dest_dir).startswith(str(voice_root)):
+        return JSONResponse({"error": "bad_path"}, status_code=400)
     dest_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     suffix = Path(file.filename or "rec.wav").suffix.lower() or ".wav"
@@ -263,7 +278,7 @@ app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="web")
 # P1-1 流式实时接口（/ws/stream）：导入失败不阻断其余 REST 接口
 # ------------------------------------------------------------------ #
 try:
-    from server.stream_ws import register_stream_ws
+    from server.ws_api import register_stream_ws
     from server.scheduler import make_real_backends
     from server.stream_pipeline import StreamProcessor
     from fusion.fusion_orchestrator import FusionOrchestrator

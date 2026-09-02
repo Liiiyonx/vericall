@@ -1,0 +1,15 @@
+external/aasist/
+data/raw/
+data/redteam/**/*.wav
+assets/demo_audio/
+reports/
+evaluation/reports/
+envs/
+*.zip
+__pycache__/
+*.pyc
+.venv/
+output/
+.DS_Store
+.workbuddy/
+.tmp_smoke/

@@ -1,0 +1,36 @@
+name: pytest
+
+on:
+  push:
+    branches: [master, main, workbuddy-ea01ac61]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install logic-test deps (no GPU / no Ollama)
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy pytest
+
+      - name: Run pytest (pure-logic suite)
+        run: |
+          python -m pytest tests/ -q
+
+      # 说明：本仓库的整套 pytest 仅覆盖纯逻辑（融合决策、EER 指标、
+      # 流式缓冲/状态机、规则评分器、红队扰动/语料），不加载 AASIST/funasr/Ollama，
+      # 因此 CI 在任意干净环境秒级通过，作为每周全链路回归的"快门"。
+      # 真实三通道推理与跨域评测需在带 GPU / 本地权重的机器上手动跑
+      # scripts/test_fusion_full.py 与 evaluation/*_eval.py。

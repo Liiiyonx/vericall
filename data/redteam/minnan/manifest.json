@@ -1,0 +1,44 @@
+[
+  {
+    "wav": null,
+    "text": "阿母是我啦我手機挵歹去這是同学的號我佇學校出代誌急欲用錢你緊來提錢去這个戶頭莫共阿爸講",
+    "dialect": "minnan",
+    "label": "scam",
+    "note": "合成-诈骗话术(minnan)"
+  },
+  {
+    "wav": null,
+    "text": "這是警察局你彼張卡疑似洗钱愛提錢過去監管戶頭才毋會捉人",
+    "dialect": "minnan",
+    "label": "scam",
+    "note": "合成-诈骗话术(minnan)"
+  },
+  {
+    "wav": null,
+    "text": "阿爸我頭家急欲用錢你提兩萬去這个碼莫共阿母講",
+    "dialect": "minnan",
+    "label": "scam",
+    "note": "合成-诈骗话术(minnan)"
+  },
+  {
+    "wav": null,
+    "text": "阿母我暗仔轉來食飯免買菜我順紲帶爸的降壓藥食完無",
+    "dialect": "minnan",
+    "label": "normal",
+    "note": "合成-正常闲聊(minnan)"
+  },
+  {
+    "wav": null,
+    "text": "喂你個快遞放佇豐巢櫃取件碼2109記得提",
+    "dialect": "minnan",
+    "label": "normal",
+    "note": "合成-正常闲聊(minnan)"
+  },
+  {
+    "wav": null,
+    "text": "阿爸天冷加衫我收工早轉來",
+    "dialect": "minnan",
+    "label": "normal",
+    "note": "合成-正常闲聊(minnan)"
+  }
+]

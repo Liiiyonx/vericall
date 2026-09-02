@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>谛听 VeriCall · 通道① AASIST 训练实时看板</title>
+<style>
+  :root{
+    --bg:#0f1420; --card:#1a2233; --card2:#222c42; --line:#2e3a55;
+    --text:#e6ebf5; --muted:#8b97ad; --green:#4ade80; --amber:#fbbf24;
+    --red:#f87171; --purple:#a78bfa; --cyan:#22d3ee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;padding:20px;min-height:100vh}
+  h1{font-size:18px;font-weight:600;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:12px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h3{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:8px}
+  .big{font-size:28px;font-weight:700}
+  .small{font-size:12px;color:var(--muted);margin-top:4px}
+  .progress{height:14px;background:var(--card2);border-radius:7px;overflow:hidden;margin-top:8px}
+  .bar{height:100%;border-radius:7px;background:var(--purple);transition:width .5s}
+  .bar.warn{background:var(--amber)}
+  .g{color:var(--green)}.a{color:var(--amber)}.r{color:var(--red)}.c{color:var(--cyan)}
+  .bar-hd{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+  .st-run{background:rgba(74,222,128,.15);color:var(--green)}
+  .st-stall{background:rgba(251,191,36,.15);color:var(--amber)}
+  .st-done{background:rgba(167,139,250,.15);color:var(--purple)}
+  .foot{color:var(--muted);font-size:11px;margin-top:16px;text-align:center}
+  .light{color:var(--muted);font-size:11px;margin-top:4px}
+</style>
+</head>
+<body>
+  <h1>谛听 VeriCall · 通道① 声学伪造检测（AASIST）</h1>
+  <div class="sub">实时训练看板 · 每 20 秒自动刷新 · 更新于 <span id="upd">—</span></div>
+
+  <div class="grid">
+    <div class="card"><h3>训练进度</h3><div class="big" id="prog">—</div><div class="small" id="progSub">—</div><div class="progress"><div class="bar" id="progBar"></div></div></div>
+    <div class="card"><h3>dev EER（越低越好）</h3><div class="big" id="eer">—</div><div class="small" id="eerSub">达标线 ≤1.5%</div><div class="progress"><div class="bar warn" id="eerBar"></div></div></div>
+    <div class="card"><h3>当前 loss</h3><div class="big" id="loss">—</div><div class="small" id="lossDelta">—</div></div>
+    <div class="card"><h3>预计剩余</h3><div class="big c" id="eta">—</div><div class="small" id="etaSub">—</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3>训练状态</h3>
+    <div style="font-size:14px"><span class="status st-run" id="status">检测中…</span> <span id="statusTxt" style="margin-left:8px;color:var(--muted)">—</span></div>
+    <div class="light" id="statusDetail" style="margin-top:8px">—</div>
+  </div>
+
+  <div class="card">
+    <h3>loss 收敛曲线（每 epoch）</h3>
+    <svg id="chart" width="100%" height="200" viewBox="0 0 900 200" preserveAspectRatio="none"></svg>
+    <div class="light">横轴 epoch · 纵轴 loss（取 min-max 归一化显示）</div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>权重存档（weights/）</h3>
+    <table><thead><tr><th>文件</th><th>大小</th><th>时间</th><th>说明</th></tr></thead><tbody id="wt"></tbody></table>
+  </div>
+
+  <div class="foot">数据源：D:/VeriCall_data/training_ep30.log + exp_result/LA_AASIST_5060_ep24_bs16/weights/ · 训练完成后自动显示最终 EER</div>
+
+<script>
+const TARGET=24, GOAL=1.5;
+function human(sec){sec=Math.round(sec);if(sec<60)return sec+'s';if(sec<3600)return Math.floor(sec/60)+'m'+(sec%60);return Math.floor(sec/3600)+'h'+Math.floor((sec%3600)/60)+'m';}
+function fmtTime(t){return t?new Date(t*1000).toLocaleTimeString():'—';}
+function pctClass(v){return v<=GOAL?'g':(v<=5?'a':'r')}
+async function load(){
+  document.getElementById('upd').textContent=new Date().toLocaleTimeString();
+  try{
+    const log=await fetch('/log?_='+Date.now()).then(r=>r.text());
+    const lines=log.split('\n');
+    const epochs=[];
+    for(const ln of lines){
+      const m=ln.match(/epoch(\d+)\s+loss=([\d.]+)/);
+      if(m)epochs.push({ep:+m[1],loss:+m[2]});
+    }
+    // dev EER 从 "DONE.\nLoss:..., dev_eer: X" 行解析, 结合最佳时的 epoch
+    let lastEer=null,lastEerEpoch=null,lastBestEp=null;
+    for(let i=0;i<lines.length;i++){
+      const bm=lines[i].match(/best model find at epoch (\d+)/);
+      if(bm)lastBestEp=+bm[1];
+      const em=lines[i].match(/dev_eer:\s*([\d.]+)/);
+      if(em){lastEer=+em[1];lastEerEpoch=lastBestEp;}
+    }
+    const cur=epochs[epochs.length-1];
+    const done=cur?cur.ep+1:0;
+    const pct=Math.min(100,100*done/TARGET);
+    document.getElementById('prog').textContent=done+' / '+TARGET+' epoch';
+    document.getElementById('progSub').textContent=pct.toFixed(1)+'% 完成';
+    document.getElementById('progBar').style.width=pct+'%';
+    // EER 显示最近一次
+    const eerVal=lastEer;
+    if(eerVal!==null){
+      document.getElementById('eer').textContent=eerVal.toFixed(3)+'%';
+      document.getElementById('eer').className='big '+pctClass(eerVal);
+      document.getElementById('eerSub').textContent='epoch '+lastEerEpoch+' · 达标线 ≤1.5%';
+      const eb=Math.min(100,100*(eerVal/30));
+      document.getElementById('eerBar').style.width=Math.max(3,eb)+'%';
+    }
+    if(cur){
+      document.getElementById('loss').textContent=cur.loss.toFixed(4);
+      const prev=epochs[epochs.length-2];
+      if(prev){
+        const d=cur.loss-prev.loss;
+        document.getElementById('lossDelta').innerHTML='较上epoch '+(d<0?'<span class="g">↓':'<span class="r">↑')+Math.abs(d).toFixed(4)+'</span>';
+      }
+    }
+    // 状态
+    const mtime=parseInt(log.split('_mtime_')[1]||0);
+    const stall=lastEerEpoch!==null?null:null;
+    const st=document.getElementById('status');
+    if(epochs.length>=TARGET){st.textContent='已完成';st.className='status st-done';document.getElementById('statusTxt').textContent='24 epoch 全部完成，正在生成最终权重与 EER…';}
+    else{st.textContent='训练中';st.className='status st-run';document.getElementById('statusTxt').textContent=epochs.length?('当前 epoch'+String(cur.ep).padStart(3,'0')+'（loss '+cur.loss.toFixed(4)+'）'):'启动中…';}
+    // ETA：用权重文件 epoch_{N}.pth 的 mtime 差推算单 epoch 耗时
+    document.getElementById('eta').textContent='—';
+    try{
+      const wf=await fetch('/weights?_='+Date.now()).then(r=>r.text());
+      const epochsTs={};
+      for(const ln of wf.split('\n')){
+        const parts=ln.split('\t');
+        if(parts.length<3)continue;
+        const m=parts[0].match(/^epoch_(\d+)\.pth$/);
+        if(m&&!parts[0].includes('_'))epochsTs[+m[1]]=new Date(parts[2].replace(/-/g,'/')).getTime();
+      }
+      const keys=Object.keys(epochsTs).map(Number).sort((a,b)=>a-b);
+      if(keys.length>=2){
+        const span=(epochsTs[keys[keys.length-1]]-epochsTs[keys[0]])/(keys.length-1);
+        const remain=(TARGET-done)*span;
+        if(span>0&&remain>0){
+          document.getElementById('eta').textContent=human(remain/1000);
+          document.getElementById('etaSub').textContent='约 '+human(span/1000)+'/epoch · 共'+done+' epoch';
+        }
+      }
+    }catch(e){}
+    // 权重列表
+    const wt=document.getElementById('wt');
+    wt.innerHTML='';
+    if(wdir){for(const ln of wdir.split('\n')){const p=ln.trim();if(!p)continue;const m=p.split('\t');if(m.length<3)continue;const tr=document.createElement('tr');let note='';const fn=m[0];if(fn==='best.pth')note='最终权重';else if(fn==='swa.pth')note='SWA平均';else if(/^epoch_\d+\.pth$/.test(fn))note='周期存档';else if(/_\d+\.\d+\.pth$/.test(fn))note='dev最佳';tr.innerHTML='<td>'+fn+'</td><td>'+(+m[1]/1024).toFixed(0)+' KB</td><td>'+m[2]+'</td><td style="color:var(--muted)">'+note+'</td>';wt.appendChild(tr);}}
+  }catch(e){
+    document.getElementById('status').textContent='读取失败';
+    document.getElementById('statusTxt').textContent='需启动本地 HTTP 服务才能读到训练日志';
+    document.getElementById('statusDetail').textContent='在项目目录运行: python -m http.server 8080，然后浏览器打开 http://localhost:8080/training_dashboard.html';
+  }
+}
+load(); setInterval(load,20000);
+</script>
+</body>
+</html>

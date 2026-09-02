@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>谛听 VeriCall · AIGC 语音鉴真</title>
+<style>
+:root{
+  --bg:#060607; --ink:#ece7dc; --mut:#8f8a7d; --dim:#57544c;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --line:rgba(236,231,220,.09); --line2:rgba(236,231,220,.18);
+  --ok:#8fb996; --warn:#d4a04a; --bad:#c96a5e;
+  --serif:"Songti SC","STSong","Noto Serif SC","Noto Serif CJK SC","SimSun",serif;
+  --sans:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+::selection{background:rgba(212,180,131,.25)}
+html{scrollbar-width:thin; scrollbar-color:#2a2a28 transparent}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans);
+  min-height:100vh; -webkit-font-smoothing:antialiased; overflow-x:hidden}
+body::before{content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:radial-gradient(1100px 600px at 50% -20%, rgba(212,180,131,.06), transparent 65%)}
+
+/* ============ 顶栏 ============ */
+header{max-width:1180px; margin:0 auto; padding:18px 32px 0;
+  display:flex; align-items:center; gap:34px}
+.logo{display:flex; align-items:center; gap:12px; cursor:default}
+.logo svg{width:34px; height:34px}
+.logo .cn{font-family:var(--serif); font-size:20px; letter-spacing:6px; font-weight:600}
+.logo .en{font-family:var(--mono); font-size:10px; letter-spacing:3.5px; color:var(--mut); margin-top:3px}
+.tabs{display:flex; gap:26px; margin-left:18px}
+.tab{font-size:13px; letter-spacing:2px; color:var(--mut); cursor:pointer;
+  padding:4px 2px; border-bottom:1px solid transparent; transition:all .25s; user-select:none}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--ink); border-bottom-color:var(--gold)}
+.sys{margin-left:auto; display:flex; gap:18px; align-items:center;
+  font-family:var(--mono); font-size:11px; color:var(--dim)}
+.sys .it{display:flex; align-items:center; gap:6px}
+.sys .it b{color:var(--mut); font-weight:500}
+.pip{width:5px; height:5px; border-radius:50%; background:var(--dim)}
+.pip.ok{background:var(--ok); box-shadow:0 0 6px rgba(143,185,150,.8)}
+.pip.warn{background:var(--warn)}
+
+/* ============ 页面通用 ============ */
+main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
+.page{display:none}
+.page.on{display:block}
+@keyframes rise{from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:none}}
+.rise{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+.hairline{height:1px; background:var(--line); margin:0}
+
+/* ============ 检测页 · 舞台 ============ */
+.hero{text-align:center; padding:38px 0 0}
+.hero h1{font-family:var(--serif); font-size:78px; font-weight:600; letter-spacing:28px;
+  text-indent:28px; line-height:1; color:var(--ink)}
+.hero .en{font-family:var(--mono); font-size:12px; letter-spacing:11px; text-indent:11px;
+  color:var(--gold); margin-top:14px}
+.hero .tag{font-size:13.5px; letter-spacing:3px; color:var(--mut); margin-top:12px}
+.waveline{display:block; margin:22px auto 0; width:min(560px,80%); height:36px; overflow:visible}
+.waveline path{fill:none; stroke-width:1.2}
+.w1{stroke:rgba(212,180,131,.5); animation:drift 7s linear infinite}
+.w2{stroke:rgba(236,231,220,.12); animation:drift 11s linear infinite reverse}
+@keyframes drift{to{transform:translateX(-200px)}}
+
+/* 输入舞台 */
+.stage{display:flex; flex-direction:column; align-items:center; padding:26px 0 8px}
+.orb{width:96px; height:96px; border-radius:50%; cursor:pointer; position:relative;
+  border:1px solid var(--line2); background:transparent; display:grid; place-items:center;
+  transition:border-color .3s, transform .3s}
+.orb:hover{border-color:var(--gold); transform:scale(1.03)}
+.orb svg{width:30px; height:30px}
+.orb.live{border-color:var(--bad)}
+.orb.live::before,.orb.live::after{content:''; position:absolute; inset:-1px; border-radius:50%;
+  border:1px solid rgba(201,106,94,.55); animation:ripple 1.8s ease-out infinite}
+.orb.live::after{animation-delay:.9s}
+@keyframes ripple{from{transform:scale(1); opacity:.9} to{transform:scale(1.75); opacity:0}}
+.orb-hint{margin-top:16px; font-size:12px; letter-spacing:2px; color:var(--dim)}
+.orb-hint b{color:var(--bad); font-family:var(--mono); font-weight:500}
+.or-line{display:flex; align-items:center; gap:14px; margin-top:26px;
+  font-size:12px; color:var(--dim); letter-spacing:1.5px}
+.or-line label{color:var(--mut); border-bottom:1px solid var(--line2); padding-bottom:1px;
+  cursor:pointer; transition:color .2s}
+.or-line label:hover{color:var(--gold2)}
+.or-line input{display:none}
+.demos{display:flex; gap:44px; margin-top:26px}
+.demo{background:none; border:none; cursor:pointer; text-align:left; padding:0;
+  color:var(--mut); font-family:var(--sans); transition:color .25s}
+.demo i{font-family:var(--mono); font-style:normal; font-size:10px; color:var(--gold);
+  letter-spacing:2px; display:block; margin-bottom:5px}
+.demo span{font-size:13px; letter-spacing:2px}
+.demo:hover{color:var(--ink)}
+.demo:hover span{border-bottom:1px solid var(--gold)}
+
+/* 分析中状态行 */
+.stage-status{margin-top:22px; font-family:var(--mono); font-size:11.5px; letter-spacing:2px;
+  color:var(--gold); min-height:18px; opacity:0; transition:opacity .4s}
+.stage-status.show{opacity:1}
+.stage-status .blink{animation:blink 1.1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ============ 三通道 ============ */
+.channels{display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin-top:34px;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+@media(max-width:880px){.channels{grid-template-columns:1fr}}
+.ch{padding:24px 26px 22px; position:relative; opacity:.4; transition:opacity .6s; overflow:hidden}
+.ch+.ch{border-left:1px solid var(--line)}
+@media(max-width:880px){.ch+.ch{border-left:none; border-top:1px solid var(--line)}}
+.ch.done{opacity:1; animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.ch.pending{opacity:.7}
+.ch.pending::after{content:''; position:absolute; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  animation:scan 1.6s ease-in-out infinite}
+@keyframes scan{0%{top:0; opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{top:100%; opacity:0}}
+.ch .idx{font-family:var(--mono); font-size:10px; letter-spacing:3px; color:var(--gold)}
+.ch h3{font-family:var(--serif); font-size:19px; font-weight:600; letter-spacing:3px; margin-top:10px}
+.ch .model{font-size:11px; color:var(--dim); letter-spacing:1px; margin-top:6px; font-family:var(--mono)}
+.ch .score{font-family:var(--mono); font-size:38px; font-weight:300; margin-top:16px; line-height:1;
+  color:var(--ink); font-variant-numeric:tabular-nums}
+.ch .score em{font-style:normal; font-size:14px; color:var(--dim); margin-left:4px}
+.ch .track{height:1px; background:var(--line); margin-top:16px; position:relative}
+.ch .track i{position:absolute; left:0; top:-0.5px; height:2px; width:0; background:var(--gold);
+  transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.ch .foot{display:flex; justify-content:space-between; align-items:baseline; margin-top:14px;
+  font-size:11px; letter-spacing:1.5px}
+.ch .lab{font-family:var(--mono); color:var(--mut)}
+.ch .lab.bad{color:var(--bad)} .ch .lab.good{color:var(--ok)} .ch .lab.mid{color:var(--warn)}
+.ch .conf{color:var(--dim); font-family:var(--mono)}
+.ch .detail{font-size:12px; color:var(--mut); line-height:1.9; margin-top:12px;
+  max-height:0; overflow:hidden; transition:max-height .8s ease}
+.ch.done .detail{max-height:150px}
+
+/* ============ 裁决 ============ */
+.verdict{display:none; text-align:center; padding:46px 0 16px}
+.verdict.show{display:block; animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+.gauge{width:170px; height:170px; margin:0 auto; position:relative}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .bgc{fill:none; stroke:var(--line); stroke-width:1.5}
+.gauge .fgc{fill:none; stroke-width:1.5; stroke-linecap:round;
+  transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1)}
+.gauge .gtxt{position:absolute; inset:0; display:grid; place-items:center}
+.gauge .gtxt b{font-family:var(--mono); font-size:30px; font-weight:300; font-variant-numeric:tabular-nums}
+.gauge .gtxt span{display:block; font-size:10px; letter-spacing:3px; color:var(--dim); margin-top:6px}
+.vword{font-family:var(--serif); font-size:54px; font-weight:600; letter-spacing:18px;
+  text-indent:18px; margin-top:30px}
+.verdict.allow .vword{color:var(--ok)} .verdict.allow .fgc{stroke:var(--ok)}
+.verdict.caution .vword{color:var(--warn)} .verdict.caution .fgc{stroke:var(--warn)}
+.verdict.block .vword{color:var(--bad)} .verdict.block .fgc{stroke:var(--bad)}
+.vreason{max-width:620px; margin:20px auto 0; font-size:13px; line-height:2; color:var(--mut)}
+.vmeta{display:flex; justify-content:center; gap:40px; margin-top:26px;
+  font-family:var(--mono); font-size:11px; color:var(--dim); letter-spacing:1px}
+.vmeta b{color:var(--mut); font-weight:500; margin-left:6px}
+
+/* ============ 登记页 ============ */
+.enroll{display:grid; grid-template-columns:1.2fr 1fr; gap:70px; padding-top:60px}
+@media(max-width:880px){.enroll{grid-template-columns:1fr; gap:40px}}
+.ptitle{font-family:var(--serif); font-size:30px; font-weight:600; letter-spacing:8px}
+.psub{font-size:12.5px; color:var(--mut); letter-spacing:1.5px; margin-top:12px; line-height:2}
+.field{margin-top:30px}
+.field label{display:block; font-size:11px; letter-spacing:3px; color:var(--dim); margin-bottom:10px}
+.field input[type=text]{width:100%; background:transparent; border:none;
+  border-bottom:1px solid var(--line2); padding:10px 2px; color:var(--ink); font-size:16px;
+  letter-spacing:2px; outline:none; transition:border-color .3s; font-family:var(--sans)}
+.field input[type=text]:focus{border-bottom-color:var(--gold)}
+.sess{display:flex; gap:0; border:1px solid var(--line); border-radius:2px; overflow:hidden}
+.sess button{flex:1; background:none; border:none; padding:12px; color:var(--mut);
+  font-size:12.5px; letter-spacing:2px; cursor:pointer; transition:all .25s; font-family:var(--sans)}
+.sess button+button{border-left:1px solid var(--line)}
+.sess button.on{color:var(--gold2); background:rgba(212,180,131,.06)}
+.prompt{font-size:12.5px; color:var(--mut); line-height:2.1; margin-top:18px;
+  padding:16px 18px; border-left:1px solid var(--gold); background:rgba(212,180,131,.04)}
+.enroll .stage{padding:30px 0 6px}
+.orb.sm{width:84px; height:84px}
+.orb.sm svg{width:26px; height:26px}
+.consent{display:flex; gap:10px; margin-top:28px; font-size:12px; color:var(--mut); line-height:1.9}
+.consent input{margin-top:4px; accent-color:var(--gold)}
+.btn{margin-top:26px; width:100%; padding:15px; background:transparent; cursor:pointer;
+  border:1px solid var(--gold); color:var(--gold2); font-size:13px; letter-spacing:5px;
+  font-family:var(--sans); transition:all .3s}
+.btn:hover{background:rgba(212,180,131,.08); letter-spacing:6px}
+.btn:disabled{opacity:.3; cursor:not-allowed; letter-spacing:5px}
+.vlib{margin-top:26px}
+.vrow{display:flex; align-items:baseline; gap:16px; padding:16px 2px;
+  border-bottom:1px solid var(--line)}
+.vrow .nm{font-family:var(--serif); font-size:17px; letter-spacing:3px}
+.vrow .ct{font-family:var(--mono); font-size:11px; color:var(--dim)}
+.vrow .st{margin-left:auto; font-size:10px; letter-spacing:2px; color:var(--ok)}
+.vempty{color:var(--dim); font-size:12.5px; letter-spacing:2px; padding:40px 0; text-align:center}
+
+/* ============ 记录页 ============ */
+.hist{padding-top:60px}
+.hrow{display:grid; grid-template-columns:150px 1fr 90px 220px 70px; gap:18px;
+  align-items:baseline; padding:18px 2px; border-bottom:1px solid var(--line);
+  font-size:13px; animation:rise .5s both}
+.hrow.head{color:var(--dim); font-size:10.5px; letter-spacing:2.5px; font-family:var(--mono);
+  border-bottom-color:var(--line2); animation:none}
+.hrow .t{font-family:var(--mono); font-size:11.5px; color:var(--dim)}
+.hrow .n{letter-spacing:1px}
+.hrow .v{font-size:12px; letter-spacing:3px}
+.hrow .v.allow{color:var(--ok)} .hrow .v.caution{color:var(--warn)} .hrow .v.block{color:var(--bad)}
+.hrow .s{font-family:var(--mono); font-size:11px; color:var(--mut)}
+.hrow .e{font-family:var(--mono); font-size:11px; color:var(--dim); text-align:right}
+
+.toast{position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(16px);
+  background:#111110; border:1px solid var(--line2); color:var(--ink); font-size:13px;
+  letter-spacing:1.5px; padding:13px 26px; opacity:0; transition:all .35s; z-index:99;
+  pointer-events:none}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:rgba(201,106,94,.6); color:var(--bad)}
+
+/* ============ 实时监测页（P1-2） ============ */
+.live-stage{display:flex; flex-direction:column; align-items:center; padding:54px 0 8px}
+.orb.green{border-color:var(--ok)}
+.orb.yellow{border-color:var(--warn)}
+.orb.red{border-color:var(--bad)}
+.orb.yellow::before,.orb.yellow::after,.orb.red::before,.orb.red::after{
+  content:''; position:absolute; inset:-1px; border-radius:50%; animation:ripple 1.8s ease-out infinite}
+.orb.red::before,.orb.red::after{border-color:rgba(201,106,94,.55)}
+.orb.yellow::before,.orb.yellow::after{border-color:rgba(212,160,74,.5)}
+.live-state{margin-top:18px; font-size:14px; letter-spacing:3px; font-family:var(--mono)}
+.live-state.green{color:var(--ok)} .live-state.yellow{color:var(--warn)} .live-state.red{color:var(--bad)}
+.live-trans{margin-top:14px; font-size:12px; letter-spacing:1px; color:var(--mut);
+  max-width:560px; text-align:center; min-height:18px; line-height:1.8}
+.live-tip{margin-top:22px; font-size:11.5px; color:var(--dim); letter-spacing:1px}
+.live-tip b{color:var(--gold2); font-family:var(--mono); font-weight:500}
+.tl{display:flex; gap:3px; flex-wrap:wrap; margin-top:22px; max-width:680px; justify-content:center}
+.tl .b{width:13px; height:32px; border-radius:2px; background:var(--dim); opacity:.45; transition:opacity .3s}
+.tl .b.green{background:var(--ok); opacity:1} .tl .b.yellow{background:var(--warn); opacity:1}
+.tl .b.red{background:var(--bad); opacity:1}
+.tl .b:hover{outline:1px solid var(--gold)}
+.alert-card{position:fixed; inset:0; display:none; place-items:center;
+  background:rgba(6,6,7,.84); z-index:120}
+.alert-card.show{display:grid; animation:rise .5s both}
+.alert-box{max-width:440px; text-align:center; padding:42px 36px; border:1px solid rgba(201,106,94,.5);
+  background:#0d0c0c}
+.alert-box .t{font-family:var(--serif); font-size:30px; letter-spacing:8px; color:var(--bad)}
+.alert-box .a{font-size:14px; line-height:2.1; color:var(--ink); margin-top:20px}
+.alert-box .r{font-size:12px; color:var(--mut); line-height:1.9; margin-top:16px;
+  border-left:1px solid var(--gold); padding-left:14px; text-align:left}
+.alert-box .btn{width:auto; padding:13px 40px; margin-top:26px}
+
+/* ============ 适老模式（P2-3 · elder-mode） ============ */
+.elder-btn{cursor:pointer; border:1px solid var(--line2); background:none; color:var(--mut);
+  font-size:12px; letter-spacing:2px; padding:5px 14px; border-radius:2px; transition:all .25s;
+  font-family:var(--sans)}
+.elder-btn:hover{color:var(--gold2); border-color:var(--gold)}
+body.elder .elder-btn{color:var(--gold2); border-color:var(--gold)}
+body.elder .tab{font-size:19px; letter-spacing:3px}
+body.elder .hero h1{font-size:64px; letter-spacing:22px}
+body.elder .hero .tag{font-size:18px}
+body.elder .orb{width:150px; height:150px}
+body.elder .orb svg{width:60px; height:60px}
+body.elder .orb.sm{width:130px; height:130px}
+body.elder .orb-hint{font-size:20px}
+body.elder .ch .score{font-size:56px}
+body.elder .ch h3{font-size:26px}
+body.elder .ch .model{font-size:15px}
+body.elder .ch .foot{font-size:17px}
+body.elder .ch .detail{font-size:18px; line-height:2}
+body.elder .ch.done .detail{max-height:240px}
+body.elder .vword{font-size:72px}
+body.elder .vreason{font-size:22px; line-height:2.1}
+body.elder .vmeta{font-size:17px}
+body.elder .gauge{width:220px; height:220px}
+body.elder .gauge svg{width:220px; height:220px}
+body.elder .gauge .gtxt b{font-size:42px}
+body.elder .btn{font-size:20px; padding:20px; letter-spacing:6px}
+body.elder .ptitle{font-size:40px}
+body.elder .psub{font-size:19px; line-height:2.2}
+body.elder .field label{font-size:16px}
+body.elder .field input[type=text]{font-size:24px}
+body.elder .prompt{font-size:20px; line-height:2.2}
+body.elder .sess button{font-size:18px; padding:16px}
+body.elder .vrow .nm{font-size:24px}
+body.elder .hrow{font-size:18px}
+body.elder .toast{font-size:20px}
+/* 实时页 · 红黄绿整屏色块（仅适老模式显示） */
+.elder-banner{display:none}
+body.elder .elder-banner{display:block; margin-top:34px; padding:58px 24px; text-align:center;
+  font-family:var(--serif); font-size:56px; font-weight:600; letter-spacing:14px; text-indent:14px;
+  border-radius:10px; color:#101010; transition:background .5s, color .5s}
+body.elder .elder-banner .sub{display:block; font-size:24px; letter-spacing:4px; text-indent:4px;
+  margin-top:16px; font-family:var(--sans); font-weight:400}
+body.elder .elder-banner.green{background:#8fb996}
+body.elder .elder-banner.yellow{background:#d4a04a}
+body.elder .elder-banner.red{background:#c96a5e; color:#fff}
+body.elder .tl{display:none}
+body.elder .live-trans{font-size:22px}
+body.elder .live-state{display:none}
+body.elder .live-tip{display:none}
+/* 告警卡（适老放大） */
+body.elder .alert-box{max-width:680px; padding:56px 48px}
+body.elder .alert-box .t{font-size:56px; letter-spacing:12px}
+body.elder .alert-box .a{font-size:32px; line-height:2}
+body.elder .alert-box .r{font-size:22px; line-height:2}
+body.elder .alert-box .btn{font-size:24px; padding:18px 44px}
+body.elder #liveAlertReplay{font-size:18px}
+
+/* ============ 子女分享卡片（P2-4） ============ */
+.share-modal{position:fixed; inset:0; display:none; place-items:center;
+  background:rgba(6,6,7,.92); z-index:130; padding:20px; overflow:auto}
+.share-modal.show{display:grid; animation:rise .4s both}
+.share-box{max-width:420px; text-align:center}
+.share-box img{width:100%; max-height:70vh; object-fit:contain;
+  border:1px solid var(--line2); border-radius:4px; background:#0c0b0b}
+.share-box .hint{font-size:12px; color:var(--mut); margin-top:14px; letter-spacing:1.5px; line-height:1.9}
+.share-box .row{display:flex; gap:14px; justify-content:center; margin-top:16px}
+.share-box .btn{width:auto; padding:13px 30px; margin-top:0}
+body.elder .share-box{max-width:520px}
+body.elder .share-box .btn{font-size:22px; padding:16px 36px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="21.5" stroke="#d4b483" stroke-width="1" opacity=".55"/>
+      <path d="M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5"
+            stroke="#d4b483" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M24.5 17.8c3 0 5.2 2.3 5.2 5.1 0 2-1.2 3.1-2.4 4"
+            stroke="#d4b483" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>
+      <circle cx="23.8" cy="25.8" r="1.7" fill="#d4b483"/>
+      <path d="M13.5 20.5a11 11 0 0 0 0 7" stroke="#d4b483" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+    </svg>
+    <div>
+      <div class="cn">谛听</div>
+      <div class="en">VERICALL</div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <div class="tab on" data-p="detect">检测</div>
+    <div class="tab" data-p="enroll">声纹登记</div>
+    <div class="tab" data-p="history">记录</div>
+    <div class="tab" data-p="live">实时监测</div>
+  </nav>
+  <div class="sys" id="sys"></div>
+  <button class="elder-btn" id="elderBtn" title="适老模式：大字 · 红黄绿整屏色块 · 语音播报">适老</button>
+</header>
+
+<main>
+
+<!-- ================= 检测 ================= -->
+<section class="page on" id="p-detect">
+  <div class="hero">
+    <h1 class="rise">谛听</h1>
+    <div class="en rise" style="animation-delay:.15s">VERICALL</div>
+    <p class="tag rise" style="animation-delay:.3s">声学伪造 · 声纹核验 · 话术理解 —— 三通道纵深防御</p>
+    <svg class="waveline rise" style="animation-delay:.45s" viewBox="0 0 560 44" preserveAspectRatio="none">
+      <path class="w1" d="M0 22 Q25 6 50 22 T100 22 T150 22 T200 22 T250 22 T300 22 T350 22 T400 22 T450 22 T500 22 T550 22 T600 22 T650 22 T700 22 T750 22"/>
+      <path class="w2" d="M0 22 Q50 34 100 22 T200 22 T300 22 T400 22 T500 22 T600 22 T700 22 T800 22"/>
+    </svg>
+  </div>
+
+  <div class="stage rise" style="animation-delay:.55s">
+    <button class="orb" id="recBtn" title="录音">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#d4b483" stroke-width="1.4" stroke-linecap="round">
+        <rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"/>
+      </svg>
+    </button>
+    <div class="orb-hint" id="recHint">点击开始录音</div>
+    <div class="or-line">或上传音频
+      <label>浏览文件<input type="file" id="fileIn" accept=".wav,.flac,.mp3"></label>
+      <span id="fileName" style="letter-spacing:0"></span>
+    </div>
+    <div class="demos">
+      <button class="demo" data-demo="A"><i>SCENE 01</i><span>家人真声</span></button>
+      <button class="demo" data-demo="B"><i>SCENE 02</i><span>AIGC 冒充家人</span></button>
+      <button class="demo" data-demo="C"><i>SCENE 03</i><span>陌生人来电</span></button>
+    </div>
+    <div class="stage-status" id="stageStatus"><span id="stageTxt"></span><span class="blink">▌</span></div>
+  </div>
+
+  <div class="channels rise" style="animation-delay:.7s">
+    <div class="ch" id="ch-acoustic">
+      <div class="idx">CHANNEL · 01</div>
+      <h3>声学伪造</h3>
+      <div class="model">AASIST · devEER 0.74%</div>
+      <div class="score" id="sc-acoustic">--</div>
+      <div class="track"><i id="bar-acoustic"></i></div>
+      <div class="foot"><span class="lab" id="la-acoustic">待分析</span><span class="conf" id="cf-acoustic"></span></div>
+      <div class="detail" id="de-acoustic"></div>
+    </div>
+    <div class="ch" id="ch-voiceprint">
+      <div class="idx">CHANNEL · 02</div>
+      <h3>声纹核验</h3>
+      <div class="model">CAMPPlus · 192 维嵌入</div>
+      <div class="score" id="sc-voiceprint">--</div>
+      <div class="track"><i id="bar-voiceprint"></i></div>
+      <div class="foot"><span class="lab" id="la-voiceprint">待分析</span><span class="conf" id="cf-voiceprint"></span></div>
+      <div class="detail" id="de-voiceprint"></div>
+    </div>
+    <div class="ch" id="ch-semantic">
+      <div class="idx">CHANNEL · 03</div>
+      <h3>话术理解</h3>
+      <div class="model">SenseVoice + LLM 风险评分</div>
+      <div class="score" id="sc-semantic">--</div>
+      <div class="track"><i id="bar-semantic"></i></div>
+      <div class="foot"><span class="lab" id="la-semantic">待分析</span><span class="conf" id="cf-semantic"></span></div>
+      <div class="detail" id="de-semantic"></div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict">
+    <div class="gauge">
+      <svg width="170" height="170" viewBox="0 0 170 170">
+        <circle class="bgc" cx="85" cy="85" r="70"/>
+        <circle class="fgc" id="gaugeFg" cx="85" cy="85" r="70"
+                stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+      </svg>
+      <div class="gtxt"><div><b id="gScore">--</b><span>可疑度</span></div></div>
+    </div>
+    <div class="vword" id="vWord">--</div>
+    <div class="vreason" id="vReason"></div>
+    <div class="vmeta">
+      <span>整体置信度<b id="vConf">--</b></span>
+      <span>分析耗时<b id="vTime">--</b></span>
+    </div>
+    <button class="btn" id="shareFromVerdict" style="width:auto;padding:13px 40px;margin-top:30px;display:none">生成子女提醒卡</button>
+  </div>
+</section>
+
+<!-- ================= 登记 ================= -->
+<section class="page" id="p-enroll">
+  <div class="enroll">
+    <div class="rise">
+      <div class="ptitle">声纹登记</div>
+      <p class="psub">登记家人声纹后，通道②即可核验来电者是否为本人。<br>建议三种场景各录一段，每段 30 秒以上。</p>
+      <div class="field"><label>家人称谓</label>
+        <input type="text" id="enName" placeholder="妈妈 / 爸爸 / 女儿 …"></div>
+      <div class="field"><label>采集场景</label>
+        <div class="sess" id="sessRow">
+          <button class="on" data-s="putonghua">普通话朗读</button>
+          <button data-s="fangyan">方言自由说</button>
+          <button data-s="readback">数字复述</button>
+        </div></div>
+      <div class="prompt" id="promptBox"></div>
+      <div class="stage">
+        <button class="orb sm" id="enRecBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#d4b483" stroke-width="1.4" stroke-linecap="round">
+            <rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"/>
+          </svg>
+        </button>
+        <div class="orb-hint" id="enRecHint">点击录音</div>
+        <div class="or-line">或
+          <label>上传录音<input type="file" id="enFileIn" accept=".wav,.flac"></label>
+          <span id="enFileName" style="letter-spacing:0"></span>
+        </div>
+      </div>
+      <div class="consent">
+        <input type="checkbox" id="consent">
+        <span>本人（或已获家人授权）同意将录音用于谛听 VeriCall 项目的声纹特征提取与竞赛演示，数据仅保存在本机，不用于其他用途。</span>
+      </div>
+      <button class="btn" id="enSubmit" disabled>登记声纹</button>
+    </div>
+    <div class="rise" style="animation-delay:.2s">
+      <div class="ptitle" style="font-size:22px">声纹库</div>
+      <p class="psub" id="voiceSub">已登记 0 位</p>
+      <div class="vlib" id="voiceList"><div class="vempty">暂无登记</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 记录 ================= -->
+<section class="page" id="p-history">
+  <div class="hist rise">
+    <div class="ptitle">检测记录</div>
+    <p class="psub">每次分析自动留档 · 最新 50 条</p>
+    <div style="margin-top:34px" id="histList"></div>
+  </div>
+</section>
+
+<!-- ================= 实时监测 ================= -->
+<section class="page" id="p-live">
+  <div class="live-stage rise">
+    <button class="orb green" id="liveOrb" title="实时状态">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#d4b483" stroke-width="1.4" stroke-linecap="round">
+        <rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"/>
+      </svg>
+    </button>
+    <div class="live-state green" id="liveState">监听未开始</div>
+    <div class="elder-banner green" id="elderBanner">通话正常<span class="sub">放心聊</span></div>
+    <button class="btn" id="liveBtn" style="width:auto;padding:13px 46px;margin-top:24px">开始监听</button>
+    <div class="live-trans" id="liveTrans"></div>
+    <div class="tl" id="liveTimeline"></div>
+    <div class="live-tip">边说边判 · 端到端延迟 ≤2s/窗 · 断线自动回退「上传检测」模式</div>
+  </div>
+</section>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<div class="alert-card" id="liveAlert">
+  <div class="alert-box">
+    <div class="t">请先核实</div>
+    <div class="a" id="liveAlertA">这个电话的声音有些不对劲，建议先挂断，拨打家人平时的号码确认一下。</div>
+    <div class="r" id="liveAlertR"></div>
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:26px">
+      <button class="btn" id="liveAlertClose" style="margin-top:0">我知道了</button>
+      <button class="btn" id="liveAlertShare" style="margin-top:0">发给子女</button>
+    </div>
+    <div id="liveAlertReplay" style="margin-top:16px;font-size:12px;color:var(--dim);cursor:pointer;letter-spacing:2px">🔊 重播提醒</div>
+  </div>
+</div>
+
+<div class="share-modal" id="shareModal">
+  <div class="share-box">
+    <img id="shareImg" alt="谛听拦截提醒卡">
+    <div class="hint">长按图片保存转发给子女 · 或点击下方按钮保存</div>
+    <div class="row">
+      <button class="btn" id="shareDownload">保存图片</button>
+      <button class="btn" id="shareClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script src="/copy.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const PROMPTS={
+  putonghua:"请朗读：妈，是我。我在外面出了点事，急需五万块钱周转，先别告诉我爸。银行卡号是 6222 开头。妈你听出来是我了吧？——覆盖称谓 / 金额 / 紧迫话术的诈骗高频模式。",
+  fangyan:"请用方言自然聊天 1 分钟以上（讲讲今天做了什么即可，无需朗读）。",
+  readback:"请复述屏幕上的随机数字：58 302 1174 90（用于声纹确认测试）。"
+};
+const VTXT={allow:"放行",caution:"警惕",block:"拦截"};
+let curSess="putonghua", enRec=null;
+
+/* ---------- 适老模式 + 语音播报（P2-3） ---------- */
+/* copy.js 兜底（file:// 直开或静态服务缺失时仍可用） */
+const COPY=window.VERICALL_COPY||{
+  states:{green:{word:"通话正常",short:"放心聊",advise:"通话正常，放心聊。"},
+    yellow:{word:"话术可疑",short:"多留个心眼",advise:"这通电话提到转账，请多留个心眼，和家里人商量一下再决定。"},
+    red:{word:"请先核实",short:"先挂断，回拨确认",advise:"这个电话的声音有些不对劲，建议先挂断，拨打家人平时的号码确认一下。"}},
+  card:{title:"谛听拦截提醒",subtitle:"AI 拟声电话诈骗 · 三通道联合判定",action:"建议这样做",
+    footer:"谛听 VeriCall",hint:"长按保存图片，转发给子女"},
+  advise:function(s,f){return (this.states[s]||this.states.green).advise.replace("{family}",f||"家人")},
+  speak:function(s,f){return this.advise(s,f)}
+};
+let elderOn=localStorage.getItem("vericall_elder")==="1";
+let voiceOn=localStorage.getItem("vericall_voice")!=="0";
+let voiceNames=[], lastLiveWin=null, lastRec=null, lastYSpk=0;
+function speak(text){
+  if(!voiceOn||!window.speechSynthesis||!text) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="zh-CN"; u.rate=elderOn?0.85:0.95; u.pitch=1; u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(_){}
+}
+function applyElder(){
+  document.body.classList.toggle("elder",elderOn);
+  $("elderBtn").textContent=elderOn?"适老 · 开":"适老";
+}
+$("elderBtn").onclick=()=>{
+  elderOn=!elderOn; localStorage.setItem("vericall_elder",elderOn?"1":"0");
+  applyElder();
+  if(elderOn) speak("适老模式已开启。字体会变大，遇到可疑电话我会念给您听。");
+};
+applyElder();
+
+/* ---------- 状态栏 ---------- */
+async function loadStatus(){
+  try{
+    const s=await(await fetch("/api/status")).json();
+    const eer=s.aasist_dev_eer!=null?s.aasist_dev_eer.toFixed(2)+"%":"--";
+    $("sys").innerHTML=
+      `<span class="it"><span class="pip ok"></span>AASIST <b>${eer}</b></span>
+       <span class="it"><span class="pip ${s.voices.length?"ok":"warn"}"></span>声纹 <b>${s.voices.length}</b></span>
+       <span class="it"><span class="pip ${s.ollama?"ok":"warn"}"></span>OLLAMA <b>${s.ollama?"ON":"OFF"}</b></span>`;
+    renderVoices(s.voices);
+  }catch(e){}
+}
+function renderVoices(vs){
+  voiceNames=vs.map(v=>v.name);
+  $("voiceSub").textContent=`已登记 ${vs.length} 位`;
+  $("voiceList").innerHTML=vs.length?vs.map(v=>
+    `<div class="vrow"><span class="nm">${v.name}</span>
+     <span class="ct">${v.samples} SAMPLES</span><span class="st">已登记</span></div>`).join("")
+    :'<div class="vempty">暂无登记</div>';
+}
+
+/* ---------- 页签 ---------- */
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on"); $("p-"+t.dataset.p).classList.add("on");
+  if(t.dataset.p==="history") loadHistory();
+});
+
+/* ---------- WAV 录音器 ---------- */
+function makeRecorder(btnId,hintId,onDone){
+  const btn=$(btnId),hint=$(hintId);
+  let ac,proc,src,chunks=[],recording=false,t0;
+  function encodeWav(samples,sr){
+    const len=samples.length, buf=new ArrayBuffer(44+len*2), v=new DataView(buf);
+    const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+    ws(0,"RIFF");v.setUint32(4,36+len*2,true);ws(8,"WAVEfmt ");v.setUint32(16,16,true);
+    v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);
+    v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+    ws(36,"data");v.setUint32(40,len*2,true);
+    for(let i=0;i<len;i++){let s=Math.max(-1,Math.min(1,samples[i]));
+      v.setInt16(44+i*2,s<0?s*0x8000:s*0x7FFF,true)}
+    return new Blob([buf],{type:"audio/wav"});
+  }
+  btn.onclick=async()=>{
+    if(recording){
+      recording=false; proc.disconnect(); src.disconnect(); btn.classList.remove("live");
+      const dur=(Date.now()-t0)/1000;
+      const total=chunks.reduce((a,c)=>a+c.length,0), all=new Float32Array(total);
+      let off=0; chunks.forEach(c=>{all.set(c,off);off+=c.length}); chunks=[];
+      const blob=encodeWav(all,16000);
+      hint.textContent=`已录 ${dur.toFixed(1)} 秒 · 点击重新录制`;
+      onDone(blob,dur); ac.close(); return;
+    }
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1}});
+      ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+      src=ac.createMediaStreamSource(stream);
+      proc=ac.createScriptProcessor(4096,1,1);
+      src.connect(proc); proc.connect(ac.destination);
+      proc.onaudioprocess=e=>{if(recording)chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)))};
+      recording=true; t0=Date.now(); btn.classList.add("live");
+      hint.innerHTML="录音中 <b id='"+btnId+"T'></b> · 再次点击停止";
+      const tick=()=>{const el=$(btnId+"T"); if(el&&recording){el.textContent=((Date.now()-t0)/1000).toFixed(1)+"s"; setTimeout(tick,200)}};
+      tick();
+    }catch(e){toast("无法访问麦克风："+e.message,true)}
+  };
+}
+makeRecorder("recBtn","recHint",(b)=>{analyzeFile(b,"record_"+Date.now()+".wav")});
+makeRecorder("enRecBtn","enRecHint",(b)=>{enRec={blob:b,name:"enroll_"+Date.now()+".wav"};checkEnroll()});
+
+/* ---------- 上传 ---------- */
+$("fileIn").onchange=()=>{const f=$("fileIn").files[0]; if(f){$("fileName").textContent=f.name; analyzeFile(f,f.name)}};
+$("enFileIn").onchange=()=>{const f=$("enFileIn").files[0]; if(f){$("enFileName").textContent=f.name; enRec={blob:f,name:f.name}; checkEnroll()}};
+
+/* ---------- demo ---------- */
+document.querySelectorAll(".demo").forEach(c=>c.onclick=()=>{
+  const fd=new FormData(); fd.append("demo",c.dataset.demo); runAnalyze(fd);
+});
+
+/* ---------- 分析 ---------- */
+const STAGES=["CH.01 ACOUSTIC · 声学伪造检测","CH.02 VOICEPRINT · 声纹比对","CH.03 SEMANTIC · 话术理解","FUSION · 融合裁决"];
+let progTimer=null;
+function analyzeFile(blob,name){
+  const fd=new FormData(); fd.append("file",blob,name); runAnalyze(fd);
+}
+async function runAnalyze(fd){
+  resetChannels(); $("verdict").className="verdict";
+  const ss=$("stageStatus"); ss.classList.add("show");
+  let si=0; $("stageTxt").textContent=STAGES[0];
+  progTimer=setInterval(()=>{si=Math.min(si+1,STAGES.length-1); $("stageTxt").textContent=STAGES[si]},6500);
+  const chans=["acoustic","voiceprint","semantic"];
+  chans.forEach((k,i)=>setTimeout(()=>$("ch-"+k).classList.add("pending"), i*300));
+  try{
+    const r=await fetch("/api/analyze",{method:"POST",body:fd});
+    const data=await r.json();
+    clearInterval(progTimer); ss.classList.remove("show");
+    chans.forEach(k=>$("ch-"+k).classList.remove("pending"));
+    if(data.error){toast(data.message||("分析失败: "+data.error),true);return}
+    revealResult(data);
+  }catch(e){
+    clearInterval(progTimer); ss.classList.remove("show");
+    chans.forEach(k=>$("ch-"+k).classList.remove("pending"));
+    toast("请求失败: "+e.message,true);
+  }
+}
+function resetChannels(){
+  $("shareFromVerdict").style.display="none";
+  ["acoustic","voiceprint","semantic"].forEach(k=>{
+    $("ch-"+k).classList.remove("done");
+    $("la-"+k).className="lab"; $("la-"+k).textContent="分析中";
+    $("bar-"+k).style.width="0"; $("sc-"+k).innerHTML="--";
+    $("de-"+k).textContent=""; $("cf-"+k).textContent="";
+  });
+}
+function revealResult(rec){
+  lastRec=rec;
+  rec.channels.forEach((c,i)=>{
+    setTimeout(()=>{
+      const k=c.name, card=$("ch-"+k);
+      card.classList.add("done");
+      const bad=c.score>=0.6, mid=c.score>=0.35&&!bad;
+      const lab=$("la-"+k); lab.textContent=c.label;
+      lab.className="lab "+(bad?"bad":mid?"mid":"good");
+      $("bar-"+k).style.width=Math.round(c.score*100)+"%";
+      $("bar-"+k).style.background=bad?"var(--bad)":mid?"var(--warn)":"var(--gold)";
+      const sc=$("sc-"+k);
+      sc.innerHTML=c.score.toFixed(2)+"<em>/1.0</em>";
+      sc.style.color=bad?"var(--bad)":mid?"var(--warn)":"var(--ink)";
+      $("cf-"+k).textContent="CONF "+c.confidence;
+      $("de-"+k).textContent=c.detail;
+    }, i*500);
+  });
+  setTimeout(()=>{
+    const v=$("verdict");
+    v.className="verdict show "+rec.final;
+    $("vWord").textContent=VTXT[rec.final]||rec.final;
+    $("vReason").textContent=rec.rationale;
+    $("gScore").textContent=rec.score.toFixed(2);
+    $("vConf").textContent=rec.confidence.toFixed(2);
+    $("vTime").textContent=(rec.elapsed_s??"--")+"s";
+    requestAnimationFrame(()=>{
+      $("gaugeFg").style.strokeDashoffset=439.8*(1-rec.score);
+    });
+    if(rec.final!=="allow") $("shareFromVerdict").style.display="inline-block";
+    if(elderOn) speak(COPY.speak(rec.final==="block"?"red":rec.final==="caution"?"yellow":"green",voiceNames[0]));
+    v.scrollIntoView({behavior:"smooth",block:"center"});
+  }, rec.channels.length*500+300);
+}
+
+/* ---------- 登记 ---------- */
+document.querySelectorAll("#sessRow button").forEach(b=>b.onclick=e=>{
+  e.preventDefault();
+  document.querySelectorAll("#sessRow button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); curSess=b.dataset.s; $("promptBox").textContent=PROMPTS[curSess];
+});
+$("promptBox").textContent=PROMPTS.putonghua;
+$("consent").onchange=checkEnroll; $("enName").oninput=checkEnroll;
+function checkEnroll(){
+  $("enSubmit").disabled=!($("consent").checked&&$("enName").value.trim()&&enRec);
+}
+$("enSubmit").onclick=async()=>{
+  const fd=new FormData();
+  fd.append("name",$("enName").value.trim());
+  fd.append("session",curSess);
+  fd.append("file",enRec.blob,enRec.name);
+  $("enSubmit").disabled=true; $("enSubmit").textContent="声纹特征提取中 …";
+  try{
+    const r=await fetch("/api/enroll",{method:"POST",body:fd});
+    const d=await r.json();
+    if(d.error) toast(d.message||"登记失败",true);
+    else{toast(`「${d.name}」声纹登记成功`); enRec=null; $("enName").value=""; $("consent").checked=false; loadStatus()}
+  }catch(e){toast("请求失败: "+e.message,true)}
+  $("enSubmit").textContent="登记声纹"; checkEnroll();
+};
+
+/* ---------- 历史 ---------- */
+async function loadHistory(){
+  try{
+    const d=await(await fetch("/api/history")).json();
+    const rs=d.records||[];
+    $("histList").innerHTML=
+      `<div class="hrow head"><span>时间</span><span>音频 / 场景</span><span>裁决</span><span>通道分数 A·V·S</span><span style="text-align:right">耗时</span></div>`+
+      (rs.length?rs.map((r,i)=>{
+        const ch=(r.channels||[]).map(c=>c.score).join(" · ");
+        return `<div class="hrow" style="animation-delay:${i*0.04}s">
+          <span class="t">${(r.time||"").slice(5)}</span>
+          <span class="n">${r.name||"--"}</span>
+          <span class="v ${r.final}">${VTXT[r.final]||r.final}</span>
+          <span class="s">${ch} ｜ Σ ${r.score}</span>
+          <span class="e">${r.elapsed_s}s</span></div>`;
+      }).join(""):'<div class="vempty">暂无记录</div>');
+  }catch(e){}
+}
+
+/* ---------- toast ---------- */
+let toastT=null;
+function toast(msg,err){
+  const t=$("toast"); t.textContent=msg; t.className="toast show"+(err?" err":"");
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),3200);
+}
+
+/* ---------- 实时监测（P1-2 · /ws/stream） ---------- */
+const LIVE_STATE={GREEN:"green",YELLOW:"yellow",RED:"red"};
+const LIVE_TXT={GREEN:"通话正常",YELLOW:"话术可疑 · 留意",RED:"疑似诈骗 · 建议核实"};
+function liveClass(s){return LIVE_STATE[s]||"green"}
+function setLive(s){
+  const c=liveClass(s);
+  $("liveOrb").className="orb live "+c;
+  $("liveState").className="live-state "+c;
+  $("liveState").textContent=LIVE_TXT[s]||"监听中";
+  const bn=$("elderBanner");
+  if(bn){
+    const st=COPY.states[c]||COPY.states.green;
+    bn.className="elder-banner "+c;
+    bn.innerHTML=st.word+"<span class='sub'>"+(st.short||"")+"</span>";
+  }
+}
+let liveWs=null, liveAC=null, liveProc=null, liveSrc=null;
+$("liveBtn").onclick=()=>{
+  if(liveWs){ liveWs.close(); return; }
+  try{
+    liveWs=new WebSocket(`ws://${location.host}/ws/stream`);
+    liveWs.onopen=()=>{ $("liveBtn").textContent="停止监听"; startLiveMic(); toast("已连接流式接口"); setLive("GREEN"); $("liveTimeline").innerHTML="" };
+    liveWs.onmessage=e=>{ try{ handleLive(JSON.parse(e.data)) }catch(_){} };
+    liveWs.onclose=()=>{ liveWs=null; stopLiveMic(); $("liveBtn").textContent="开始监听";
+      $("liveState").textContent="已断开（可回退上传检测）"; };
+    liveWs.onerror=()=>{ toast("流式接口不可用，请回退到上传检测模式",true) };
+  }catch(e){ toast("无法建立连接: "+e.message,true) }
+};
+function handleLive(ev){
+  if(ev.type==="window"){
+    lastLiveWin=ev;
+    const b=document.createElement("div");
+    b.className="b "+liveClass(ev.state);
+    b.title=`t=${ev.t_rel}s 融合=${ev.fused} ${ev.state}`;
+    $("liveTimeline").appendChild(b);
+    if(ev.channels&&ev.channels.semantic&&ev.channels.semantic.transcript)
+      $("liveTrans").textContent=ev.channels.semantic.transcript;
+    setLive(ev.state);
+    if(elderOn&&ev.state==="YELLOW"&&Date.now()-lastYSpk>20000){
+      lastYSpk=Date.now(); speak(COPY.speak("yellow",voiceNames[0]));
+    }
+  }else if(ev.type==="alert"){
+    $("liveAlertR").textContent=ev.rationale||"";
+    const adv=ev.advice||COPY.speak("red",voiceNames[0]);
+    $("liveAlertA").textContent=adv;
+    $("liveAlert").classList.add("show");
+    if(elderOn) speak(adv);
+  }
+}
+$("liveAlertClose").onclick=()=>$("liveAlert").classList.remove("show");
+$("liveAlertReplay").onclick=()=>speak($("liveAlertA").textContent);
+$("liveAlertShare").onclick=()=>{
+  const w=lastLiveWin||{};
+  const chans=w.channels?Object.entries(w.channels).map(([k,v])=>({name:k,score:v.score,label:v.label})):[];
+  openShare(makeShareCard({final:"red",fused:w.fused,channels:chans,
+    advice:$("liveAlertA").textContent,rationale:$("liveAlertR").textContent,source:"实时通话"}));
+};
+
+/* ---------- 子女分享卡片（P2-4 · canvas 生成） ---------- */
+const CHAN_CN={acoustic:"声学伪造",voiceprint:"声纹核验",semantic:"话术理解"};
+function wrapText(ctx,text,x,y,maxW,lineH){
+  const chars=String(text||"").split(""); let line="",yy=y;
+  for(const ch of chars){
+    if(ctx.measureText(line+ch).width>maxW){ctx.fillText(line,x,yy);line=ch;yy+=lineH}
+    else line+=ch;
+  }
+  if(line)ctx.fillText(line,x,yy);
+  return yy+lineH;
+}
+function makeShareCard(o){
+  const W=800,H=1140,cv=document.createElement("canvas");
+  cv.width=W; cv.height=H; const x=cv.getContext("2d");
+  x.fillStyle="#0c0b0b"; x.fillRect(0,0,W,H);
+  x.strokeStyle="#d4b483"; x.lineWidth=2; x.strokeRect(26,26,W-52,H-52);
+  const cx=W/2, serif="'Songti SC','STSong','SimSun',serif",
+        sans="'PingFang SC','Microsoft YaHei',sans-serif";
+  /* 谛听 logo（圆 + 耳形弧线 + 听珠） */
+  x.strokeStyle="#d4b483"; x.lineWidth=3;
+  x.beginPath(); x.arc(cx,112,44,0,Math.PI*2); x.stroke();
+  x.lineWidth=4; x.beginPath(); x.arc(cx+4,112,22,Math.PI*0.25,Math.PI*1.55); x.stroke();
+  x.fillStyle="#d4b483"; x.beginPath(); x.arc(cx,112,6,0,Math.PI*2); x.fill();
+  /* 标题区 */
+  x.textAlign="center";
+  x.font="600 46px "+serif; x.fillStyle="#d4b483";
+  x.fillText(COPY.card.title||"谛听拦截提醒",cx,206);
+  x.font="20px "+sans; x.fillStyle="#8f8a7d";
+  x.fillText(COPY.card.subtitle||"",cx,246);
+  const t=new Date(), pad=n=>String(n).padStart(2,"0");
+  x.font="20px monospace"; x.fillStyle="#57544c";
+  x.fillText("来电时间 "+t.getFullYear()+"-"+pad(t.getMonth()+1)+"-"+pad(t.getDate())
+    +" "+pad(t.getHours())+":"+pad(t.getMinutes())+(o.source?" · "+o.source:""),cx,288);
+  /* 裁决大字 */
+  const vmap={block:["请先核实","#c96a5e"],red:["请先核实","#c96a5e"],
+    caution:["话术可疑","#d4a04a"],yellow:["话术可疑","#d4a04a"],
+    allow:["通话正常","#8fb996"],green:["通话正常","#8fb996"]};
+  const [vw,vc]=vmap[o.final]||vmap.red;
+  x.font="600 88px "+serif; x.fillStyle=vc; x.fillText(vw,cx,402);
+  x.font="24px monospace"; x.fillStyle="#8f8a7d";
+  x.fillText("融合可疑度 "+(typeof o.fused==="number"?o.fused.toFixed(2):"--"),cx,446);
+  /* 三通道证据 */
+  x.textAlign="left"; let y=508;
+  (o.channels||[]).forEach(c=>{
+    const sc=typeof c.score==="number"?c.score:0;
+    const cc=sc>=0.6?"#c96a5e":sc>=0.35?"#d4a04a":"#8fb996";
+    x.font="22px "+sans; x.fillStyle="#8f8a7d";
+    x.fillText(CHAN_CN[c.name]||c.name,90,y);
+    x.font="24px monospace"; x.fillStyle=cc; x.fillText(sc.toFixed(2),300,y);
+    x.font="20px "+sans; x.fillStyle="#57544c"; x.fillText(c.label||"",392,y);
+    x.fillStyle="rgba(236,231,220,.1)"; x.fillRect(90,y+14,560,4);
+    x.fillStyle=cc; x.fillRect(90,y+14,560*Math.min(1,Math.max(0,sc)),4);
+    y+=74;
+  });
+  /* 建议话术框 */
+  y+=8;
+  x.strokeStyle="rgba(212,180,131,.5)"; x.lineWidth=1.5;
+  x.strokeRect(80,y,640,192);
+  x.font="600 24px "+sans; x.fillStyle="#d4b483";
+  x.fillText(COPY.card.action||"建议这样做",108,y+44);
+  x.font="26px "+sans; x.fillStyle="#ece7dc";
+  let ey=wrapText(x,o.advice||"",108,y+86,584,40);
+  if(o.rationale){
+    x.font="18px "+sans; x.fillStyle="#57544c";
+    wrapText(x,"判定依据："+o.rationale,108,Math.max(ey+8,y+150),584,26);
+  }
+  /* 页脚 */
+  x.textAlign="center"; x.font="19px "+sans; x.fillStyle="#57544c";
+  x.fillText(COPY.card.footer||"谛听 VeriCall",cx,H-70);
+  x.fillText(COPY.card.hint||"",cx,H-38);
+  return cv.toDataURL("image/png");
+}
+function openShare(dataUrl){
+  $("shareImg").src=dataUrl;
+  $("shareModal").classList.add("show");
+}
+$("shareClose").onclick=()=>$("shareModal").classList.remove("show");
+$("shareModal").onclick=e=>{if(e.target===$("shareModal"))$("shareModal").classList.remove("show")};
+$("shareDownload").onclick=()=>{
+  const a=document.createElement("a"), t=new Date(), pad=n=>String(n).padStart(2,"0");
+  a.href=$("shareImg").src;
+  a.download="谛听拦截提醒_"+t.getFullYear()+pad(t.getMonth()+1)+pad(t.getDate())+"_"+pad(t.getHours())+pad(t.getMinutes())+".png";
+  a.click();
+};
+$("shareFromVerdict").onclick=()=>{
+  const r=lastRec||{};
+  const st=r.final==="caution"?"yellow":"red";
+  openShare(makeShareCard({final:r.final||"block",fused:r.score,
+    channels:(r.channels||[]).map(c=>({name:c.name,score:c.score,label:c.label})),
+    advice:COPY.advise(st,voiceNames[0]),rationale:r.rationale,source:"上传检测"}));
+};
+function startLiveMic(){
+  navigator.mediaDevices.getUserMedia({audio:{channelCount:1}}).then(stream=>{
+    liveAC=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    liveSrc=liveAC.createMediaStreamSource(stream);
+    liveProc=liveAC.createScriptProcessor(4096,1,1);
+    liveSrc.connect(liveProc); liveProc.connect(liveAC.destination);
+    liveProc.onaudioprocess=e=>{
+      if(!liveWs||liveWs.readyState!==1) return;
+      const ch=e.inputBuffer.getChannelData(0), buf=new ArrayBuffer(ch.length*2), v=new DataView(buf);
+      for(let i=0;i<ch.length;i++){let s=Math.max(-1,Math.min(1,ch[i]));v.setInt16(i*2,s<0?s*0x8000:s*0x7FFF,true)}
+      liveWs.send(buf);
+    };
+  }).catch(e=>toast("麦克风不可用: "+e.message,true));
+}
+function stopLiveMic(){ try{ if(liveProc)liveProc.disconnect(); if(liveSrc)liveSrc.disconnect(); if(liveAC)liveAC.close() }catch(_){} }
+
+loadStatus(); setInterval(loadStatus,15000);
+</script>
+</body>
+</html>

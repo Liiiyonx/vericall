@@ -1,0 +1,44 @@
+[
+  {
+    "wav": null,
+    "text": "妈我是同学号我手机摔了急用五万块你转卡号别告诉我爸",
+    "dialect": "mandarin",
+    "label": "scam",
+    "note": "合成-诈骗话术(mandarin)"
+  },
+  {
+    "wav": null,
+    "text": "这里是市公安局你银行卡涉嫌洗钱要把资金转安全账户否则冻结逮捕",
+    "dialect": "mandarin",
+    "label": "scam",
+    "note": "合成-诈骗话术(mandarin)"
+  },
+  {
+    "wav": null,
+    "text": "爸我领导急用钱你先垫付两万到这个二维码别声张",
+    "dialect": "mandarin",
+    "label": "scam",
+    "note": "合成-诈骗话术(mandarin)"
+  },
+  {
+    "wav": null,
+    "text": "妈我周末回来吃饭你别买菜了路上买爸降压药吃完没",
+    "dialect": "mandarin",
+    "label": "normal",
+    "note": "合成-正常闲聊(mandarin)"
+  },
+  {
+    "wav": null,
+    "text": "喂您好您的快递放丰巢柜了取件码3372请领取",
+    "dialect": "mandarin",
+    "label": "normal",
+    "note": "合成-正常闲聊(mandarin)"
+  },
+  {
+    "wav": null,
+    "text": "爸今天降温记得加衣服我下班早点回",
+    "dialect": "mandarin",
+    "label": "normal",
+    "note": "合成-正常闲聊(mandarin)"
+  }
+]

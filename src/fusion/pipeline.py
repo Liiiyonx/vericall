@@ -1,0 +1,240 @@
+# -*- coding: utf-8 -*-
+"""
+谛听 VeriCall — 端到端融合管线（三通道真实集成）
+===============================================================
+把三个通道接到一起跑一条真实通话音频，输出最终"放行/警惕/拦截"裁决。
+
+当前状态：
+    通道① 声学伪造(AASIST)   -> 真实（加载训练权重做推理；权重未就绪时安全占位不误拦）
+    通道② 家人声纹(CAMPPlus) -> 真实（已验证：同人相似度≈1.0 / 异人≈0.03）
+    通道③ 话术语义(SenseVoice+Ollama) -> 真实（ASR 转写 + deepseek-r1 风险评分）
+
+GPU 显存管理（RTX 5060 8GB，关键！）：
+    通道②的 CAMPPlus 与通道③的 SenseVoice 都会占 GPU。为避免二者叠加，
+    本管线严格串行性地加载/释放：
+        1) 声纹核验（载 CAMPPlus）→ 立即释放
+        2) 话术 ASR（载 SenseVoice）→ 立即释放
+        3) 话术 LLM 评分（调 Ollama 服务，Ollama 自行管理 GPU）
+    这样任意时刻 GPU 上最多一个"大模型"，避开 OOM（详见 semantic_channel.py 顶部说明）。
+
+用法：
+    python -m fusion.pipeline
+    （默认用 SenseVoice 示例音频演示：同说话人->放行，异说话人->拦截）
+
+作为库：
+    from fusion.pipeline import VeriCallPipeline
+    pipe = VeriCallPipeline()
+    pipe.enroll("女儿", "daughter.wav")
+    r = pipe.analyze("incoming_call.wav")     # -> FusionResult
+    print(r.final, r.rationale)
+"""
+from __future__ import annotations
+
+import sys
+import time
+import os
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from paths import SV_EXAMPLE, DEVICE, OFFLINE, DEMO_CACHE  # noqa: E402
+
+from fusion.fusion_orchestrator import FusionOrchestrator, ChannelVerdict
+from fusion.voiceprint_channel import VoiceprintChannel
+from fusion.semantic_channel import SemanticChannel
+from fusion.acoustic_channel import AcousticChannel
+
+
+def _empty_cache():
+    """尽力释放 GPU 显存（模型对象置 None 后调用）。"""
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        pass
+
+
+class VeriCallPipeline:
+    """谛听 VeriCall 端到端管线：声纹 + 话术 + (声学占位) -> 融合裁决。"""
+
+    def __init__(self,
+                 voiceprint: VoiceprintChannel | None = None,
+                 semantic: SemanticChannel | None = None,
+                 acoustic: AcousticChannel | None = None,
+                 orchestrator: FusionOrchestrator | None = None,
+                 device: str | None = None):
+        device = device or DEVICE
+        self.vp = voiceprint or VoiceprintChannel()
+        self.sem = semantic or SemanticChannel()
+        self.ac = acoustic or AcousticChannel(device=device)
+        self.orch = orchestrator or FusionOrchestrator()
+
+    # ------------------------------------------------------------------ #
+    def enroll(self, name: str, audio_path: str) -> None:
+        """登记一位家人的声纹（通道②）。"""
+        self.vp.enroll(name, audio_path)
+
+    # ------------------------------------------------------------------ #
+    def _voiceprint_verdict(self, audio_path: str) -> ChannelVerdict:
+        """通道② 真实核验（CAMPPlus）。完成后立即释放 GPU。"""
+        v = self.vp.verify(audio_path)
+        self.vp._model = None          # 释放 CAMPPlus
+        _empty_cache()
+        return v
+
+    def _acoustic_verdict(self, audio_path: str) -> ChannelVerdict:
+        """通道① 真实 AASIST 声学伪造检测（load→infer→释放 GPU 串行）。"""
+        verdict = self.ac.analyze(audio_path)
+        self.ac._model = None          # 释放 AASIST
+        _empty_cache()
+        return verdict
+
+    def _semantic_verdict(self, audio_path: str) -> ChannelVerdict:
+        """通道③ 真实话术分析：ASR 转写 -> 释放 GPU -> LLM 评分。"""
+        from fusion.transcript_cache import get as cache_get, put as cache_put
+
+        t0 = time.time()
+        try:
+            transcript = self.sem.asr.transcribe(audio_path)
+            if transcript:
+                cache_put(audio_path, transcript)   # 跑通即落盘，断网可复用
+        except Exception as e:  # noqa: BLE001
+            transcript = cache_get(audio_path) or ""
+            reason = f"ASR 失败({'缓存命中' if transcript else '缓存缺失'}): {e}"
+        else:
+            reason = ""
+        # ASR 用完后立即释放 SenseVoice，再让 Ollama 独占 GPU 加载 LLM
+        self.sem.asr._model = None
+        _empty_cache()
+
+        if not transcript:
+            res = self.sem._fallback(reason or "ASR 转写为空", t0)
+        else:
+            res = self.sem.analyze(transcript)
+            res.transcript = transcript
+            res.latency_s = round(time.time() - t0, 2)
+
+        conf = 0.9 if res.category != "unknown" else 0.3
+        return ChannelVerdict(
+            name="semantic",
+            score=res.risk,
+            label=res.category,
+            detail=f"{res.reason} | 转写: {res.transcript[:40]}",
+            confidence=conf,
+        )
+
+    def analyze(self, audio_path: str, scenario: str | None = None) -> "FusionResult":
+        """对一段来电音频跑完整三通道融合，返回最终裁决。
+
+        scenario: 演示场景编号（A/B/C）。离线模式（VERICALL_OFFLINE=1）下
+        直接走缓存通道 + 实时规则话术，跳过 Ollama/SenseVoice/torch。
+        """
+        if OFFLINE:
+            return self._offline_result(scenario)
+        print(f"\n=== 分析音频: {audio_path} ===")
+
+        # 通道① 声学伪造：真实 AASIST 推理（load→infer→释放 GPU）
+        acoustic = self._acoustic_verdict(audio_path)
+        print(f"[通道① 声学] score={acoustic.score} label={acoustic.label} "
+              f"({acoustic.confidence}) {acoustic.detail}")
+
+        # 通道② 声纹：真实
+        voiceprint = self._voiceprint_verdict(audio_path)
+        print(f"[通道② 声纹] score={voiceprint.score} label={voiceprint.label} "
+              f"({voiceprint.confidence}) {voiceprint.detail}")
+
+        # 通道③ 话术：真实 ASR + LLM
+        semantic = self._semantic_verdict(audio_path)
+        print(f"[通道③ 话术] score={semantic.score} label={semantic.label} "
+              f"({semantic.confidence}) {semantic.detail}")
+
+        # 融合裁决
+        result = self.orch.decide(acoustic, voiceprint, semantic)
+        print(f"→ 最终【{result.final}】 汇总可疑度={result.score} "
+              f"置信度={result.confidence}")
+        print(f"   理由: {result.rationale}")
+        return result
+
+    # ------------------------------------------------------------------ #
+    def _offline_result(self, scenario: str | None) -> "FusionResult":
+        """离线降级：用 demo_cache.json 的缓存通道判决 + 实时规则话术，跑真实融合。
+
+        无 GPU/Ollama/SenseVoice 也能演示 A/B/C 三场景；话术通道仍走零依赖规则引擎，
+        融合裁决逻辑完全真实，只是声学/声纹通道用预存缓存。
+        """
+        import json
+
+        scen = (scenario or "A").upper()
+        if not DEMO_CACHE.is_file():
+            return FusionResult(
+                final="allow", score=0.0, confidence=0.0,
+                rationale="【离线演示模式】未找到 demo_cache.json，返回中性占位",
+                channels=[], offline=True)
+        try:
+            cache = json.loads(DEMO_CACHE.read_text(encoding="utf-8"))
+            entry = cache.get("scenarios", {}).get(scen)
+        except Exception as e:  # noqa: BLE001
+            return FusionResult(
+                final="allow", score=0.0, confidence=0.0,
+                rationale=f"【离线演示模式】缓存读取失败: {e}", channels=[], offline=True)
+        if entry is None:
+            return FusionResult(
+                final="allow", score=0.0, confidence=0.0,
+                rationale=f"【离线演示模式】无场景 {scen} 缓存，返回中性占位",
+                channels=[], offline=True)
+
+        # 话术通道：实时跑规则引擎（用缓存转写文本）
+        transcript = entry.get("transcript", "")
+        sem = self.sem._rule_score(transcript)
+        semantic = ChannelVerdict(
+            name="semantic", score=sem.risk, label=sem.category,
+            detail=f"{sem.reason} | 转写: {transcript[:40]}", confidence=0.9)
+
+        # 声学 / 声纹：用预存缓存判决（标注离线来源，不误用为真实推理）
+        ac_raw = entry.get("acoustic", {})
+        vp_raw = entry.get("voiceprint", {})
+        acoustic = ChannelVerdict(
+            name=ac_raw.get("name", "acoustic"),
+            score=float(ac_raw.get("score", 0.0)),
+            label=ac_raw.get("label", "stub"),
+            detail=ac_raw.get("detail", "离线缓存"),
+            confidence=float(ac_raw.get("confidence", 0.0)))
+        voiceprint = ChannelVerdict(
+            name=vp_raw.get("name", "voiceprint"),
+            score=float(vp_raw.get("score", 0.0)),
+            label=vp_raw.get("label", "stub"),
+            detail=vp_raw.get("detail", "离线缓存"),
+            confidence=float(vp_raw.get("confidence", 0.0)))
+
+        result = self.orch.decide(acoustic, voiceprint, semantic)
+        result.offline = True
+        result.rationale = "【离线演示模式·缓存通道】" + result.rationale
+        return result
+
+
+# ---------------------------------------------------------------------- #
+def _demo():
+    zh = str(SV_EXAMPLE / "zh.mp3")
+    en = str(SV_EXAMPLE / "en.mp3")
+    if not (os.path.isfile(zh) and os.path.isfile(en)):
+        print("缺少示例音频，无法演示")
+        return
+
+    pipe = VeriCallPipeline()
+    # 登记"家人"声纹（用中文示例音频作为家人样本）
+    pipe.enroll("家人", zh)
+
+    print("\n########## 场景一：家人本人来电（同说话人）##########")
+    r1 = pipe.analyze(zh)
+
+    print("\n########## 场景二：疑似冒用（不同说话人）##########")
+    r2 = pipe.analyze(en)
+
+    print("\n=== 汇总 ===")
+    print(f"场景一(同人): {r1.final} | 场景二(异人): {r2.final}")
+
+
+if __name__ == "__main__":
+    _demo()

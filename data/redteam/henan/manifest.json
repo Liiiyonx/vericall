@@ -1,0 +1,44 @@
+[
+  {
+    "wav": null,
+    "text": "妈恁孩儿手机掉厕所了这是同学号急用五万你转卡号别给俺爸说",
+    "dialect": "henan",
+    "label": "scam",
+    "note": "合成-诈骗话术(henan)"
+  },
+  {
+    "wav": null,
+    "text": "哥我是领导微信垫付两万块急用明天还你别给嫂子说",
+    "dialect": "henan",
+    "label": "scam",
+    "note": "合成-诈骗话术(henan)"
+  },
+  {
+    "wav": null,
+    "text": "婶儿公安局说你卡涉嫌洗黑钱赶紧转安全账户要不就抓人",
+    "dialect": "henan",
+    "label": "scam",
+    "note": "合成-诈骗话术(henan)"
+  },
+  {
+    "wav": null,
+    "text": "妈今黑儿咱吃烩面吧我下班捎回去爸那药吃了没",
+    "dialect": "henan",
+    "label": "normal",
+    "note": "合成-正常闲聊(henan)"
+  },
+  {
+    "wav": null,
+    "text": "喂快递搁门卫了取件码6621记着拿",
+    "dialect": "henan",
+    "label": "normal",
+    "note": "合成-正常闲聊(henan)"
+  },
+  {
+    "wav": null,
+    "text": "爸天冷多穿点我寻思着早回",
+    "dialect": "henan",
+    "label": "normal",
+    "note": "合成-正常闲聊(henan)"
+  }
+]

@@ -1,0 +1,25 @@
+# 谛听 VeriCall · 依赖清单（按真实 import 整理，任务书 P0-2）
+# 安装：pip install -r requirements.txt
+#   GPU 用户如需 cu128 轮子（与清华镜像二选一）：
+#   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+# ---- 推理（全部真实使用）----
+torch>=2.1
+torchaudio>=2.1
+numpy
+scipy
+soundfile
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9   # FastAPI 的 Form/File 上传必需，缺它 /api/enroll 直接 500
+websockets>=12.0          # P1-1 /ws/stream 流式接口依赖（uvicorn[standard] 也带，显式列出更稳）
+funasr>=1.1               # CAMPPlus 声纹 + SenseVoice ASR + fsmn-vad（P1 流式复用）
+modelscope>=1.14
+
+# ---- 训练（AASIST 官方代码需要）----
+torchcontrib
+tensorboard
+
+# ---- 评测与标定 ----
+scikit-learn
+matplotlib

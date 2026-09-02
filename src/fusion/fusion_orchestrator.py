@@ -46,6 +46,10 @@ HARD_BLOCK_SCORE = 0.85
 # 汇总可疑度软阈值：超过则警惕，再高则拦截
 SOFT_ALERT = 0.50
 SOFT_BLOCK = 0.70
+# 出处：scripts/fusion_calibration.py（evaluation/fusion_calibration.md，P1-5）。
+# 结论：ASVspoof 英文基准上声学分数双峰，网格最低(0.70/0.35/0.55)与生产默认
+# (0.85/0.50/0.70) 决策完全相同(FA=1/MISS=3)。为保留"误拦家人更伤产品"的安全边，
+# 生产维持偏高 hard_block；soft 阈值三通道差异需在中文/信道退化集上再验证。
 
 
 @dataclass

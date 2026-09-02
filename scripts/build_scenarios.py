@@ -26,9 +26,20 @@ N_STRANGER = 20
 
 
 def _find_protocol() -> Path | None:
-    for cand in (ASVSPOOF_LA.parent if ASVSPOOF_LA.is_absolute() else ASVSPOOF_LA).rglob(
-            "ASVspoof2019_LA_dev_protocol*.txt"):
-        return cand
+    """在 ASVspoof2019 LA 数据根下找 dev 协议文件。
+
+    真实文件命名如 ASVspoof2019.LA.cm.dev.trl.txt（目录 ASVspoof2019_LA_cm_protocols），
+    非旧文档假设的 '*dev_protocol*.txt'。
+    """
+    base = ASVSPOOF_LA
+    for cand in list(base.rglob("ASVspoof2019.LA.cm.dev*.txt")) + \
+                list(base.rglob("ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.dev.trl.txt")):
+        if "dev" in cand.name and cand.is_file():
+            return cand
+    # 兜底：宽松匹配 dev 且含 .trl 或 .txt 的协议
+    for cand in base.rglob("*.trl.txt"):
+        if "dev" in cand.name:
+            return cand
     return None
 
 

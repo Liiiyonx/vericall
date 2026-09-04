@@ -130,13 +130,28 @@ def run_ssl_branch(ssl_model: str, limit: int, train_cap: int) -> dict:
     flac_dirs = {"train": la / "ASVspoof2019_LA_train" / "flac",
                  "dev": la / "ASVspoof2019_LA_dev" / "flac"}
 
-    def extract(items, flac_dir, cap, batch_size=8):
-        X, y = [], []
+    # 特征缓存：长批次可能硬崩溃（CUDA OOM 等），断点续提避免前功尽弃
+    cache_dir = ROOT / ".tmp_ssl" / Path(str(ssl_model)).name
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    def extract(items, flac_dir, cap, tag, batch_size=4):
         import soundfile as sf
+        final_cache = cache_dir / f"{tag}_{cap}.npz"
+        if final_cache.exists():
+            z = np.load(final_cache)
+            print(f"  [extract] {tag} 命中缓存 {final_cache.name} ({len(z['y'])} 条)", flush=True)
+            return z["X"], z["y"]
         subset = items[:cap]
-        # 按文件大小（时长代理）排序后组批：批次内长度一致，避免显存碎片 OOM
+        # 按文件大小（时长代理）排序后组批：批次内长度一致，减少显存碎片
         subset = sorted(subset, key=lambda t: (flac_dir / f"{t[0]}.flac").stat().st_size)
-        for st in range(0, len(subset), batch_size):
+        X, y, start = [], [], 0
+        part = cache_dir / f"{tag}_{cap}.partial.npz"
+        if part.exists():
+            z = np.load(part)
+            X, y = [z["X"]], list(z["y"])
+            start = int(z["start"])
+            print(f"  [extract] {tag} 从断点 {start}/{len(subset)} 续提", flush=True)
+        for st in range(start, len(subset), batch_size):
             chunk = subset[st:st + batch_size]
             wavs, labs = [], []
             for utt, lab in chunk:
@@ -150,11 +165,19 @@ def run_ssl_branch(ssl_model: str, limit: int, train_cap: int) -> dict:
             X.append(h)
             y.extend(labs)
             done = min(st + batch_size, len(subset))
-            if done % (batch_size * 100) == 0:
-                torch.cuda.empty_cache() if device == "cuda" else None
-            if done % (batch_size * 50) == 0 or done == len(subset):
-                print(f"  [extract] {done}/{len(subset)}", flush=True)
-        return np.concatenate(X), np.array(y)
+            if done % 400 == 0 or done == len(subset):
+                print(f"  [extract] {tag} {done}/{len(subset)}", flush=True)
+            if done % 2000 == 0 or done == len(subset):  # 定期落盘断点
+                np.savez(part, X=np.concatenate(X), y=np.array(y), start=done)
+                if device == "cuda":
+                    torch.cuda.empty_cache()
+        Xa, ya = np.concatenate(X), np.array(y)
+        np.savez(final_cache, X=Xa, y=ya)
+        try:
+            part.unlink(missing_ok=True)
+        except OSError:
+            pass  # 安全删除钩子可能拦截 unlink，断点文件留着无妨
+        return Xa, ya
 
     train_items = load_protocol(train_proto)
     dev_items = load_protocol(dev_proto)
@@ -162,8 +185,8 @@ def run_ssl_branch(ssl_model: str, limit: int, train_cap: int) -> dict:
     import random as _rnd
     _rnd.Random(42).shuffle(train_items)
     _rnd.Random(42).shuffle(dev_items)
-    Xtr, ytr = extract(train_items, flac_dirs["train"], min(train_cap, len(train_items)))
-    Xdv, ydv = extract(dev_items, flac_dirs["dev"], min(limit, len(dev_items)))
+    Xtr, ytr = extract(train_items, flac_dirs["train"], min(train_cap, len(train_items)), "train")
+    Xdv, ydv = extract(dev_items, flac_dirs["dev"], min(limit, len(dev_items)), "dev")
 
     clf = LogisticRegression(max_iter=1000, C=1.0).fit(Xtr, ytr)
     spoof_scores = 1.0 - clf.predict_proba(Xdv)[:, 1]  # 伪造概率（项目口径）
@@ -196,16 +219,24 @@ def main():
     # 优先选含 eval 集核验字段的主实验文件；model_quality.json 中 EER 单位为百分数
     mq = sorted(ROOT.glob("external/aasist/exp_result/**/model_quality.json"),
                 key=lambda p: 0 if "eval_eer_best_verified" in p.read_text(encoding="utf-8") else 1)
+    a0_dev = None
     if mq:
         with open(mq[0], encoding="utf-8") as f:
             q = json.load(f)
-        raw_eer = q.get("eval_eer_best_verified") or q.get("eval_eer") or q.get("dev_eer", 0)
-        eer = raw_eer / 100.0 if raw_eer > 1 else raw_eer  # 百分数 → 小数
-        payload["results"].append({
-            "name": "A0 AASIST（现有基线）",
-            "eer": eer,
-            "far": 0, "n": 0,
-            "note": f"引用 {mq[0].parent.name}/model_quality.json（eval 集核验值，不重复推理）"})
+        raw_eval = q.get("eval_eer_best_verified") or q.get("eval_eer")
+        raw_dev = q.get("best_dev_eer") or q.get("dev_eer")
+        to_frac = lambda v: (v / 100.0 if v else v)  # model_quality.json 统一为百分数 → 小数
+        if raw_dev:
+            a0_dev = to_frac(raw_dev)
+            payload["results"].append({
+                "name": "A0 AASIST（现有基线·dev 同集）",
+                "eer": a0_dev, "far": 0, "n": 0,
+                "note": f"引用 {mq[0].parent.name} dev 核验值——与 B1 同集对比的主口径"})
+        if raw_eval:
+            payload["results"].append({
+                "name": "A0 AASIST（现有基线·eval）",
+                "eer": to_frac(raw_eval), "far": 0, "n": 0,
+                "note": "eval 集核验值，仅作参照，不与 dev 直接对比"})
 
     try:
         payload["results"].append(run_ssl_branch(args.ssl, args.limit, args.train_cap))
@@ -215,14 +246,18 @@ def main():
             write_report(payload)
             return
 
-    if len(payload["results"]) >= 2:
-        a0, b1 = payload["results"][0], payload["results"][-1]
-        if a0["eer"] and b1["eer"] < a0["eer"] * 0.7:
-            payload["conclusion"] = (f"**B1 显著优于 A0**（{b1['eer']:.2%} vs {a0['eer']:.2%}，"
-                                     "相对提升 >30%）→ 建议立项 B3「XLS-R + AASIST 后端」完整训练。")
+    if len(payload["results"]) >= 2 and a0_dev:
+        b1 = payload["results"][-1]
+        if b1["eer"] < a0_dev * 0.7:
+            payload["conclusion"] = (f"**B1 显著优于 A0 dev**（{b1['eer']:.2%} vs {a0_dev:.2%}，"
+                                     "同集相对提升 >30%）→ 建议立项 B3「XLS-R + AASIST 后端」完整训练。")
         else:
-            payload["conclusion"] = (f"B1（{b1['eer']:.2%}）相对 A0（{a0['eer']:.2%}）提升不足 30%，"
-                                     "维持 AASIST 主力线，SSL 转离线深评候选。")
+            payload["conclusion"] = (
+                f"B1 dev {b1['eer']:.2%} 未达 A0 dev {a0_dev:.2%} 的 30% 相对提升门槛，"
+                "按选型纪律 **B3 暂不上马**，维持 AASIST 主力线。\n\n"
+                "补充判断：冻结 SSL 特征仅接线性头已到此量级，说明特征本身有判别力——"
+                "其价值在「三路分数级融合」第三路（融合不要求单路最优，见计划书 §一.1），"
+                "建议后续以融合实验（AASIST+XLS-R 分数 stacking）复评，而非单模型替换。")
     write_report(payload)
 
 

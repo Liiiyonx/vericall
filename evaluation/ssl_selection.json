@@ -1,20 +1,27 @@
 {
-  "date": "2026-09-04T13:27:31",
+  "date": "2026-09-04T14:49:44",
   "results": [
     {
-      "name": "A0 AASIST（现有基线）",
+      "name": "A0 AASIST（现有基线·dev 同集）",
+      "eer": 0.00745,
+      "far": 0,
+      "n": 0,
+      "note": "引用 LA_AASIST_5060_ep24_bs16 dev 核验值——与 B1 同集对比的主口径"
+    },
+    {
+      "name": "A0 AASIST（现有基线·eval）",
       "eer": 0.03494,
       "far": 0,
       "n": 0,
-      "note": "引用 LA_AASIST_5060_ep24_bs16/model_quality.json（eval 集核验值，不重复推理）"
+      "note": "eval 集核验值，仅作参照，不与 dev 直接对比"
     },
     {
       "name": "B1 wav2vec2-xls-r-300m + LR",
-      "eer": 0.10506786905265136,
-      "far": 0.10638297872340426,
-      "threshold": 0.8331629024557134,
-      "n": 500,
-      "note": "train 1000 条, device=cuda"
+      "eer": 0.016073871794308518,
+      "far": 0.01609105180533752,
+      "threshold": 0.74421259512655,
+      "n": 24844,
+      "note": "train 20000 条, device=cuda"
     }
   ],
   "matrix": [
@@ -47,5 +54,5 @@
       "B1 胜出后立项"
     ]
   ],
-  "conclusion": "B1（10.51%）相对 A0（3.49%）提升不足 30%，维持 AASIST 主力线，SSL 转离线深评候选。"
+  "conclusion": "B1 dev 1.61% 未达 A0 dev 0.74% 的 30% 相对提升门槛，按选型纪律 **B3 暂不上马**，维持 AASIST 主力线。\n\n补充判断：冻结 SSL 特征仅接线性头已到此量级，说明特征本身有判别力——其价值在「三路分数级融合」第三路（融合不要求单路最优，见计划书 §一.1），建议后续以融合实验（AASIST+XLS-R 分数 stacking）复评，而非单模型替换。"
 }

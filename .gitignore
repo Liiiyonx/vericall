@@ -20,3 +20,4 @@ output/
 .tmp_smoke/
 data/redteam/**/*.mp3
 data/redteam/**/*.flac
+.tmp_ssl/

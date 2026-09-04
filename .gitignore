@@ -1,4 +1,6 @@
 external/aasist/
+external/GPT-SoVITS/
+external/_GPT-SoVITS.partial/
 data/raw/
 data/redteam/**/*.wav
 # 隐私数据（家人声纹/上传音频/历史，勿入库）

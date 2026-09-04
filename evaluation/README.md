@@ -13,6 +13,7 @@
 | `redteam_adversarial.md` / `.json` | P2-5 | 红队对抗实验报告（攻击面框架，由 `make_redteam_adversarial.py` 生成） |
 | `cross_domain_matrix.md` | P2-2 | 跨域评测矩阵（即插即用，由 `cross_domain_eval.py` 生成） |
 | `attack_breakdown_eval.py` | 通道① | 跨攻击域（已知 A01–A06 vs 未知 A07–A19）细分 EER |
+| `ssl_selection.md` / `.json` | 通道①升级 | SSL 前端选型报告（AASIST vs XLS-R/WavLM，由 `scripts/eval_ssl_frontend.py` 生成，缺依赖出骨架） |
 | `metrics.py` | 全部 | 零依赖 EER/FAR/FRR 指标 |
 
 ## 跑通顺序

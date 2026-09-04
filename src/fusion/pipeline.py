@@ -10,12 +10,10 @@
     通道③ 话术语义(SenseVoice+Ollama) -> 真实（ASR 转写 + deepseek-r1 风险评分）
 
 GPU 显存管理（RTX 5060 8GB，关键！）：
-    通道②的 CAMPPlus 与通道③的 SenseVoice 都会占 GPU。为避免二者叠加，
-    本管线严格串行性地加载/释放：
-        1) 声纹核验（载 CAMPPlus）→ 立即释放
-        2) 话术 ASR（载 SenseVoice）→ 立即释放
-        3) 话术 LLM 评分（调 Ollama 服务，Ollama 自行管理 GPU）
-    这样任意时刻 GPU 上最多一个"大模型"，避开 OOM（详见 semantic_channel.py 顶部说明）。
+    模型常驻策略（2026-09 重构）：AASIST 与 CAMPPlus 合计仅 ~0.6GB，常驻不卸载；
+    SenseVoice 跑完 ASR 后默认也常驻，仅在调 LLM 前检测到剩余显存不足
+    （按 deepseek-r1:8b ≈5GB 估，VERICALL_LLM_VRAM_GB 可调）时才卸载腾位。
+    旧行为（每轮全量卸载，单次分析 22-32s）可用 VERICALL_UNLOAD_ASR=1 恢复。
 
 用法：
     python -m fusion.pipeline
@@ -56,6 +54,24 @@ def _empty_cache():
         pass
 
 
+# LLM 冷加载所需显存下限（字节）。剩余低于此值时先卸载 ASR 再调 LLM。
+# 2026-09-02 实测：8GB 卡上 SenseVoice 常驻后剩 ~5.5GB，r1:8b 冷加载仍 500，
+# 阈值从 5.0 上调至 6.0（宁可多卸一次 ASR，也别让 LLM 反复 500 重试拖慢整体）。
+_LLM_VRAM_BYTES = int(float(os.environ.get("VERICALL_LLM_VRAM_GB", "6.0")) * 1024 ** 3)
+_FORCE_UNLOAD_ASR = os.environ.get("VERICALL_UNLOAD_ASR", "0") == "1"
+
+
+def _free_vram_bytes() -> float:
+    """当前 GPU 剩余可用显存（字节）；无 CUDA 返回 +inf（表示无需腾位）。"""
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return torch.cuda.mem_get_info()[0]
+    except Exception:
+        pass
+    return float("inf")
+
+
 class VeriCallPipeline:
     """谛听 VeriCall 端到端管线：声纹 + 话术 + (声学占位) -> 融合裁决。"""
 
@@ -78,21 +94,20 @@ class VeriCallPipeline:
 
     # ------------------------------------------------------------------ #
     def _voiceprint_verdict(self, audio_path: str) -> ChannelVerdict:
-        """通道② 真实核验（CAMPPlus）。完成后立即释放 GPU。"""
-        v = self.vp.verify(audio_path)
-        self.vp._model = None          # 释放 CAMPPlus
-        _empty_cache()
-        return v
+        """通道② 真实核验（CAMPPlus ~0.3GB，常驻不卸载）。"""
+        return self.vp.verify(audio_path)
 
     def _acoustic_verdict(self, audio_path: str) -> ChannelVerdict:
-        """通道① 真实 AASIST 声学伪造检测（load→infer→释放 GPU 串行）。"""
-        verdict = self.ac.analyze(audio_path)
-        self.ac._model = None          # 释放 AASIST
-        _empty_cache()
-        return verdict
+        """通道① 真实 AASIST 声学伪造检测（常驻不卸载）。"""
+        return self.ac.analyze(audio_path, unload_after=False)
 
     def _semantic_verdict(self, audio_path: str) -> ChannelVerdict:
-        """通道③ 真实话术分析：ASR 转写 -> 释放 GPU -> LLM 评分。"""
+        """通道③ 真实话术分析：ASR 转写 ->（按需腾位）-> LLM 评分。
+
+        调 LLM 前仅当剩余显存不足以容纳大模型（默认按 r1:8b ≈5GB 估）
+        才卸载 SenseVoice——显存充裕时 ASR 常驻，省去每次 ~10s 的重载。
+        VERICALL_UNLOAD_ASR=1 可强制恢复"每次卸载"旧行为（OOM 兜底）。
+        """
         from fusion.transcript_cache import get as cache_get, put as cache_put
 
         t0 = time.time()
@@ -105,9 +120,10 @@ class VeriCallPipeline:
             reason = f"ASR 失败({'缓存命中' if transcript else '缓存缺失'}): {e}"
         else:
             reason = ""
-        # ASR 用完后立即释放 SenseVoice，再让 Ollama 独占 GPU 加载 LLM
-        self.sem.asr._model = None
-        _empty_cache()
+        if self.sem.asr._model is not None and (
+                _FORCE_UNLOAD_ASR or _free_vram_bytes() < _LLM_VRAM_BYTES):
+            self.sem.asr._model = None
+            _empty_cache()
 
         if not transcript:
             res = self.sem._fallback(reason or "ASR 转写为空", t0)

@@ -132,8 +132,11 @@ class FusionOrchestrator:
         else:
             final = "allow"
 
-        # 整体置信度：取三通道置信度的均值，但只要有任一低置信就下调
+        # 整体置信度：三通道均值；任一通道低置信（<0.4）时再打 8 折——
+        # 残废通道会拉低整体结论的可信度，提示人工复核而非静默采信。
         avg_conf = sum(c.confidence for c in chans) / len(chans)
+        if any(c.confidence < 0.4 for c in chans):
+            avg_conf *= 0.8
 
         rationale = self._explain(final, fused, chans)
         return FusionResult(

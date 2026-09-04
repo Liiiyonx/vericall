@@ -1,0 +1,51 @@
+{
+  "date": "2026-09-04T13:27:31",
+  "results": [
+    {
+      "name": "A0 AASIST（现有基线）",
+      "eer": 0.03494,
+      "far": 0,
+      "n": 0,
+      "note": "引用 LA_AASIST_5060_ep24_bs16/model_quality.json（eval 集核验值，不重复推理）"
+    },
+    {
+      "name": "B1 wav2vec2-xls-r-300m + LR",
+      "eer": 0.10506786905265136,
+      "far": 0.10638297872340426,
+      "threshold": 0.8331629024557134,
+      "n": 500,
+      "note": "train 1000 条, device=cuda"
+    }
+  ],
+  "matrix": [
+    [
+      "A0",
+      "AASIST（现有基线）",
+      "原始波形",
+      "已训练 best.pth",
+      "证据链已存在，直接引用"
+    ],
+    [
+      "B1",
+      "wav2vec2-XLS-R-300M + LR 头",
+      "SSL 冻结特征",
+      "train 子集 2h 训练",
+      "选型主力"
+    ],
+    [
+      "B2",
+      "WavLM-Base+ + LR 头",
+      "SSL 冻结特征",
+      "同上",
+      "备选，域偏置更小"
+    ],
+    [
+      "B3",
+      "XLS-R + AASIST 后端（完整训练）",
+      "SSL+AASIST",
+      "多卡 1-2 天",
+      "B1 胜出后立项"
+    ]
+  ],
+  "conclusion": "B1（10.51%）相对 A0（3.49%）提升不足 30%，维持 AASIST 主力线，SSL 转离线深评候选。"
+}

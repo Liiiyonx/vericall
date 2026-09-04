@@ -295,7 +295,14 @@ class AcousticChannel:
 
     # ------------------------------------------------------------------ #
     def analyze(self, audio_path: str,
-                nb_samp: Optional[int] = None) -> "ChannelVerdict":
+                nb_samp: Optional[int] = None,
+                unload_after: bool = True) -> "ChannelVerdict":
+        """分析一个音频文件。
+
+        unload_after=False 时不卸载模型（常驻模式）：AASIST 显存仅 ~0.3GB，
+        常驻可把"每次分析/流式每窗"的重复加载开销归零。批量离线脚本保持
+        默认 True 不变；pipeline 与流式调度传 False。
+        """
         from fusion.fusion_orchestrator import ChannelVerdict
 
         if not self.load():
@@ -339,7 +346,8 @@ class AcousticChannel:
                 name="acoustic", score=0.0, label="error",
                 detail=f"AASIST 推理异常: {e}", confidence=0.0)
         finally:
-            self.unload()
+            if unload_after:
+                self.unload()
 
 
 # ---------------------------------------------------------------------- #

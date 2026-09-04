@@ -18,3 +18,5 @@ output/
 .DS_Store
 .workbuddy/
 .tmp_smoke/
+data/redteam/**/*.mp3
+data/redteam/**/*.flac

@@ -51,6 +51,9 @@ def load_existing(path: Path) -> list:
 
 
 def main():
+    # 2026-09-05 加Ff1a全局 socket 超时Ff0c防止 urllib 半开连接无限挂起
+    import socket as _socket
+    _socket.setdefaulttimeout(180)
     ap = argparse.ArgumentParser()
     ap.add_argument("--per-category", type=int, default=10)
     ap.add_argument("--seed", type=int, default=42)

@@ -1,22 +1,22 @@
 {
-  "created": "2026-09-03",
-  "backend": "ollama",
-  "total": 183,
+  "created": "2026-09-05",
+  "backend": "cloud",
+  "total": 4982,
   "by_category": {
-    "impersonate_family": 25,
-    "impersonate_authority": 23,
-    "fake_investment": 24,
-    "refund_cs": 24,
-    "lottery_prize": 24,
-    "online_loan": 24,
-    "elder_healthcare": 19,
-    "romance_pig": 20
+    "impersonate_family": 662,
+    "impersonate_authority": 645,
+    "fake_investment": 612,
+    "refund_cs": 628,
+    "lottery_prize": 645,
+    "online_loan": 631,
+    "elder_healthcare": 599,
+    "romance_pig": 560
   },
   "by_stage": {
-    "opening": 45,
-    "buildup": 52,
-    "pressure": 37,
-    "ask": 49
+    "opening": 1175,
+    "buildup": 1361,
+    "pressure": 1127,
+    "ask": 1319
   },
-  "review_sampled": 35
+  "review_sampled": 433
 }

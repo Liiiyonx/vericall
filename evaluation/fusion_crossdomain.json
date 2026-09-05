@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-06T03:24:36",
+  "dataset": "CFAD asvspoof_layout (zero-shot)",
+  "n": 2000,
+  "results": [
+    {
+      "name": "AASIST 单模型",
+      "eer_pct": 44.2
+    },
+    {
+      "name": "XLS-R 冻结 + LR",
+      "eer_pct": 15.5
+    },
+    {
+      "name": "等权平均融合",
+      "eer_pct": 19.0
+    },
+    {
+      "name": "LR stacking 融合",
+      "eer_pct": 18.3
+    }
+  ],
+  "conclusion": "中文域（CFAD 零样本）最优 **XLS-R 冻结 + LR EER 15.50%**，⚠️ 未达到计划书 §一「中文域 EER<5%」验收线。融合相对单模型的增益见上表。"
+}

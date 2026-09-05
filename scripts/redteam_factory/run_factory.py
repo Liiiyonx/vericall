@@ -115,7 +115,8 @@ def _synth_edgetts(voice: str, text: str, out_path: Path, retries: int = 3) -> t
     last_err = ""
     for attempt in range(1, retries + 1):
         try:
-            mp3_bytes = asyncio.run(_fetch())
+            # asyncio.wait_for 兜底：半开连接永久挂起时 45s 强断（台账坑位速查）
+            mp3_bytes = asyncio.run(asyncio.wait_for(_fetch(), timeout=45))
             if not mp3_bytes:
                 raise RuntimeError("empty audio stream")
             ff = subprocess.run(

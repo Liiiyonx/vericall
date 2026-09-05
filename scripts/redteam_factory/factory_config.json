@@ -25,6 +25,16 @@
       "voice_notes": "已按 2026-09-03 --list-voices 实际目录校准：sichuan/henan 无原生音色（henan 以陕西腔近似），sichuan 回落普通话音色+方言文本，minnan 以台湾国语近似，dongbei=辽宁腔，cantonese=粤港音色"
     },
     {
+      "name": "sovits_api",
+      "display": "GPT-SoVITS(v2 API, GPU 批处理)",
+      "kind": "sovits_api",
+      "url": "http://127.0.0.1:9880/tts",
+      "attack_prefix": "RT-SOVITS",
+      "probe_path": "external/GPT-SoVITS/api_v2.py",
+      "license": "MIT",
+      "note": "需先启动 api_v2 服务: D:/VeriCall_data/conda_envs/gpt-sovits/python.exe api_v2.py -a 127.0.0.1 -p 9880 -c GPT_SoVITS/configs/tts_infer.yaml；参考音自举自 edgetts 产物(data/redteam/refs.json)"
+    },
+    {
       "name": "sovits",
       "display": "GPT-SoVITS",
       "kind": "cli",

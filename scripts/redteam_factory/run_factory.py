@@ -132,12 +132,57 @@ def _synth_edgetts(voice: str, text: str, out_path: Path, retries: int = 3) -> t
     return False, last_err
 
 
+def _synth_sovits_api(url: str, ref_audio: Path, prompt_text: str, text: str,
+                      out_path: Path, retries: int = 2) -> tuple:
+    """GPT-SoVITS api_v2（GPU 常驻服务）批处理适配。GET /tts 返回音频流落盘。"""
+    import urllib.parse
+    import urllib.request
+
+    qs = urllib.parse.urlencode({
+        "text": text[:400], "text_lang": "zh",
+        "ref_audio_path": str(ref_audio),
+        "prompt_text": prompt_text[:200], "prompt_lang": "zh",
+        "text_split_method": "cut5", "batch_size": 1,
+        "media_type": "wav", "streaming_mode": "false",
+    })
+    last_err = ""
+    for attempt in range(1, retries + 1):
+        try:
+            with urllib.request.urlopen(f"{url}?{qs}", timeout=120) as resp:
+                data = resp.read()
+            if not data or len(data) < 1024:
+                raise RuntimeError(f"空/异常响应 {len(data) if data else 0}B")
+            out_path.write_bytes(data)
+            return True, "ok"
+        except Exception as e:  # noqa: BLE001
+            last_err = f"{type(e).__name__}: {e}"
+            if attempt < retries:
+                time.sleep(2 * attempt)
+    return False, last_err
+
+
+def _prompt_for(ref_audio: Path) -> str:
+    """查自举参考音的 prompt_text（refs.json 中登记）。"""
+    refs_json = ROOT / "data" / "redteam" / "refs.json"
+    if refs_json.exists():
+        import json as _json
+        try:
+            return _json.loads(refs_json.read_text(encoding="utf-8")).get(
+                str(ref_audio), "").get("prompt_text", "")
+        except Exception:
+            return ""
+    return ""
+
+
 def synth_one(eng: dict, ref, text: str, out_path: Path,
               source_wav: Path | None = None) -> tuple:
-    """调引擎合成一条。ref：CLI 引擎为参考音 Path，edgetts 为音色名。返回 (ok, msg)。"""
+    """调引擎合成一条。ref：CLI/API 引擎为参考音 Path，edgetts 为音色名。返回 (ok, msg)。"""
     if eng.get("kind") == "edgetts":
         return _synth_edgetts(str(ref), text, out_path)
-    cmd = eng["cmd"].format(ref=str(ref), ref_text="", text=text,
+    if eng.get("kind") == "sovits_api":
+        url = eng.get("url", "http://127.0.0.1:9880/tts")
+        return _synth_sovits_api(url, Path(ref), _prompt_for(Path(ref)), text, out_path)
+    cmd = eng["cmd"].format(ref=str(ref), ref_text=_prompt_for(Path(ref)), text=text,
                             out=str(out_path), source_wav=str(source_wav or ref))
     try:
         proc = subprocess.run(cmd, shell=True, cwd=ROOT, timeout=300,
@@ -159,7 +204,13 @@ def main():
                     help="覆盖每方言话术条数上限（默认取配置值）")
     ap.add_argument("--channels", help="逗号分隔，默认全部预设")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--shard-idx", type=int, default=0, help="分片序号(0 起)")
+    ap.add_argument("--shard-total", type=int, default=1, help="分片总数")
+    ap.add_argument("--meta-file", help="meta 输出路径（默认 out_root/meta.csv，分片用独立文件）")
     args = ap.parse_args()
+
+    if not (0 <= args.shard_idx < args.shard_total):
+        sys.exit("--shard-idx 越界")
 
     cfg = load_config()
     status = probe_engines(cfg)
@@ -192,6 +243,8 @@ def main():
                     plan.append((eng, dialect, ref, sc))
 
     print(f"\n== 网格计划 ==  {len(plan)} 条合成 × {len(channels)} 信道 = {len(plan) * len(channels)} 个 wav")
+    plan = plan[args.shard_idx::args.shard_total]  # 分片：round-robin 均匀拆分
+    print(f"== 本分片 ==  {args.shard_idx+1}/{args.shard_total} → {len(plan)} 条合成")
     if args.dry_run:
         from collections import Counter
         c = Counter((e['name'], d) for e, d, _, _ in plan)
@@ -200,7 +253,8 @@ def main():
         return
 
     out_root.mkdir(parents=True, exist_ok=True)
-    meta_path = out_root / META_NAME
+    meta_path = Path(args.meta_file) if args.meta_file else out_root / META_NAME
+    meta_path.parent.mkdir(parents=True, exist_ok=True)
     meta_exists = meta_path.exists()
     n_ok, n_skip, n_fail = 0, 0, 0
     t0 = time.time()

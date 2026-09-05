@@ -1,79 +1,93 @@
 {
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/mandarin/ref_boot_edgetts_mandarin_zh-CN-YunxiNeural_SC-000007.wav": {
-    "prompt_text": "喂~那个...你现在下载这个'安全防护'APP，按照里面的提示做眨眨眼、摇摇头啊，然后完成人脸识别。这个操作是为了验证你的身份信息，避免你的钱财受到损失。",
-    "script_id": "SC-000007",
-    "dialect": "mandarin",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-CN-YunxiNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/mandarin/ref_boot_edgetts_mandarin_zh-CN-XiaoxiaoNeural_SC-000007.wav": {
-    "prompt_text": "喂~那个...你现在下载这个'安全防护'APP，按照里面的提示做眨眨眼、摇摇头啊，然后完成人脸识别。这个操作是为了验证你的身份信息，避免你的钱财受到损失。",
-    "script_id": "SC-000007",
-    "dialect": "mandarin",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-CN-XiaoxiaoNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/mandarin/ref_boot_edgetts_mandarin_zh-CN-YunjianNeural_SC-000007.wav": {
-    "prompt_text": "喂~那个...你现在下载这个'安全防护'APP，按照里面的提示做眨眨眼、摇摇头啊，然后完成人脸识别。这个操作是为了验证你的身份信息，避免你的钱财受到损失。",
-    "script_id": "SC-000007",
-    "dialect": "mandarin",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-CN-YunjianNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/minnan/ref_boot_edgetts_minnan_zh-TW-HsiaoChenNeural_SC-000001.wav": {
-    "prompt_text": "喂阿婆，我是小张啊，刚摔了手机，这是同学的号，你别挂，先听我说两句。",
-    "script_id": "SC-000001",
-    "dialect": "minnan",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-TW-HsiaoChenNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/minnan/ref_boot_edgetts_minnan_zh-TW-YunJheNeural_SC-000001.wav": {
-    "prompt_text": "喂阿婆，我是小张啊，刚摔了手机，这是同学的号，你别挂，先听我说两句。",
-    "script_id": "SC-000001",
-    "dialect": "minnan",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-TW-YunJheNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/sichuan/ref_boot_edgetts_sichuan_zh-CN-YunxiNeural_SC-000010.wav": {
-    "prompt_text": "那个名额下午五点前就要截止了！晚了可就没啦，你必须现在就来处理，错过了机会就真的错过了！",
-    "script_id": "SC-000010",
-    "dialect": "sichuan",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-CN-YunxiNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/sichuan/ref_boot_edgetts_sichuan_zh-CN-XiaoxiaoNeural_SC-000010.wav": {
-    "prompt_text": "那个名额下午五点前就要截止了！晚了可就没啦，你必须现在就来处理，错过了机会就真的错过了！",
-    "script_id": "SC-000010",
-    "dialect": "sichuan",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-CN-XiaoxiaoNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/cantonese/ref_boot_edgetts_cantonese_zh-HK-HiuMaanNeural_SC-000005.wav": {
-    "prompt_text": "喂，那个，您好！您的手机号最近涉及了一起医保诈骗案件，涉案金额巨大，我们已经接到报案，案件已经移交警方进行侦办，需要您立刻配合处理。",
-    "script_id": "SC-000005",
-    "dialect": "cantonese",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-HK-HiuMaanNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/cantonese/ref_boot_edgetts_cantonese_zh-HK-WanLungNeural_SC-000005.wav": {
-    "prompt_text": "喂，那个，您好！您的手机号最近涉及了一起医保诈骗案件，涉案金额巨大，我们已经接到报案，案件已经移交警方进行侦办，需要您立刻配合处理。",
-    "script_id": "SC-000005",
-    "dialect": "cantonese",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-HK-WanLungNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/dongbei/ref_boot_edgetts_dongbei_zh-CN-liaoning-XiaobeiNeural_SC-000002.wav": {
-    "prompt_text": "好的，请看：\n\n喂，亲爱的亲家母啊，那个撞了人呢，私了。对方不肯私了，说要去法院，要是被拖进法庭啊，损失更大。您快想想办法，先挪点钱出来应急。",
-    "script_id": "SC-000002",
-    "dialect": "dongbei",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-CN-liaoning-XiaobeiNeural"
-  },
-  "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/henan/ref_boot_edgetts_henan_zh-CN-shaanxi-XiaoniNeural_SC-000009.wav": {
-    "prompt_text": "喂，你好啊，我是那个央行的客服来通知你养老金融扶持政策的事，最近这个月有特批名额，手续简单，稳赚不赔还写进合同，名额有限，你要是感兴趣得抓紧，快了快了。",
-    "script_id": "SC-000009",
-    "dialect": "henan",
-    "source": "edgetts-bootstrap",
-    "voice": "zh-CN-shaanxi-XiaoniNeural"
-  }
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/mandarin/ref_boot_edgetts_mandarin_zh-CN-YunxiNeural_SC-000007_seg8s.wav": {
+  "prompt_text": "喂~那个...你现在下载这个'安全防护'APP，按照里面的提示做眨眨",
+  "script_id": "SC-000007",
+  "dialect": "mandarin",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-CN-YunxiNeural",
+  "_from": "ref_boot_edgetts_mandarin_zh-CN-YunxiNeural_SC-000007.wav",
+  "_seg_dur": 8.0
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/mandarin/ref_boot_edgetts_mandarin_zh-CN-XiaoxiaoNeural_SC-000007_seg8s.wav": {
+  "prompt_text": "喂~那个...你现在下载这个'安全防护'APP，按照里面的提示做眨眨",
+  "script_id": "SC-000007",
+  "dialect": "mandarin",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-CN-XiaoxiaoNeural",
+  "_from": "ref_boot_edgetts_mandarin_zh-CN-XiaoxiaoNeural_SC-000007.wav",
+  "_seg_dur": 8.0
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/mandarin/ref_boot_edgetts_mandarin_zh-CN-YunjianNeural_SC-000007_seg8s.wav": {
+  "prompt_text": "喂~那个...你现在下载这个'安全防护'APP，按照里面的提示做眨眨",
+  "script_id": "SC-000007",
+  "dialect": "mandarin",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-CN-YunjianNeural",
+  "_from": "ref_boot_edgetts_mandarin_zh-CN-YunjianNeural_SC-000007.wav",
+  "_seg_dur": 8.0
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/minnan/ref_boot_edgetts_minnan_zh-TW-HsiaoChenNeural_SC-000001.wav": {
+  "prompt_text": "喂阿婆，我是小张啊，刚摔了手机，这是同学的号，你别挂，先听我说两句。",
+  "script_id": "SC-000001",
+  "dialect": "minnan",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-TW-HsiaoChenNeural"
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/minnan/ref_boot_edgetts_minnan_zh-TW-YunJheNeural_SC-000001.wav": {
+  "prompt_text": "喂阿婆，我是小张啊，刚摔了手机，这是同学的号，你别挂，先听我说两句。",
+  "script_id": "SC-000001",
+  "dialect": "minnan",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-TW-YunJheNeural"
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/sichuan/ref_boot_edgetts_sichuan_zh-CN-YunxiNeural_SC-000010.wav": {
+  "prompt_text": "那个名额下午五点前就要截止了！晚了可就没啦，你必须现在就来处理，错过了机会就真的错过了！",
+  "script_id": "SC-000010",
+  "dialect": "sichuan",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-CN-YunxiNeural"
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/sichuan/ref_boot_edgetts_sichuan_zh-CN-XiaoxiaoNeural_SC-000010.wav": {
+  "prompt_text": "那个名额下午五点前就要截止了！晚了可就没啦，你必须现在就来处理，错过了机会就真的错过了！",
+  "script_id": "SC-000010",
+  "dialect": "sichuan",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-CN-XiaoxiaoNeural"
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/cantonese/ref_boot_edgetts_cantonese_zh-HK-HiuMaanNeural_SC-000005_seg8s.wav": {
+  "prompt_text": "喂，那个，您好！您的手机号最近涉及了一起医保诈骗案件，涉案",
+  "script_id": "SC-000005",
+  "dialect": "cantonese",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-HK-HiuMaanNeural",
+  "_from": "ref_boot_edgetts_cantonese_zh-HK-HiuMaanNeural_SC-000005.wav",
+  "_seg_dur": 8.0
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/cantonese/ref_boot_edgetts_cantonese_zh-HK-WanLungNeural_SC-000005_seg8s.wav": {
+  "prompt_text": "喂，那个，您好！您的手机号最近涉及了一起医保诈骗案件，涉案",
+  "script_id": "SC-000005",
+  "dialect": "cantonese",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-HK-WanLungNeural",
+  "_from": "ref_boot_edgetts_cantonese_zh-HK-WanLungNeural_SC-000005.wav",
+  "_seg_dur": 8.0
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/dongbei/ref_boot_edgetts_dongbei_zh-CN-liaoning-XiaobeiNeural_SC-000002_seg8s.wav": {
+  "prompt_text": "好的，请看：\n\n喂，亲爱的亲家母啊，那个撞了人呢，私了。对方不",
+  "script_id": "SC-000002",
+  "dialect": "dongbei",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-CN-liaoning-XiaobeiNeural",
+  "_from": "ref_boot_edgetts_dongbei_zh-CN-liaoning-XiaobeiNeural_SC-000002.wav",
+  "_seg_dur": 8.0
+ },
+ "C:/Users/Liii/Desktop/谛听VeriCall/data/redteam/henan/ref_boot_edgetts_henan_zh-CN-shaanxi-XiaoniNeural_SC-000009_seg8s.wav": {
+  "prompt_text": "喂，你好啊，我是那个央行的客服来通知你养老金融扶持政策的事，最近这个",
+  "script_id": "SC-000009",
+  "dialect": "henan",
+  "source": "edgetts-bootstrap",
+  "voice": "zh-CN-shaanxi-XiaoniNeural",
+  "_from": "ref_boot_edgetts_henan_zh-CN-shaanxi-XiaoniNeural_SC-000009.wav",
+  "_seg_dur": 8.0
+ }
 }

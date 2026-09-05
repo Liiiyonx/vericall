@@ -92,7 +92,23 @@ def find_refs(cfg: dict, dialect: str, limit: int, eng: dict) -> list:
     d = ROOT / cfg["speaker_ref_root"] / dialect
     if not d.exists():
         return []
-    return sorted(d.glob("*.wav"))[:limit]
+    refs = sorted(d.glob("*.wav"))
+    if eng.get("kind") == "sovits_api":
+        # GPT-SoVITS v2 API 参考音限 3~10s：过滤超长整段，优先 _seg8s 切段
+        import wave
+        ok = []
+        for r in refs:
+            try:
+                with wave.open(str(r)) as w:
+                    dur = w.getnframes() / w.getframerate()
+                if 3.0 <= dur <= 10.0:
+                    ok.append(r)
+            except Exception:  # noqa: BLE001
+                continue
+        seg = [r for r in ok if "_seg8s" in r.stem]
+        full = [r for r in ok if "_seg8s" not in r.stem]
+        return (seg + full)[:limit]
+    return refs[:limit]
 
 
 def _synth_edgetts(voice: str, text: str, out_path: Path, retries: int = 3) -> tuple:

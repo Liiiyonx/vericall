@@ -19,9 +19,9 @@
 
 ## 三、数据侧闭环（hf-mirror 打通）
 
-- **真**：AISHELL-1 按说话人下载 21 人 → **7389 条 16k 真人中文语音**（`D:/VeriCall_data/aishell1_sub/`，与 CFAD 真同源）；
+- **真**：AISHELL-1 按说话人下载 21 人 → **20,329 条 16k 真人中文语音**（59 说话人 S0002-S0060，`D:/VeriCall_data/aishell1_sub/`，与 CFAD 真同源）；
 - **伪**：FMFCC-A 17,636 条（A07-A13 商业/开源 TTS 系）；
-- 特征缓存：aishell 7389 / FMFCC 17636 / 红队 3117（XLS-R 1024d）。
+- 特征缓存：aishell 20,329 / FMFCC 17,636 / 红队母本 3117 + 切段 2121（XLS-R 1024d）。
 
 ## 四、第 1 轮修复（中文域适配）+ 评测矩阵
 

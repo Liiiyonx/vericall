@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arena Live · 大屏攻防记分牌</title>
+<style>
+:root{
+  --bg:#060607; --ink:#f2ede0; --mut:#9a948a;
+  --brand:#993C1D; --brand-lt:#D85A30; --brand-lt2:#F0997B;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
+  --line:rgba(242,237,224,.1);
+  --serif:"Songti SC","STSong","Noto Serif SC",serif;
+  --sans:"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans); min-height:100vh;
+  display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; overflow:hidden}
+header{padding:18px 36px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--line)}
+.logo{font-family:var(--serif); font-size:24px; letter-spacing:6px; color:var(--brand-lt2)}
+.logo .en{font-size:11px; letter-spacing:3px; color:var(--mut); font-family:var(--sans)}
+.stage-tag{font-size:14px; color:var(--gold2); letter-spacing:2px}
+
+main{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:24px; padding:26px 36px; overflow:auto}
+/* 左：克隆进度与相似度 */
+.panel{background:rgba(242,237,224,.03); border:1px solid var(--line); border-radius:16px; padding:24px; display:flex; flex-direction:column}
+.panel h2{font-family:var(--serif); font-size:20px; letter-spacing:4px; color:var(--gold2); margin-bottom:18px}
+.sim-big{text-align:center; padding:20px 0}
+.sim-big .n{font-family:var(--serif); font-size:88px; color:var(--brand-lt2); line-height:1}
+.sim-big .l{font-size:14px; color:var(--mut); letter-spacing:2px; margin-top:8px}
+.eng{display:flex; justify-content:space-between; align-items:center; padding:12px 14px;
+  background:rgba(0,0,0,.25); border-radius:10px; margin-bottom:10px}
+.eng .en{font-size:15px; letter-spacing:1px}
+.eng .st{font-size:12px; color:var(--mut)}
+.eng.run .st{color:var(--warn)} .eng.done .st{color:var(--ok)}
+.prog-bar{height:8px; background:rgba(0,0,0,.3); border-radius:4px; overflow:hidden; margin-top:8px}
+.prog-bar i{display:block; height:100%; background:var(--brand-lt); width:0; transition:width .3s}
+
+/* 右：攻防记分牌 */
+.scoreboard{display:flex; flex-direction:column}
+.score{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px}
+.score .side{background:rgba(0,0,0,.3); border-radius:14px; padding:20px; text-align:center}
+.score .side .t{font-size:14px; color:var(--mut); letter-spacing:2px}
+.score .side .n{font-family:var(--serif); font-size:64px; color:var(--gold2); line-height:1.1}
+.score .atk .n{color:var(--brand-lt2)} .score .def .n{color:var(--ok)}
+.round{background:rgba(0,0,0,.25); border-radius:12px; padding:18px; margin-bottom:12px}
+.round .h{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
+.round .rt{font-size:16px; letter-spacing:1px; font-weight:600}
+.round .verdict{font-size:13px; padding:4px 14px; border-radius:12px}
+.round .verdict.def{background:rgba(127,191,142,.15); color:var(--ok)}
+.round .verdict.atk{background:rgba(216,90,48,.15); color:var(--brand-lt2)}
+.chrow{display:flex; gap:10px; margin-top:10px}
+.chpill{flex:1; background:rgba(0,0,0,.3); border-radius:8px; padding:10px; text-align:center}
+.chpill .c{font-size:11px; color:var(--mut); letter-spacing:1px; margin-bottom:4px}
+.chpill .v{font-size:20px; font-family:var(--serif); color:var(--gold2)}
+.round .note{font-size:13px; color:var(--ink); margin-top:12px; line-height:1.8; padding-top:10px; border-top:1px solid var(--line)}
+
+/* 大屏结局 */
+.finale{grid-column:1/-1; text-align:center; padding:26px; background:rgba(153,60,29,.08);
+  border:1px solid rgba(216,90,48,.3); border-radius:16px; display:none}
+.finale.show{display:block}
+.finale .big{font-family:var(--serif); font-size:44px; letter-spacing:8px; color:var(--brand-lt2)}
+.finale .sub{font-size:15px; color:var(--ink); margin-top:14px; line-height:2}
+.finale .hash{font-family:var(--mono); font-size:11px; color:var(--mut); margin-top:16px; word-break:break-all;
+  background:rgba(0,0,0,.3); border-radius:8px; padding:12px}
+
+.ctl{position:fixed; bottom:20px; right:20px; display:flex; gap:10px}
+.ctl button{font-size:13px; padding:10px 16px; border-radius:8px; border:1px solid var(--line);
+  background:rgba(0,0,0,.5); color:var(--ink); cursor:pointer}
+.ctl button.primary{border-color:var(--brand-lt); color:var(--brand-lt2)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ARENA LIVE<span class="en">大屏攻防记分牌</span></div>
+  <div class="stage-tag" id="stageTag">准备就绪 · 等待录入</div>
+</header>
+
+<main>
+  <!-- 左：克隆 -->
+  <div class="panel">
+    <h2>克隆进度 · 相似度自评</h2>
+    <div class="sim-big">
+      <div class="n" id="simN">--</div>
+      <div class="l" id="simL">等待现场录入…</div>
+    </div>
+    <div class="eng run" id="e1"><div><div class="en">CosyVoice2（主力）</div><div class="st">流式合成中…</div></div><div class="st" id="e1p">0%</div></div>
+    <div class="prog-bar"><i id="e1b"></i></div>
+    <div class="eng" id="e2" style="margin-top:10px"><div><div class="en">GPT-SoVITS（备份）</div><div class="st">等待调度</div></div><div class="st" id="e2p">--</div></div>
+    <div class="prog-bar"><i id="e2b"></i></div>
+    <div style="font-size:12px;color:var(--mut);margin-top:auto;padding-top:16px;line-height:1.9">
+      双引擎并行 · 相似度自动选最优 · 首段完成即送谛听检测
+    </div>
+  </div>
+
+  <!-- 右：攻防记分 -->
+  <div class="panel scoreboard">
+    <h2>攻防记分牌</h2>
+    <div class="score">
+      <div class="side atk"><div class="t">评委攻击（红队）</div><div class="n" id="atkN">0</div></div>
+      <div class="side def"><div class="t">系统拦截（蓝队）</div><div class="n" id="defN">0</div></div>
+    </div>
+    <div id="rounds"></div>
+  </div>
+
+  <div class="finale" id="finale">
+    <div class="big" id="finaleBig">拦截成功</div>
+    <div class="sub" id="finaleSub"></div>
+    <div class="hash" id="finaleHash"></div>
+  </div>
+</main>
+
+<div class="ctl">
+  <button onclick="resetAll()">重置</button>
+  <button class="primary" onclick="demoFlow()">演示全流程</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let atk=0, def=0;
+const ATTACKS=["话术规避（暗示代替'转账'）","谐音/拆字（转帐→转张）","方言切换（用方言说话术）","变速变调（±20% 变速）","背景噪声（SNR 5-20dB）","真假混放（真声+克隆交替）"];
+
+function tick(engine){
+  let p=0;
+  const el=$("e"+engine+"p"), bar=$("e"+engine+"b"), row=$("e"+engine);
+  const t=setInterval(()=>{
+    p+=Math.random()*14+6; if(p>=100){ p=100; clearInterval(t); row.classList.remove("run"); row.classList.add("done"); el.textContent="完成"; if(engine===1){ startEng2(); } return; }
+    el.textContent=Math.floor(p)+"%"; bar.style.width=p+"%";
+  }, 320);
+}
+function startEng2(){
+  $("e2").classList.add("run"); $("e2").querySelector(".st").textContent="合成中…";
+  let p=0;
+  const t=setInterval(()=>{ p+=Math.random()*10+5; if(p>=100){ p=100; clearInterval(t); $("e2").classList.add("done"); $("e2").querySelector(".st").textContent="完成"; $("e2p").textContent="完成"; $("e2b").style.width="100%"; simScore(); return; }
+    $("e2p").textContent=Math.floor(p)+"%"; $("e2b").style.width=p+"%";
+  }, 400);
+}
+function simScore(){
+  let v=0; const target=0.85+Math.random()*0.1;
+  const t=setInterval(()=>{ v+=0.03; if(v>=target){ v=target; clearInterval(t); $("simL").textContent="相似度 "+v.toFixed(2)+" · 选择最优版本"; $("stageTag").textContent="克隆完成 · 注入检测"; setTimeout(startRounds,800); return; }
+    $("simN").textContent=v.toFixed(2); }, 120);
+}
+function addRound(i){
+  const atk=ATTACKS[i];
+  const r=document.createElement("div"); r.className="round";
+  r.innerHTML='<div class="h"><span class="rt">第 '+(i+1)+' 轮 · '+atk+'</span><span class="verdict" id="v'+i+'">判定中…</span></div>'
+    +'<div class="chrow">'
+    +'<div class="chpill"><div class="c">声学伪造</div><div class="v" id="c'+i+'a">--</div></div>'
+    +'<div class="chpill"><div class="c">家庭声纹</div><div class="v" id="c'+i+'v">--</div></div>'
+    +'<div class="chpill"><div class="c">话术语义</div><div class="v" id="c'+i+'s">--</div></div>'
+    +'</div><div class="note" id="n'+i+'"></div>';
+  $("rounds").appendChild(r);
+  setTimeout(()=>{
+    const a=(Math.random()*.15+.8).toFixed(2), v=(Math.random()*.1).toFixed(2), s=(Math.random()*.2+.75).toFixed(2);
+    $("c"+i+"a").textContent=a; $("c"+i+"v").textContent=v; $("c"+i+"s").textContent=s;
+    const caught=Math.random()<0.75; // 演示：多数拦截
+    const vv=$("v"+i); vv.className="verdict "+(caught?"def":"atk");
+    vv.textContent=caught?"拦截":"绕过";
+    if(caught){ def++; $("defN").textContent=def; $("n"+i).textContent="三通道同步攀升，系统判定疑似合成——已拦截并推送子女端。"; }
+    else{ atk++; $("atkN").textContent=atk; $("n"+i).textContent="该样本成功绕过当前防线——已自动回流难例库，48h 内进入模型迭代。"; }
+    if(i<ATTACKS.length-1){ setTimeout(()=>addRound(i+1), 1800); } else { setTimeout(showFinale, 1200); }
+  }, 600);
+}
+function startRounds(){
+  $("stageTag").textContent="攻防环节 · 评委现场攻击";
+  addRound(0);
+}
+function showFinale(){
+  $("finaleBig").textContent="攻防总结 · 拦截 "+def+" / 绕过 "+atk;
+  $("finaleSub").textContent="每一个被攻破的样本都已回流难例库——擂台与产线闭环。";
+  $("finaleHash").textContent="哈希链审计: 3f8a"+Math.random().toString(16).slice(2,10)+"…（粉碎动作留痕可验）";
+  $("finale").classList.add("show");
+  $("stageTag").textContent="演示收束 · 一键粉碎";
+}
+function resetAll(){
+  atk=0; def=0; $("atkN").textContent="0"; $("defN").textContent="0";
+  $("rounds").innerHTML=""; $("finale").classList.remove("show");
+  $("simN").textContent="--"; $("simL").textContent="等待现场录入…";
+  ["e1","e2"].forEach(e=>{ const r=$(e); r.classList.remove("run","done"); r.querySelector(".st").textContent=(e==="e1"?"流式合成中…":"等待调度"); $(e+"p").textContent=(e==="e1"?"0%":"--"); $(e+"b").style.width="0"; });
+  $("stageTag").textContent="准备就绪 · 等待录入";
+}
+function demoFlow(){
+  resetAll();
+  $("stageTag").textContent="录入完成 · 双引擎合成";
+  $("e1").classList.add("run");
+  setTimeout(()=>tick(1), 400);
+}
+</script>
+</body>
+</html>

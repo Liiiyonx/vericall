@@ -137,6 +137,8 @@ def _model_status() -> dict:
         "voices": voices,
         "ollama": ollama,
         "device": DEVICE,
+        # 09-06 前端展示：当前声学通道（aasist | xlsr_cn | xlsr_cn:wide）
+        "acoustic": os.environ.get("VERICALL_ACOUSTIC", "aasist"),
     }
 
 

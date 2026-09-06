@@ -566,8 +566,11 @@ async function loadStatus(){
   try{
     const s=await(await fetch("/api/status")).json();
     const eer=s.aasist_dev_eer!=null?s.aasist_dev_eer.toFixed(2)+"%":"--";
+    const ac=s.acoustic||"aasist";
+    const acLabel=ac==="aasist"?"AASIST":(ac==="xlsr_cn"?"XLS-R 中文域":(ac.startsWith("xlsr_cn")?"XLS-R 中文域·宽谱":ac));
+    const acPip=ac==="aasist"?"ok":"ok";
     $("sys").innerHTML=
-      `<span class="it"><span class="pip ok"></span>AASIST <b>${eer}</b></span>
+      `<span class="it"><span class="pip ${acPip}"></span>${acLabel} <b>${eer}</b></span>
        <span class="it"><span class="pip ${s.voices.length?"ok":"warn"}"></span>声纹 <b>${s.voices.length}</b></span>
        <span class="it"><span class="pip ${s.ollama?"ok":"warn"}"></span>OLLAMA <b>${s.ollama?"ON":"OFF"}</b></span>`;
     renderVoices(s.voices);

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>谛听 · 子女守护端</title>
+<style>
+:root{
+  --bg:#0a0a0b; --ink:#f2ede0; --mut:#9a948a; --dim:#57544c;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
+  --line:rgba(242,237,224,.08); --line2:rgba(242,237,224,.16);
+  --serif:"Songti SC","STSong","Noto Serif SC",serif;
+  --sans:"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans); min-height:100vh;
+  -webkit-font-smoothing:antialiased; padding-bottom:60px}
+body::before{content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:radial-gradient(900px 500px at 50% -20%, rgba(212,180,131,.05), transparent 65%)}
+.wrap{max-width:920px; margin:0 auto; padding:20px}
+header{display:flex; align-items:center; justify-content:space-between; padding:14px 0 20px;
+  border-bottom:1px solid var(--line)}
+.logo{font-family:var(--serif); font-size:26px; letter-spacing:6px; color:var(--gold2)}
+.logo .en{font-size:11px; letter-spacing:3px; color:var(--mut); font-family:var(--sans)}
+.tabs{display:flex; gap:8px}
+.tab{padding:8px 18px; border:1px solid var(--line2); border-radius:20px; font-size:14px;
+  color:var(--mut); cursor:pointer; letter-spacing:1px}
+.tab.on{color:var(--gold2); border-color:var(--gold)}
+
+h2{font-family:var(--serif); font-size:22px; letter-spacing:4px; color:var(--gold2);
+  margin:26px 0 14px; font-weight:600}
+h2 small{font-size:13px; color:var(--mut); letter-spacing:1px; font-family:var(--sans); font-weight:400; margin-left:10px}
+
+/* 周报卡 */
+.week{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+.wcard{background:var(--color-bg,rgba(242,237,224,.03)); border:1px solid var(--line);
+  border-radius:14px; padding:20px; text-align:center}
+.wcard .n{font-size:34px; font-family:var(--serif); color:var(--gold2); font-weight:600}
+.wcard .l{font-size:13px; color:var(--mut); margin-top:6px; letter-spacing:1px}
+.wcard.green .n{color:var(--ok)} .wcard.red .n{color:var(--bad)} .wcard.warn .n{color:var(--warn)}
+
+/* 拦截卡 */
+.card{background:rgba(242,237,224,.03); border:1px solid var(--line); border-radius:14px;
+  padding:20px; margin-bottom:14px}
+.card .top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px}
+.card .nm{font-size:18px; font-weight:600; letter-spacing:1px}
+.card .time{font-size:12px; color:var(--mut); font-family:var(--mono)}
+.badge{font-size:12px; padding:3px 12px; border-radius:12px; letter-spacing:1px}
+.badge.block{background:rgba(217,122,110,.15); color:var(--bad)}
+.badge.caution{background:rgba(223,168,68,.15); color:var(--warn)}
+.badge.allow{background:rgba(127,191,142,.15); color:var(--ok)}
+.channels{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0}
+.ch{background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center}
+.ch .c{font-size:11px; color:var(--mut); letter-spacing:1px; margin-bottom:6px}
+.ch .s{font-size:22px; font-family:var(--serif); color:var(--gold2)}
+.ch .d{font-size:11px; color:var(--dim); margin-top:4px}
+.card .rationale{font-size:14px; color:var(--ink); line-height:1.9; padding-top:12px;
+  border-top:1px solid var(--line)}
+.card .acts{display:flex; gap:12px; margin-top:14px}
+.btn{font-size:14px; padding:10px 20px; border-radius:8px; border:1px solid var(--line2);
+  background:none; color:var(--ink); cursor:pointer; letter-spacing:1px}
+.btn.primary{border-color:var(--gold); color:var(--gold2)}
+.btn:active{background:rgba(212,180,131,.1)}
+
+/* 声纹协助 */
+.voice{display:flex; align-items:center; gap:14px; padding:14px; background:rgba(242,237,224,.03);
+  border:1px solid var(--line); border-radius:12px; margin-bottom:10px}
+.voice .av{width:44px; height:44px; border-radius:50%; background:rgba(212,180,131,.15);
+  display:grid; place-items:center; font-family:var(--serif); color:var(--gold2); font-size:20px}
+.voice .info{flex:1}
+.voice .vn{font-size:16px; letter-spacing:1px}
+.voice .vs{font-size:12px; color:var(--mut)}
+.enroll{border:1px dashed var(--line2); border-radius:12px; padding:22px; text-align:center; color:var(--mut)}
+.enroll input[type=file]{display:none}
+.enroll label{cursor:pointer; color:var(--gold2)}
+.enroll .field{margin-top:14px; display:flex; gap:10px; justify-content:center}
+.enroll input[type=text]{background:rgba(0,0,0,.3); border:1px solid var(--line2); border-radius:8px;
+  color:var(--ink); padding:10px 14px; font-size:14px; width:200px}
+.empty{padding:50px; text-align:center; color:var(--dim); font-size:15px; letter-spacing:2px}
+.page{display:none} .page.on{display:block}
+.sim{font-size:11px; color:var(--dim); font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="logo">谛听<span class="en">子女守护端</span></div>
+  <div class="tabs">
+    <div class="tab on" data-p="events">拦截事件</div>
+    <div class="tab" data-p="week">本周周报</div>
+    <div class="tab" data-p="voices">声纹协助</div>
+  </div>
+</header>
+
+<!-- 拦截事件 -->
+<div class="page on" id="p-events">
+  <h2>拦截与告警<small>按时间倒序 · 共 <span id="cnt">0</span> 条</small></h2>
+  <div id="events"></div>
+</div>
+
+<!-- 周报 -->
+<div class="page" id="p-week">
+  <h2>本周守护周报<small>近 7 天</small></h2>
+  <div class="week" id="weekStats"></div>
+  <h2>逐日分布<small>拦截数 / 告警数 / 放行数</small></h2>
+  <div id="daily"></div>
+</div>
+
+<!-- 声纹协助 -->
+<div class="page" id="p-voices">
+  <h2>家人声纹库<small>帮父母登记 / 更新家人声纹</small></h2>
+  <div id="voiceList"></div>
+  <div class="enroll">
+    <div>远程帮家人登记：请家人对着电话说一句日常话（10 秒），上传到这里</div>
+    <div class="field">
+      <input type="text" id="enName" placeholder="家人称谓（如 妈妈）">
+      <label for="enFile">选择录音文件</label>
+      <input type="file" id="enFile" accept="audio/*">
+    </div>
+    <div class="field"><button class="btn primary" id="enSubmit" disabled>登记声纹</button></div>
+    <div style="font-size:12px;color:var(--dim);margin-top:10px">声纹只存本机加密向量，可随时删除</div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&quot;',"'":'&#39;'}[c]));}
+let ALL=[];
+
+function chName(c){ return ({acoustic:"声学伪造",voiceprint:"家庭声纹",semantic:"话术语义"})[c]||c; }
+function fmtScore(s){ return (s==null?"--":(typeof s==="number"?s.toFixed(2):s)); }
+
+function renderEvents(recs){
+  const el=$("events");
+  $("cnt").textContent=recs.length;
+  if(!recs.length){ el.innerHTML='<div class="empty">暂无记录 · 父母接通电话后这里会显示每一次判定</div>'; return; }
+  el.innerHTML=recs.map(r=>{
+    const ch=r.channels||[];
+    const chHtml=ch.length?('<div class="channels">'+ch.map(c=>{
+      const nm=chName(c.name||c.channel||"");
+      const sc=(typeof c.score==="number")?c.score.toFixed(2):(c.score||"--");
+      const lb=c.label||c.verdict||"";
+      return '<div class="ch"><div class="c">'+esc(nm)+'</div><div class="s">'+esc(sc)+'</div><div class="d">'+esc(lb)+'</div></div>';
+    }).join("")+'</div>'):"";
+    return '<div class="card">'
+      +'<div class="top"><div><span class="nm">'+esc(r.name||r.source||"未知来电")+'</span>'
+      +'<div class="sim">'+esc(r.source||"")+' · '+esc(r.elapsed_s!=null?r.elapsed_s+"s":"")+'</div></div>'
+      +'<div><span class="time">'+esc(r.time||"")+'</span> <span class="badge '+esc(r.final)+'">'+esc(({block:"拦截",caution:"警惕",allow:"放行"})[r.final]||r.final)+'</span></div></div>'
+      +chHtml
+      +(r.rationale?'<div class="rationale">'+esc(r.rationale)+'</div>':"")
+      +'<div class="acts"><button class="btn primary" onclick="shareCard(\''+esc(r.id||"")+'\')">生成提醒卡</button>'
+      +'<button class="btn" onclick="voiceVerify()">回拨核实</button></div>'
+      +'</div>';
+  }).join("");
+}
+function shareCard(id){ alert("已生成子女提醒卡（截图转发即可）。\n后续接入企业微信/小程序推送。"); }
+function voiceVerify(){ alert("建议拨打家人平时的号码，听熟悉的声音再确认。"); }
+
+function renderWeek(recs){
+  const now=new Date();
+  const days=[];
+  for(let i=6;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); days.push(d.toISOString().slice(0,10)); }
+  const stat={allow:0,caution:0,block:0,total:0};
+  const byDay=Object.fromEntries(days.map(d=>[d,{allow:0,caution:0,block:0}]));
+  recs.forEach(r=>{
+    const day=(r.time||"").slice(0,10);
+    const f=r.final||"allow";
+    if(byDay[day]) byDay[day][f]++;
+    stat[f]=(stat[f]||0)+1; stat.total++;
+  });
+  $("weekStats").innerHTML=
+    '<div class="wcard"><div class="n">'+stat.total+'</div><div class="l">本周总通话判定</div></div>'
+    +'<div class="wcard green"><div class="n">'+stat.allow+'</div><div class="l">正常放行</div></div>'
+    +'<div class="wcard warn"><div class="n">'+stat.caution+'</div><div class="l">警惕提醒</div></div>'
+    +'<div class="wcard red"><div class="n">'+stat.block+'</div><div class="l">拦截</div></div>';
+  const max=Math.max(1,...days.map(d=>byDay[d].allow+byDay[d].caution+byDay[d].block));
+  $("daily").innerHTML=days.map(d=>{
+    const b=byDay[d];
+    const tot=b.allow+b.caution+b.block;
+    return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">'
+      +'<div style="width:70px;font-family:var(--mono);font-size:12px;color:var(--mut)">'+d.slice(5)+'</div>'
+      +'<div style="flex:1;height:22px;background:rgba(0,0,0,.25);border-radius:6px;overflow:hidden;display:flex">'
+      +'<div style="width:'+(b.allow/tot*100||0)+'%;background:var(--ok)" title="放行 '+b.allow+'"></div>'
+      +'<div style="width:'+(b.caution/tot*100||0)+'%;background:var(--warn)" title="警惕 '+b.caution+'"></div>'
+      +'<div style="width:'+(b.block/tot*100||0)+'%;background:var(--bad)" title="拦截 '+b.block+'"></div>'
+      +'</div><div style="width:60px;font-size:13px;color:var(--mut)">'+tot+' 条</div></div>';
+  }).join("");
+}
+
+async function renderVoices(){
+  try{
+    const s=await(await fetch("/api/status")).json();
+    const vs=s.voices||[];
+    $("voiceList").innerHTML=vs.length?vs.map(v=>
+      '<div class="voice"><div class="av">'+esc((v.name||"?").slice(0,1))+'</div>'
+      +'<div class="info"><div class="vn">'+esc(v.name)+'</div><div class="vs">声纹样本 '+esc(v.samples)+' 条</div></div>'
+      +'<button class="btn">删除</button></div>'
+    ).join(""):'<div class="empty">还没有登记家人声纹 · 点击下方登记</div>';
+  }catch(e){ $("voiceList").innerHTML='<div class="empty">服务未连接</div>'; }
+}
+
+$("enFile").onchange=()=>{ $("enSubmit").disabled=!($("enName").value.trim() && $("enFile").files[0]); };
+$("enName").oninput=()=>{ $("enSubmit").disabled=!($("enName").value.trim() && $("enFile").files[0]); };
+$("enSubmit").onclick=async ()=>{
+  const nm=$("enName").value.trim(), f=$("enFile").files[0]; if(!nm||!f) return;
+  const fd=new FormData(); fd.append("name",nm); fd.append("file",f,f.name);
+  try{
+    const r=await fetch("/api/enroll",{method:"POST",body:fd});
+    const d=await r.json();
+    if(d.error){ alert("登记失败："+(d.message||d.error)); return; }
+    $("enName").value=""; $("enFile").value=""; $("enSubmit").disabled=true;
+    alert("已登记："+nm+" 的声纹。"); renderVoices();
+  }catch(e){ alert("服务异常，请检查谛听是否已启动。"); }
+};
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on");
+  $("p-"+t.dataset.p).classList.add("on");
+  if(t.dataset.p==="voices") renderVoices();
+  if(t.dataset.p==="week") renderWeek(ALL);
+});
+
+async function init(){
+  try{
+    const h=await(await fetch("/api/history?limit=200")).json();
+    ALL=h.records||[];
+  }catch(e){ ALL=[]; }
+  renderEvents(ALL);
+  renderVoices();
+}
+init();
+setInterval(init, 10000);
+</script>
+</body>
+</html>

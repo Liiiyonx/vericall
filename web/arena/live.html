@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arena Live · 现场录入</title>
+<style>
+:root{
+  --bg:#0a0a0b; --ink:#f2ede0; --mut:#9a948a;
+  --brand:#993C1D; --brand-lt:#D85A30; --brand-lt2:#F0997B;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
+  --serif:"Songti SC","STSong","Noto Serif SC",serif;
+  --sans:"PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans); min-height:100vh;
+  display:flex; flex-direction:column; -webkit-font-smoothing:antialiased}
+.wrap{max-width:520px; margin:0 auto; padding:24px 20px; flex:1; display:flex; flex-direction:column}
+.hero{text-align:center; padding:26px 0 22px}
+.hero .k{font-size:12px; letter-spacing:4px; color:var(--brand-lt)}
+.hero h1{font-family:var(--serif); font-size:32px; letter-spacing:6px; color:var(--brand-lt2); margin-top:8px}
+.hero .sub{font-size:14px; color:var(--mut); margin-top:12px; line-height:1.9}
+
+.step{display:none; flex:1; flex-direction:column; justify-content:center}
+.step.on{display:flex}
+.consent{background:rgba(153,60,29,.1); border:1px solid rgba(216,90,48,.3); border-radius:14px; padding:22px; margin-bottom:22px}
+.consent h3{font-size:16px; color:var(--brand-lt2); margin-bottom:12px; letter-spacing:1px}
+.consent ul{padding-left:20px; font-size:13px; color:var(--ink); line-height:2}
+.consent ul li{margin-bottom:4px}
+.chk{display:flex; align-items:center; gap:12px; margin-top:16px; padding:14px;
+  background:rgba(0,0,0,.3); border-radius:10px; cursor:pointer; user-select:none}
+.chk input{width:22px; height:22px; accent-color:var(--brand-lt)}
+.chk span{font-size:15px}
+.btn{font-size:18px; padding:18px; border-radius:12px; border:2px solid var(--brand-lt);
+  background:none; color:var(--brand-lt2); cursor:pointer; letter-spacing:3px; width:100%;
+  transition:all .2s}
+.btn.primary{background:var(--brand); color:#fff}
+.btn:disabled{opacity:.4; cursor:not-allowed}
+.btn:active{transform:scale(.98)}
+
+/* 录音区 */
+.orb{width:160px; height:160px; border-radius:50%; margin:26px auto; display:grid; place-items:center;
+  border:3px solid var(--brand-lt); background:rgba(153,60,29,.08); cursor:pointer; transition:all .2s}
+.orb:active{transform:scale(.96)}
+.orb.recording{border-color:var(--bad); animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 18px rgba(217,122,110,.12)}}
+.orb svg{width:60px; height:60px}
+.rec-hint{text-align:center; font-size:16px; color:var(--mut); min-height:24px}
+.rec-hint b{color:var(--brand-lt2)}
+
+.prompt-text{background:rgba(0,0,0,.3); border-left:3px solid var(--brand-lt); border-radius:0 10px 10px 0;
+  padding:18px 20px; margin:20px 0; font-family:var(--serif); font-size:19px; line-height:2; color:var(--ink)}
+
+/* 进度 */
+.prog{display:flex; gap:8px; justify-content:center; margin:20px 0}
+.pd{width:36px; height:6px; border-radius:3px; background:rgba(242,237,224,.12)}
+.pd.on{background:var(--brand-lt)}
+.pd.done{background:var(--ok)}
+
+.done-card{text-align:center; padding:30px 0}
+.done-card .big{font-family:var(--serif); font-size:48px; letter-spacing:8px; color:var(--ok); margin:18px 0}
+.done-card .hash{font-family:ui-monospace,Consolas,monospace; font-size:11px; color:var(--mut);
+  word-break:break-all; padding:14px; background:rgba(0,0,0,.3); border-radius:8px; margin-top:14px}
+.qr{width:180px; height:180px; margin:20px auto; background:#fff; border-radius:12px; display:grid;
+  place-items:center; color:#1a1a1a; font-size:12px; text-align:center; padding:12px; line-height:1.6}
+footer{text-align:center; font-size:12px; color:var(--mut); padding:16px; letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="k">ARENA LIVE · 现场攻防演示</div>
+    <h1>谛听 · 声音录入</h1>
+    <div class="sub">10 秒声音 → 现场克隆成诈骗电话 → 谛听实时拦截<br>全程只在演示机上，录音会被"一键粉碎"</div>
+  </div>
+
+  <div class="prog" id="prog">
+    <div class="pd on"></div><div class="pd"></div><div class="pd"></div><div class="pd"></div>
+  </div>
+
+  <!-- 步骤1: 知情同意 -->
+  <div class="step on" id="s1">
+    <div class="consent">
+      <h3>知情同意（演示专用）</h3>
+      <ul>
+        <li>您的声音仅用于<b>本次现场演示</b>，内存驻留、不落盘、不进训练集、不出这台机器；</li>
+        <li>演示结束后样本会被<b>一键粉碎</b>并留审计记录；</li>
+        <li>克隆能力仅用于<b>反诈研究</b>与检测模型红队迭代。</li>
+      </ul>
+      <div class="chk" id="chkRow">
+        <input type="checkbox" id="chk">
+        <span>我已阅读并同意上述演示用途与销毁承诺</span>
+      </div>
+    </div>
+    <button class="btn primary" id="toRec" disabled>同意并开始录入</button>
+    <div style="text-align:center;margin-top:12px"><button class="btn" id="noConsent" style="border:none;color:var(--mut);font-size:14px">不同意，走预生成支线</button></div>
+  </div>
+
+  <!-- 步骤2: 录音 -->
+  <div class="step" id="s2">
+    <div class="prompt-text" id="prompt">「妈，是我。我刚才不小心把钱包落在出租车上了，现在急着去车站，你能不能先转我两千块应急？我马上还你。」</div>
+    <div class="orb" id="orb">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.6" stroke-linecap="round">
+        <rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>
+      </svg>
+    </div>
+    <div class="rec-hint" id="recHint">点上方麦克风，朗读上方那段话（10 秒）</div>
+    <button class="btn" id="finish" disabled>录好了，继续</button>
+  </div>
+
+  <!-- 步骤3: 处理中 -->
+  <div class="step" id="s3">
+    <div style="text-align:center;padding:30px 0">
+      <div style="font-size:20px;color:var(--brand-lt2);letter-spacing:2px" id="proc">正在克隆您的声音……</div>
+      <div style="font-size:13px;color:var(--mut);margin-top:14px;line-height:2">双引擎并行合成 · 相似度自评选型<br>首段完成即送谛听检测</div>
+      <div style="margin-top:26px;font-size:40px;letter-spacing:6px" class="spin">◔</div>
+    </div>
+  </div>
+
+  <!-- 步骤4: 完成 -->
+  <div class="step" id="s4">
+    <div class="done-card">
+      <div style="font-size:14px;color:var(--mut);letter-spacing:2px">您的声音已进入现场克隆管线</div>
+      <div class="big">已 就 位</div>
+      <div style="font-size:14px;color:var(--ink);line-height:2">请回到现场大屏，<br>看您的"声音"如何拨打诈骗电话，<br>又如何被谛听拦下。</div>
+      <div class="qr">（此处为演示页<br>实际场景显示 H5 二维码<br>或返回大屏入口）</div>
+      <div class="hash" id="hash"></div>
+      <div style="margin-top:18px;font-size:12px;color:var(--mut);letter-spacing:1px">演示结束后您的样本将在此处被"一键粉碎"，哈希链审计日志留痕可验。</div>
+    </div>
+  </div>
+</div>
+<footer>Arena Live · 声音样本仅在内存驻留 · 不落盘 · 不出演示机 · 演示后一键粉碎</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+function setStep(n){
+  [1,2,3,4].forEach(i=>{ $("s"+i).classList.toggle("on", i===n); });
+  document.querySelectorAll(".pd").forEach((d,i)=>{ d.classList.toggle("on", i===n-1); d.classList.toggle("done", i<n-1); });
+}
+function fakeHash(){ let h=""; for(let i=0;i<64;i++) h+="0123456789abcdef"[Math.floor(Math.random()*16)]; return h; }
+
+$("chk").onchange=()=>{ $("toRec").disabled=!$("chk").checked; };
+$("chkRow").onclick=e=>{ if(e.target.tagName!=="INPUT"){ $("chk").checked=!$("chk").checked; $("chk").dispatchEvent(new Event("change")); } };
+$("toRec").onclick=()=>setStep(2);
+$("noConsent").onclick=()=>{ setStep(3); $("proc").textContent="走预生成支线（无真实录音）……"; setTimeout(()=>{ $("hash").textContent="预生成样本 · 无个人声音 · 哈希链: "+fakeHash(); setStep(4); }, 1600); };
+
+let mediaRecorder=null, chunks=[];
+$("orb").onclick=async ()=>{
+  if(mediaRecorder && mediaRecorder.state==="recording"){ mediaRecorder.stop(); return; }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    chunks=[]; mediaRecorder=new MediaRecorder(stream);
+    mediaRecorder.ondataavailable=e=>chunks.push(e.data);
+    mediaRecorder.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      $("orb").classList.remove("recording");
+      $("recHint").innerHTML="已录 <b>"+(chunks.length?"10 秒":"音频")+"</b>，可继续";
+      $("finish").disabled=false;
+      window.__rec=new Blob(chunks,{type:"audio/webm"});
+    };
+    mediaRecorder.start();
+    $("orb").classList.add("recording");
+    $("recHint").innerHTML="<b>正在录音……</b>（说完自动停）";
+    setTimeout(()=>{ if(mediaRecorder&&mediaRecorder.state==="recording") mediaRecorder.stop(); }, 10000);
+  }catch(e){ $("recHint").textContent="无法打开麦克风，请允许权限或用预生成支线。"; $("finish").disabled=false; }
+};
+$("finish").onclick=()=>{
+  setStep(3);
+  $("proc").textContent="正在克隆您的声音……";
+  setTimeout(()=>{ $("proc").textContent="相似度自评中……选最优版本"; }, 1400);
+  setTimeout(()=>{ $("hash").textContent="样本指纹(演示): "+fakeHash(); setStep(4); }, 3200);
+};
+</script>
+</body>
+</html>

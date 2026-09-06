@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>谛听 · 大字守护</title>
+<style>
+:root{
+  --bg:#0a0a0b; --ink:#f2ede0; --mut:#9a948a;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
+  --serif:"Songti SC","STSong","Noto Serif SC",serif;
+  --sans:"PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans);
+  min-height:100vh; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased}
+header{padding:20px 28px; display:flex; align-items:center; justify-content:space-between}
+.logo{font-family:var(--serif); font-size:30px; letter-spacing:8px; color:var(--gold2)}
+.logo .en{font-size:11px; letter-spacing:4px; color:var(--mut); font-family:var(--sans)}
+main{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:10px 20px 40px; gap:26px}
+.greet{font-size:24px; color:var(--mut); text-align:center; line-height:1.9; max-width:560px}
+.greet b{color:var(--gold2); font-weight:500}
+
+/* 大圆环 */
+.ring{width:250px; height:250px; border-radius:50%; display:grid; place-items:center;
+  position:relative; transition:background .5s; box-shadow:0 0 0 10px rgba(0,0,0,.25) inset}
+.ring::before{content:''; position:absolute; inset:18px; border-radius:50%; background:var(--bg);
+  box-shadow:0 0 0 2px rgba(242,237,224,.06)}
+.ring .word{position:relative; font-family:var(--serif); font-size:64px; letter-spacing:8px;
+  font-weight:600; color:#101010; text-align:center}
+.ring .word small{display:block; font-size:20px; letter-spacing:3px; font-family:var(--sans);
+  font-weight:400; margin-top:10px}
+.ring.green{background:var(--ok)} .ring.yellow{background:var(--warn)} .ring.red{background:var(--bad)}
+.ring.red .word{color:#fff}
+.ring.idle{background:#2c2c2e} .ring.idle .word{color:var(--ink)}
+
+.state{font-size:26px; color:var(--gold2); text-align:center; min-height:36px; letter-spacing:2px}
+.advice{font-size:22px; color:var(--ink); text-align:center; max-width:560px; line-height:2;
+  min-height:44px}
+
+/* 按钮区 */
+.btns{display:flex; flex-direction:column; gap:18px; width:min(560px,100%)}
+.btn{font-size:26px; padding:22px 28px; border-radius:16px; border:2px solid var(--gold);
+  background:none; color:var(--gold2); cursor:pointer; letter-spacing:4px; font-family:var(--sans);
+  transition:all .2s; text-align:center}
+.btn:active{transform:scale(.98); background:rgba(212,180,131,.12)}
+.btn.primary{background:var(--gold); color:#1a1a1a; font-weight:600}
+.btn.ghost{border-color:rgba(154,148,138,.5); color:var(--mut); font-size:22px}
+.btn.recording{border-color:var(--bad); color:var(--bad); animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.5}}
+
+/* 场景条 */
+.scenes{display:flex; gap:14px; flex-wrap:wrap; justify-content:center}
+.scene{font-size:20px; padding:16px 22px; border-radius:12px; border:1px solid rgba(212,180,131,.4);
+  background:none; color:var(--ink); cursor:pointer}
+.scene:active{background:rgba(212,180,131,.12)}
+.scene b{color:var(--gold2); display:block; font-size:22px}
+
+footer{padding:14px; text-align:center; font-size:14px; color:var(--mut); letter-spacing:2px}
+.hidden{display:none!important}
+.replay{font-size:18px; color:var(--mut); cursor:pointer; letter-spacing:2px; margin-top:4px}
+.replay:active{color:var(--gold2)}
+.voices{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:8px}
+.vtag{font-size:18px; color:var(--mut); border:1px solid rgba(154,148,138,.4); padding:8px 16px; border-radius:20px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">谛听 · 大字守护<span class="en">VERICALL ELDER</span></div>
+  <div style="font-size:16px;color:var(--mut)" id="sysState"></div>
+</header>
+
+<main>
+  <div class="greet" id="greet">您好，我是<b>谛听</b>。我会在您接电话时帮您辨认：<br>这个声音是不是您家人的<b>真声音</b>。</div>
+
+  <div class="ring idle" id="ring">
+    <div class="word" id="ringWord">待 命<small>点下方按钮试试</small></div>
+  </div>
+
+  <div class="state" id="state"></div>
+  <div class="advice" id="advice"></div>
+  <div class="replay hidden" id="replay">🔊 再听一遍</div>
+
+  <div class="btns" id="btns">
+    <button class="btn primary" id="recBtn">按住 说话 / 点我录音</button>
+    <div class="scenes">
+      <button class="scene" data-demo="A"><b>家人真声</b>听这个</button>
+      <button class="scene" data-demo="B"><b>AIGC 冒充</b>听这个</button>
+      <button class="scene" data-demo="C"><b>陌生人</b>听这个</button>
+    </div>
+    <label class="btn ghost" for="upFile">或 选一段电话录音</label>
+    <input type="file" id="upFile" accept="audio/*" class="hidden">
+  </div>
+
+  <div class="voices" id="voices"></div>
+</main>
+
+<footer>谛听 VeriCall · 适老端 · 只辨认声音，不评判内容 · 一切记录保存在本机</footer>
+
+<script src="/copy.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&quot;',"'":'&#39;'}[c]));}
+const COPY=(window.VERICALL_COPY&&window.VERICALL_COPY.states)||{
+  green:{word:"通话正常",short:"放心聊",advise:"通话正常，放心聊。"},
+  yellow:{word:"话术可疑",short:"多留个心眼",advise:"先别急着答应，问家人平时的号码确认一下。"},
+  red:{word:"声音存疑",short:"先挂断，回拨确认",advise:"这个声音听起来不对劲，建议挂断，拨打{family}平时的号码确认。"}
+};
+function speak(t){ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="zh-CN"; u.rate=.9; speechSynthesis.speak(u);}catch(e){} }
+function finalToState(f){ return f==="block"?"red":(f==="caution"?"yellow":"green"); }
+function familyName(){ return (window.__familyNames&&window.__familyNames[0])||"家人"; }
+let busy=false;
+
+function setRing(state, advice){
+  const r=$("ring"), w=$("ringWord");
+  r.className="ring "+state;
+  const c=COPY[state]||COPY.green;
+  w.innerHTML=c.word.replace(" ","&nbsp;")+'<small>'+esc(c.short)+'</small>';
+  $("state").textContent=c.word;
+  const adv=(advice||c.advise).replace("{family}",familyName());
+  $("advice").textContent=adv;
+  speak(adv);
+  $("replay").classList.remove("hidden");
+}
+
+async function loadStatus(){
+  try{
+    const s=await(await fetch("/api/status")).json();
+    $("sysState").textContent=(s.device||"")+"·"+(s.ollama?"语义在":"离线");
+    window.__familyNames=(s.voices||[]).map(v=>v.name);
+    const vs=s.voices||[];
+    $("voices").innerHTML=vs.length?("<span style='font-size:16px;color:var(--mut)'>已登记家人：</span>"+vs.map(v=>"<span class='vtag'>"+esc(v.name)+"</span>").join("")):"";
+  }catch(e){ $("sysState").textContent="服务未连"; }
+}
+
+async function analyze(fd){
+  if(busy) return; busy=true;
+  setIdle("分析中……请稍等");
+  try{
+    const r=await fetch("/api/analyze",{method:"POST",body:fd});
+    const d=await r.json();
+    if(d.error){ $("advice").textContent="分析失败：" + esc(d.message||d.error); speak("分析失败，请再试一次。"); return; }
+    const st=finalToState(d.final);
+    const rationale=(d.rationale||"").split("；")[0];
+    setRing(st, rationale||undefined);
+  }catch(e){
+    $("advice").textContent="网络或服务异常，请检查谛听是否已启动。";
+  }finally{ busy=false; }
+}
+
+function setIdle(t){
+  const r=$("ring"); r.className="ring idle";
+  $("ringWord").innerHTML="分 析 中<small>"+esc(t||"请稍等")+"</small>";
+  $("state").textContent=""; $("advice").textContent=""; $("replay").classList.add("hidden");
+}
+
+/* 场景 */
+document.querySelectorAll(".scene").forEach(b=>b.onclick=()=>{
+  const fd=new FormData(); fd.append("demo",b.dataset.demo); analyze(fd);
+});
+/* 上传 */
+$("upFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const fd=new FormData(); fd.append("file",f,f.name); analyze(fd);
+};
+/* 录音 */
+let mediaRecorder=null, chunks=[];
+$("recBtn").onclick=async ()=>{
+  if(mediaRecorder && mediaRecorder.state==="recording"){ mediaRecorder.stop(); return; }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    chunks=[]; mediaRecorder=new MediaRecorder(stream);
+    mediaRecorder.ondataavailable=e=>chunks.push(e.data);
+    mediaRecorder.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      $("recBtn").classList.remove("recording"); $("recBtn").textContent="按住 说话 / 点我录音";
+      const blob=new Blob(chunks,{type:"audio/webm"});
+      const fd=new FormData(); fd.append("file",blob,"recording.webm"); analyze(fd);
+    };
+    mediaRecorder.start();
+    $("recBtn").classList.add("recording"); $("recBtn").textContent="正在录音……再点一次结束";
+    speak("请开始说话，说完再点一下我。");
+    setTimeout(()=>{ if(mediaRecorder&&mediaRecorder.state==="recording") mediaRecorder.stop(); }, 15000);
+  }catch(e){ speak("无法打开麦克风，请检查权限。"); $("advice").textContent="无法打开麦克风，请允许浏览器使用麦克风。"; }
+};
+$("replay").onclick=()=>{ const t=$("advice").textContent; if(t) speak(t); };
+
+loadStatus();
+</script>
+</body>
+</html>

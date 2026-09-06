@@ -1,8 +1,8 @@
 {
-  "total": 4509,
-  "physical_pass": 3982,
-  "quarantined": 527,
-  "hard_examples": 2546,
+  "total": 6843,
+  "physical_pass": 6299,
+  "quarantined": 544,
+  "hard_examples": 0,
   "hard_note": "通道① spoof 分 <0.3 的高置信漏检难例（优先入评估集）",
   "thresholds": {
     "dur": [
@@ -11,6 +11,5 @@
     ],
     "clip_ratio_max": 0.01,
     "silence_ratio_max": 0.6
-  },
-  "hard_samples_csv": "C:\\Users\\Liii\\Desktop\\谛听VeriCall\\data\\redteam\\factory\\hard_samples.csv"
+  }
 }

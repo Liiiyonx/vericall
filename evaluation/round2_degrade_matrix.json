@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-06 19:21",
+  "source": "C:\\Users\\Liii\\Desktop\\谛听VeriCall\\evaluation\\round2_hard34.json",
+  "n_hard": 34,
+  "n_presets": 4,
+  "target_total": 136,
+  "n_ok": 136,
+  "n_skipped": 102,
+  "n_fail": 0,
+  "n_bad_validate": 0,
+  "presets": {
+    "amr": "AMR-NB 12.2kbps 移动信道",
+    "mp3_16k": "MP3 32kbps 编解码",
+    "noise": "8k + 粉噪 SNR15dB(免提外放)",
+    "phone8k": "8k 电话信道(μ-law+削顶)"
+  },
+  "manifest": "C:\\Users\\Liii\\Desktop\\谛听VeriCall\\data\\redteam\\factory\\round2_degrade\\manifest.json"
+}

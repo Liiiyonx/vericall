@@ -1,0 +1,368 @@
+{
+  "date": "2026-09-06 19:49",
+  "n": 10,
+  "sample_note": "从 SET-B 声学未拦(spoof<0.5) 89 条中抽 10",
+  "final_dist": {
+    "block": 10
+  },
+  "blocked": 10,
+  "caution": 0,
+  "allow": 0,
+  "saver_channels": {
+    "voiceprint": 10,
+    "semantic": 4
+  },
+  "records": [
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\amr\\seg_edgetts_sichuan_zh-CN-YunxiNeural_SC-000409_01.amr.wav",
+      "src_path": "data/redteam/factory/segments/edgetts/sichuan/seg_edgetts_sichuan_zh-CN-YunxiNeural_SC-000409_01.wav",
+      "preset": "amr",
+      "speaker_ref": "zh-CN-YunxiNeural",
+      "acoustic_spoof": 0.331,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「8342」相似度=0.27）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.331,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.331 (同域EER 0.00% 参考)",
+          "confidence": 0.337
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「8342」相似度=0.27",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.3,
+          "label": "normal",
+          "detail": "贷款审批通知，无诈骗要素 | 转写: 专员您上午申请的贷款已经批了，就差最后一步了。那个放款。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 22.8
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\amr\\seg_edgetts_mandarin_zh-CN-YunyangNeural_SC-000159_01.amr.wav",
+      "src_path": "data/redteam/factory/segments/edgetts/mandarin/seg_edgetts_mandarin_zh-CN-YunyangNeural_SC-000159_01.wav",
+      "preset": "amr",
+      "speaker_ref": "zh-CN-YunyangNeural",
+      "acoustic_spoof": 0.185,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「5072」相似度=0.27）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.185,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.185 (同域EER 0.00% 参考)",
+          "confidence": 0.63
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「5072」相似度=0.27",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.5,
+          "label": "normal",
+          "detail": "转账请求但无其他诈骗特征 | 转写: 对方要他转钱，说是要他帮人家一个忙，这孩子太单纯了。他。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 26.9
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\amr\\seg_edgetts_sichuan_zh-CN-YunxiNeural_SC-000576_00.amr.wav",
+      "src_path": "data/redteam/factory/segments/edgetts/sichuan/seg_edgetts_sichuan_zh-CN-YunxiNeural_SC-000576_00.wav",
+      "preset": "amr",
+      "speaker_ref": "zh-CN-YunxiNeural",
+      "acoustic_spoof": 0.42,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「8342」相似度=0.35）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.42,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.420 (同域EER 0.00% 参考)",
+          "confidence": 0.16
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「8342」相似度=0.35",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.3,
+          "label": "normal",
+          "detail": "自称银行部门，无后续诈骗行为，正常业务通知 | 转写: 喂，您好，请问是张先生吗？我这边是银行风控部门的系统显示。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 14.7
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\phone8k\\seg_edgetts_mandarin_zh-CN-YunyangNeural_SC-000036_03.phone8k.wav",
+      "src_path": "data/redteam/factory/segments/edgetts/mandarin/seg_edgetts_mandarin_zh-CN-YunyangNeural_SC-000036_03.wav",
+      "preset": "phone8k",
+      "speaker_ref": "zh-CN-YunyangNeural",
+      "acoustic_spoof": 0.339,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「5072」相似度=0.22）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.339,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.339 (同域EER 0.00% 参考)",
+          "confidence": 0.323
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「5072」相似度=0.22",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.7,
+          "label": "money_request",
+          "detail": "诱导配合资金退回操作，疑似诈骗要钱 | 转写: 操作是必须的，夜晚马上就能退回到您账户里。那个。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 19.2
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\phone8k\\seg_edgetts_mandarin_zh-CN-YunxiNeural_SC-000511_00.phone8k.wav",
+      "src_path": "data/redteam/factory/segments/edgetts/mandarin/seg_edgetts_mandarin_zh-CN-YunxiNeural_SC-000511_00.wav",
+      "preset": "phone8k",
+      "speaker_ref": "zh-CN-YunxiNeural",
+      "acoustic_spoof": 0.353,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「8342」相似度=0.30）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.353,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.353 (同域EER 0.00% 参考)",
+          "confidence": 0.294
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「8342」相似度=0.30",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.1,
+          "label": "normal",
+          "detail": "自称商场活动通知，无诈骗要素 | 转写: 喂，您好，请问是张女士吗？啊，我这边是某某商场的活动。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 38.5
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000085.amr.wav",
+      "src_path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000085.wav",
+      "preset": "amr",
+      "speaker_ref": "zh-CN-YunyangNeural",
+      "acoustic_spoof": 0.312,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「5072」相似度=0.21）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.312,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.312 (同域EER 0.00% 参考)",
+          "confidence": 0.376
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「5072」相似度=0.21",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.9,
+          "label": "money_request",
+          "detail": "要求转账到二维码收款，典型诈骗手段 | 转写: 那个你先转三案到这个二维码上啊，别生张，这时我回头再跟你慢慢解释。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 11.7
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\phone8k\\seg_edgetts_sichuan_zh-CN-YunxiNeural_SC-000429_01.phone8k.wav",
+      "src_path": "data/redteam/factory/segments/edgetts/sichuan/seg_edgetts_sichuan_zh-CN-YunxiNeural_SC-000429_01.wav",
+      "preset": "phone8k",
+      "speaker_ref": "zh-CN-YunxiNeural",
+      "acoustic_spoof": 0.412,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「3443」相似度=0.26）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.412,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.412 (同域EER 0.00% 参考)",
+          "confidence": 0.177
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「3443」相似度=0.26",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.3,
+          "label": "normal",
+          "detail": "正常业务推广，无诈骗特征 | 转写: 哦，这个月咱们刚好有一批养老扶持的名额下来啊，是那个。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 11.2
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\phone8k\\seg_edgetts_mandarin_zh-CN-YunxiNeural_SC-000327_00.phone8k.wav",
+      "src_path": "data/redteam/factory/segments/edgetts/mandarin/seg_edgetts_mandarin_zh-CN-YunxiNeural_SC-000327_00.wav",
+      "preset": "phone8k",
+      "speaker_ref": "zh-CN-YunxiNeural",
+      "acoustic_spoof": 0.213,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「8342」相似度=0.27）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.213,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.213 (同域EER 0.00% 参考)",
+          "confidence": 0.575
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「8342」相似度=0.27",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.3,
+          "label": "normal",
+          "detail": "安抚情绪，未见诈骗要素 | 转写: 喂，爸是我，你先别着急，听我说完，我那个今天出了点事。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 14.8
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\amr\\seg_edgetts_mandarin_zh-CN-YunyangNeural_SC-000036_03.amr.wav",
+      "src_path": "data/redteam/factory/segments/edgetts/mandarin/seg_edgetts_mandarin_zh-CN-YunyangNeural_SC-000036_03.wav",
+      "preset": "amr",
+      "speaker_ref": "zh-CN-YunyangNeural",
+      "acoustic_spoof": 0.444,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「5072」相似度=0.24）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.444,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.444 (同域EER 0.00% 参考)",
+          "confidence": 0.113
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「5072」相似度=0.24",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.3,
+          "label": "normal",
+          "detail": "提及资金退回，但无明确诈骗要素，可能正常退款说明 | 转写: 操作是必须的，夜晚马上就能退回到您账户里。那个。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 19.9
+    },
+    {
+      "file": "data\\redteam\\factory\\round2_degrade\\mp3_16k\\seg_edgetts_mandarin_zh-CN-YunxiNeural_SC-000480_00.mp3_16k.mp3",
+      "src_path": "data/redteam/factory/segments/edgetts/mandarin/seg_edgetts_mandarin_zh-CN-YunxiNeural_SC-000480_00.wav",
+      "preset": "mp3_16k",
+      "speaker_ref": "zh-CN-YunxiNeural",
+      "acoustic_spoof": 0.355,
+      "final": "block",
+      "fused_score": 1.0,
+      "confidence": 0.85,
+      "rationale": "纵深防御拦截：voiceprint 通道高置信命中（mismatch，最似「8342」相似度=0.09）",
+      "channels": [
+        {
+          "name": "xlsr_cn",
+          "score": 0.355,
+          "label": "bonafide",
+          "detail": "XLS-R+中文域LR spoof概率=0.355 (同域EER 0.00% 参考)",
+          "confidence": 0.29
+        },
+        {
+          "name": "voiceprint",
+          "score": 1.0,
+          "label": "mismatch",
+          "detail": "最似「8342」相似度=0.09",
+          "confidence": 0.85
+        },
+        {
+          "name": "semantic",
+          "score": 0.8,
+          "label": "impersonation",
+          "detail": "自称兑奖机构，疑似诈骗 | 转写: 喂，您好，是张女士吧？我是那个兑讲中心的，您之前抽中的那个。",
+          "confidence": 0.9
+        }
+      ],
+      "latency_s": 14.6
+    }
+  ],
+  "conclusion": "声学单通道未拦的 10 条重编码样本走三通道联合后，最终拦截/警惕 10 条（100%），放行 0 条；兜底通道分布：{'voiceprint': 10, 'semantic': 4}。→ 纵深防御实证：语义(话术风险)/声纹(非家人) 对声学漏检样本有效兜底，单通道击穿 ≠ 系统击穿。"
+}

@@ -76,7 +76,7 @@ def main():
     if not META.exists():
         sys.exit(f"未找到 {META}，先跑 run_factory.py")
 
-    with open(META, encoding="utf-8") as f:
+    with open(META, encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
     print(f"meta 共 {len(rows)} 条")
 

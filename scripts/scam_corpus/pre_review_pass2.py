@@ -78,17 +78,37 @@ def raw_review(scorer: CloudScorer, text: str, max_retry: int = 3) -> dict:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--all", action="store_true", help="复核全部 scam pass（默认仅含要钱关键词子集）")
+    ap.add_argument("--append", action="store_true", help="与既有 OUT_FLAG 增量合并（跳过已标记 id）")
     args = ap.parse_args()
 
     rows = list(csv.DictReader(open(PREFILTER, encoding="utf-8-sig")))
     scam_pass = [r for r in rows if r["kind"] == "scam" and r["verdict"] == "pass"]
-    risk = [r for r in scam_pass if any(k in r.get("text", "") for k in MONEY_KEYS)]
+    if args.all:
+        risk = scam_pass
+        print(f"scam pass 全量 {len(risk)} 条", flush=True)
+    else:
+        risk = [r for r in scam_pass if any(k in r.get("text", "") for k in MONEY_KEYS)]
+        print(f"pass 高风险子集 {len(risk)} 条（含强要钱动作词）", flush=True)
+
+    # 增量：读既有 flagged（id 集合 + 行），跳过已标记
+    legacy_rows, done_ids = [], set()
+    if args.append and OUT_FLAG.exists():
+        try:
+            with open(OUT_FLAG, encoding="utf-8-sig", newline="") as f:
+                rd = csv.DictReader(f)
+                for row in rd:
+                    legacy_rows.append(row)
+                    done_ids.add(row["id"])
+            risk = [r for r in risk if r["id"] not in done_ids]
+            print(f"增量合并：跳过已标记 {len(done_ids)}，待测 {len(risk)}", flush=True)
+        except Exception:  # noqa: BLE001
+            legacy_rows = []
     if args.limit:
         risk = risk[: args.limit]
-    print(f"pass 高风险子集 {len(risk)} 条（含强要钱动作词）", flush=True)
 
     scorer = CloudScorer()
-    flagged = []
+    flagged = list(legacy_rows)
     t0 = time.time()
     for i, r in enumerate(risk):
         got = raw_review(scorer, r.get("text", "")[:1500])

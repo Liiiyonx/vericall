@@ -66,7 +66,17 @@ def get_pipe():
     if _pipe is None:
         from fusion.pipeline import VeriCallPipeline
         from fusion.acoustic_channel import AcousticChannel
-        _pipe = VeriCallPipeline(acoustic=AcousticChannel(device=DEVICE))
+        # 声学通道选择：VERICALL_ACOUSTIC=xlsr_cn 时用中文域 XLS-R+LR（红队检出 97.9%），
+        # 默认保持 AASIST（英文基线，向后兼容）。
+        if os.environ.get("VERICALL_ACOUSTIC", "aasist") == "xlsr_cn":
+            from fusion.xlsr_cn_channel import XlsrCnChannel
+            ac = XlsrCnChannel(device=DEVICE)
+            if not ac.load():
+                print("[API] XLS-R 中文域声学通道加载失败，回退 AASIST")
+                ac = AcousticChannel(device=DEVICE)
+        else:
+            ac = AcousticChannel(device=DEVICE)
+        _pipe = VeriCallPipeline(acoustic=ac)
         if OFFLINE:
             # 离线模式：声纹通道用缓存判决，不依赖 funasr 重算
             print("[API] 离线降级模式：跳过声纹重算，使用落盘/缓存声纹")

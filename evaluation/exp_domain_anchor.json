@@ -1,0 +1,31 @@
+{
+  "date": "2026-09-06 12:04",
+  "design": "英文 train + 可变 CFAD 锚点(真伪各半) → 排除锚点评估；3 折均值",
+  "results": [
+    {
+      "anchor": 0,
+      "cfad_eer_pct": 15.0
+    },
+    {
+      "anchor": 100,
+      "cfad_eer_pct": 14.35
+    },
+    {
+      "anchor": 300,
+      "cfad_eer_pct": 12.41
+    },
+    {
+      "anchor": 800,
+      "cfad_eer_pct": 11.06
+    },
+    {
+      "anchor": 1200,
+      "cfad_eer_pct": 10.79
+    }
+  ],
+  "baseline_eer": 15.0,
+  "best_anchor": 1200,
+  "best_eer": 10.79,
+  "improvement_pp": 4.21,
+  "conclusion": "目标域锚点 0→1200 条：CFAD EER 15.00% → 10.79%（改善 4.21 pp，排除锚点严谨评估）。对照伪域扩充实验（FMFCC 伪 17.6k 全加反而恶化 4.6pp），少量目标域标注 + 域适配是跨域泛化的有效路径——支持「评测域少量标注微调」作为中文域落地策略（与计划书 P1-3 决策树的 FMFCC 微调分支一致，锚点需求 <10% 评测规模）。"
+}

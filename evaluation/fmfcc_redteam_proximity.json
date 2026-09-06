@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-06 11:43",
+  "n_per_cluster": 200,
+  "cosine_sim": {
+    "FMFCC伪↔红队": 0.9821,
+    "FMFCC伪↔CFAD真": 0.9986,
+    "红队↔CFAD真": 0.984
+  },
+  "l2_dist": {
+    "FMFCC伪↔红队": 1.11,
+    "FMFCC伪↔CFAD真": 0.29,
+    "红队↔CFAD真": 1.04
+  },
+  "cn_lr_spoof_mean": {
+    "FMFCC伪": 0.466,
+    "红队": 0.078,
+    "CFAD真": 0.225
+  },
+  "redteam_fmfcc_nn_overlap_pct": 84.8,
+  "conclusion": "余弦相似度：FMFCC伪↔红队 0.982 / FMFCC伪↔真 0.999 / 红队↔真 0.984；红队→FMFCC伪最近邻重叠 85%。中文域LR打分：FMFCC伪 0.466 / 红队 0.078 / 真 0.225。结论：红队与 FMFCC 伪样本特征距离近、LR 分数同档。"
+}

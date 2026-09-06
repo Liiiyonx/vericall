@@ -32,12 +32,15 @@ SCORER_PKL = ROOT / "data/redteam/factory/cn_lr_scorer.pkl"
 META = ROOT / "data/redteam/factory/meta.csv"
 OUT_CSV = ROOT / "data/redteam/factory/redteam_difficulty.csv"
 OUT_MD = ROOT / "data/redteam/factory/redteam_difficulty_summary.md"
+SEG_CSV = ROOT / "data/redteam/factory/redteam_seg_difficulty.csv"
+SEG_MD = ROOT / "data/redteam/factory/redteam_seg_difficulty_summary.md"
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0, help=">0 仅前 N 条（冒烟）")
     ap.add_argument("--resume", action="store_true", help="断点续跑（跳过已有结果）")
+    ap.add_argument("--seg-only", action="store_true", help="只对切段(seg=True)打分，输出到独立文件")
     args = ap.parse_args()
 
     import librosa
@@ -54,8 +57,10 @@ def main():
         clf = pickle.load(f)
     print(f"中文域 LR 打分器加载 OK", flush=True)
 
-    rows = list(csv.DictReader(open(META, encoding="utf-8")))
-    clean = [r for r in rows if r["channel"] == "clean"]
+    rows = list(csv.DictReader(open(META, encoding="utf-8-sig")))
+    clean = [r for r in rows if r["channel"] == "clean" and not r.get("seg")]
+    if args.seg_only:
+        clean = [r for r in rows if r.get("seg") == "True"]
     if args.limit:
         clean = clean[: args.limit]
     print(f"待打分 clean 母本: {len(clean)}", flush=True)
@@ -118,12 +123,13 @@ def main():
             return 1.0
     all_rows.sort(key=keyf)
 
-    with open(OUT_CSV, "w", encoding="utf-8-sig", newline="") as f:
+    _csv_out, _md_out = (SEG_CSV, SEG_MD) if args.seg_only else (OUT_CSV, OUT_MD)
+    with open(_csv_out, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["path", "engine", "dialect", "script_id",
                                           "speaker_ref", "difficulty_spoof_prob", "verdict"])
         w.writeheader()
         w.writerows(all_rows)
-    print(f"难度分表 -> {OUT_CSV}（{len(all_rows)} 条）", flush=True)
+    print(f"难度分表 -> {_csv_out}（{len(all_rows)} 条）", flush=True)
 
     # 汇总
     from collections import Counter
@@ -155,7 +161,7 @@ def main():
     lines += ["", "## 用途", "- 增量训练选样：隐蔽(难检) 段优先入训练集（spoof 角色）；",
               "- 质量报告：红队难度分布佐证数据价值；",
               "- 阈值 0.3/0.5 可按模型更新后重标定。"]
-    Path(OUT_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    Path(_md_out).write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"汇总 -> {OUT_MD}", flush=True)
 
 

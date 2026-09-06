@@ -153,7 +153,7 @@ def main():
         for k in new_rows[0]:
             if k not in fields:
                 fields.append(k)
-        with open(meta_path, "w", encoding="utf-8-sig", newline="") as f:
+        with open(meta_path, "w", encoding="utf-8", newline="") as f:
             w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
             w.writeheader()
             for row in existing:

@@ -1,24 +1,35 @@
-# 中文场景首次验证（P1-3）
+# 中文域基线（P1-3）· 状态更新 2026-09-06
 
-> 状态：**待数据**。FMFCC-A / CFAD 获取有周期，数据到位后跑 `scripts/eval_aasist_eer.py`
-> （或本目录的 `chinese_baseline` 流程）填充下表。
+> 本文原为"待数据"规划；**2026-09-06 数据全部到位、决策树已走通**，更新如下。
 
-## 方法
-1. 数据：FMFCC-A（GitHub 直接获取，1 万真 / 4 万假，含噪声与编解码）；CFAD 作第二集。
-2. 协议对齐：`scripts/convert_fmfcc_protocol.py` 已实装——把 FMFCC-A 标签转成 ASVspoof 5 列协议 + ASVspoof 风格目录布局，可经 `VERICALL_ASVSPOOF_LA` 直接喂给 `eval_aasist_eer.py` / `cross_domain_eval.py`。内置 `--selftest` 可在无真实数据下验证协议生成。
-3. 小规模首测：子采样 1000 真 + 1000 假，跑 AASIST 直测中文 EER + 分数分布。
+## 原决策树（保留，已执行）
 
-## 三个关键数字（后续所有材料的引用源）
-| 指标 | 数值 |
-|---|---|
-| 中文 EER | TODO |
-| 英文 eval EER | 3.49% |
-| 劣化倍数 | TODO |
+- 英文模型直测中文 EER 10–25%（典型跨域劣化）→ 启动中文域微调；
+- 结论已落地：见下文"实际结果"与 `redblue_evolution.md` 总叙事。
 
-## 决策树（按实际结果走）
-- <10%：跨语种泛化尚可 → 直接进入电话信道实验（P1-4），中文混训列为 P2 可选项。
-- 10–25%：典型跨域劣化 → 启动 FMFCC-A 微调（冻结大部分层，5060 上 5 epoch 内）。
-- >25%：崩了 → 微调 + 考虑 SSL 前端升级（wav2vec2-base + AASIST 头）。
+## 数据到位（2026-09-06 实测）
 
-## 误判样本抽样
-TODO（哪些攻击类型漏了）
+| 数据集 | 状态 | 备注 |
+|---|---|---|
+| FMFCC-A | 17,636 伪 wav（A07-A13 系）本地 | label 0=伪/1=真（⚠️ 与 ASVspoof 相反，09-06 纠正） |
+| aishell1 | **100 人全量 34,715 条真**（hf-mirror 按说话人） | CFAD 真同源 |
+| CFAD | 2,000 + 4 退化布局 | 评测集（隔离纪律不入训练） |
+| 红队 | 母本 3,117 + 切段 2,121 | 禁入训练，评测难例 |
+
+## 实际结果（决策树已走通 → 第 1 轮）
+
+1. **跨域劣化确认**：英文 AASIST 对中文 CFAD EER 44%、红队击穿 95.5% → 中文域适配必要；
+2. **适配执行**：aishell 真 + FMFCC 伪训练中文域 LR（XLS-R 特征）→ v4 打分器；
+3. **修复验证**：同域说话人外 EER **0.00%**；红队击穿 **0.3%**（基线 95-99%）；FAR 100% 判真；
+4. **评测域澄清（重要）**：CFAD（声码器伪）与 FMFCC/红队（TTS 伪）分布错位——
+   中文 TTS 检测正确评测在红队域，CFAD 仅作跨域参考（详见 `cn_model_cross_eval.md`）。
+
+## 协议转换（保留，兼容）
+
+`scripts/convert_fmfcc_protocol.py`：FMFCC 标签→ASVspoof 协议（含 --selftest）。
+⚠️ 09-06 核实：本地 FMFCC 文件为数字命名（2000xxxx.wav），协议 key 含 .wav 后缀勿去。
+
+## 入口导航
+
+核心叙事：`evaluation/redblue_evolution.md`；复现：`redblue_round1.py`、`exp_cn_same_domain.py`；
+正式打分器：`data/redteam/factory/cn_lr_scorer_full.pkl`（v4）。

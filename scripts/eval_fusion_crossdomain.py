@@ -84,14 +84,23 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=2000)
     ap.add_argument("--batch-size", type=int, default=32)
+    ap.add_argument("--deg", default="", help="退化信道名(amr/mp3_16k/noise/phone8k)或留空=原布局")
     args = ap.parse_args()
 
     from sklearn.linear_model import LogisticRegression
     from paths import EXP_RESULT_DIR  # noqa: E402
 
+    # ---- 0. 布局选择（退化信道矩阵）
+    deg_name = args.deg.strip()
+    layout = CFAD if not deg_name else CFAD.parent / f"asvspoof_layout_deg_{deg_name}"
+    report_md = REPORT_MD if not deg_name else REPORT_MD.with_name(f"fusion_crossdomain_deg_{deg_name}.md")
+    report_json = REPORT_JSON if not deg_name else REPORT_JSON.with_name(f"fusion_crossdomain_deg_{deg_name}.json")
+    tag = f"cfad{'_deg_'+deg_name if deg_name else ''}_{args.limit}"
+    print(f"[0/4] 布局: {layout.name} (tag={tag})", flush=True)
+
     # ---- 1. CFAD 样本（零样本评估集）
-    proto = CFAD / "ASVspoof2019_LA_cm_protocols" / "ASVspoof2019.LA.cm.dev.trl.txt"
-    flac_dir = CFAD / "ASVspoof2019_LA_dev" / "flac"
+    proto = layout / "ASVspoof2019_LA_cm_protocols" / "ASVspoof2019.LA.cm.dev.trl.txt"
+    flac_dir = layout / "ASVspoof2019_LA_dev" / "flac"
     items = []
     with open(proto, encoding="utf-8") as f:
         for line in f:
@@ -112,7 +121,7 @@ def main():
 
     # ---- 3. CFAD 上提取两路分数
     print("[3/4] CFAD 提取 XLS-R 特征与 AASIST 分数 ...", flush=True)
-    Xc, yc = extract_ssl_features(items, flac_dir, f"cfad_{args.limit}")
+    Xc, yc = extract_ssl_features(items, flac_dir, tag)
     exp_dir = Path(EXP_RESULT_DIR) / fs.MAIN_EXP
     cfg = json.loads((exp_dir / "config.conf").read_text(encoding="utf-8"))
     module = __import__("models." + cfg["model_config"]["architecture"], fromlist=["Model"])
@@ -123,7 +132,7 @@ def main():
     # AASIST 打分需与特征同序：extract 内部按大小排序，这里复用同一排序
     items_sorted = sorted(items, key=lambda t: (flac_dir / f"{t[0]}.flac").stat().st_size)
     aa_c, _ = fs.aasist_scores(model, items_sorted, flac_dir, device, args.batch_size,
-                               "cfad", CACHE_DIR / f"aasist_cfad_{args.limit}.npz")
+                               "cfad", CACHE_DIR / f"aasist_{tag}.npz")
     if not np.array_equal(yc, np.array([l for _, l in items_sorted])):
         raise SystemExit("CFAD 标签对齐失败")
 
@@ -145,20 +154,21 @@ def main():
                   "融合相对单模型的增益见上表。")
 
     payload = {"date": dt.datetime.now().isoformat(timespec="seconds"),
-               "dataset": "CFAD asvspoof_layout (zero-shot)", "n": int(len(yc)),
+               "dataset": f"CFAD {layout.name} (zero-shot{' + '+deg_name if deg_name else ''})",
+               "n": int(len(yc)),
                "results": [{"name": n, "eer_pct": e} for n, e in rows],
                "conclusion": conclusion}
     lines = ["# 融合模型中文域零样本复验（CFAD）",
              "",
              f"> 生成：{payload['date']} · 脚本 `scripts/eval_fusion_crossdomain.py`",
-             f"> CFAD {len(yc)} 条（1000 真/1000 伪）· 融合器在英文 ASVspoof train 上拟合，零样本应用",
+             f"> CFAD {len(yc)} 条 · 布局 `{layout.name}` · 融合器在英文 ASVspoof train 上拟合，零样本应用",
              "",
              "| 方案 | CFAD EER |",
              "|---|---|"]
     lines += [f"| {n} | {e:.2f}% |" for n, e in rows]
     lines += ["", "## 结论", "", conclusion]
-    REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    with open(REPORT_JSON, "w", encoding="utf-8") as f:
+    report_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    with open(report_json, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     print(f"报告 -> {REPORT_MD}")
     for n, e in rows:

@@ -1,7 +1,7 @@
 # 融合模型中文域零样本复验（CFAD）
 
-> 生成：2026-09-06T03:24:36 · 脚本 `scripts/eval_fusion_crossdomain.py`
-> CFAD 2000 条（1000 真/1000 伪）· 融合器在英文 ASVspoof train 上拟合，零样本应用
+> 生成：2026-09-06T10:41:31 · 脚本 `scripts/eval_fusion_crossdomain.py`
+> CFAD 2000 条 · 布局 `asvspoof_layout` · 融合器在英文 ASVspoof train 上拟合，零样本应用
 
 | 方案 | CFAD EER |
 |---|---|

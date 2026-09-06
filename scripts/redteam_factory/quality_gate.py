@@ -85,7 +85,7 @@ def main():
         from fusion.acoustic_channel import AcousticChannel
         acoustic = AcousticChannel()
 
-    results, quarantine, n_hard = [], [], 0
+    results, quarantine, n_hard, hard_list = [], [], 0, []
     for i, row in enumerate(rows):
         p = ROOT / row["path"]
         chk = physical_check(p)
@@ -100,6 +100,7 @@ def main():
                 rec["hard"] = r.score < HARD_SCORE_MAX
                 if rec["hard"]:
                     n_hard += 1
+                    hard_list.append(rec)
             except Exception as e:  # noqa: BLE001
                 rec["screen_error"] = f"{type(e).__name__}: {e}"
         results.append(rec)
@@ -117,12 +118,23 @@ def main():
     }
     with open(REPORT, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
+    if hard_list:
+        hard_csv = REPORT.parent / "hard_samples.csv"
+        with open(hard_csv, "w", encoding="utf-8-sig", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(hard_list[0].keys()))
+            w.writeheader()
+            w.writerows(hard_list)
+        report["hard_samples_csv"] = str(hard_csv)
+        # 回写 report（含 hard_samples 路径）
+        with open(REPORT, "w", encoding="utf-8") as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)
+        print(f"hard 难例清单 -> {hard_csv}（{len(hard_list)} 条）")
     if quarantine:
         with open(QUAR, "w", encoding="utf-8-sig", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(quarantine[0].keys()))
             w.writeheader()
             w.writerows(quarantine)
-    print(json.dumps(report, ensure_ascii=False, indent=2))
+    print(json.dumps({k: v for k, v in report.items() if k != "thresholds"}, ensure_ascii=False, indent=2))
     print(f"报告 -> {REPORT}" + (f"，隔离清单 -> {QUAR}" if quarantine else ""))
 
 

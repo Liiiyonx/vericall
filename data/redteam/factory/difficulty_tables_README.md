@@ -40,3 +40,13 @@ python scripts/redteam_factory/score_redteam_xlsr.py --scorer full
 python scripts/redteam_factory/score_redteam_xlsr.py --seg-only --scorer full
 # 快速重打（特征已缓存）用 .tmp_ssl 内联脚本，见历史 commit d34db94
 ```
+
+## 追加（09-06 14:10）：wide 版难度表（生产默认口径）
+
+| 文件 | 覆盖 | 打分器 | 分布 | 语义 |
+|---|---|---|---|---|
+| `redteam_difficulty_wide.csv` | 母本 3117 | **wide**（aishell+FMFCC+CFAD伪） | 可检 2990/边界 121/隐蔽 6 | 生产默认口径：TTS+声码器双域 |
+| `redteam_seg_difficulty_wide.csv` | 切段 2121 | **wide** | 可检 1989/边界 104/隐蔽 28 | 同上 |
+
+**最难样本定位**：wide 版中仍"隐蔽"的 6（母本）+ 28（切段）= 34 条是 wide 也难检的
+**极难样本**——红蓝第 2 轮攻击升级的候选靶标（红队禁训练，仅作评测分层）。

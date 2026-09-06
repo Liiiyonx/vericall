@@ -1,0 +1,23 @@
+{
+  "note": "离线演示缓存（任务书 P0-4）。声学/声纹为预存判决（标注离线来源，不代表实时推理）；话术通道在离线时实时跑 rule_scorer 规则评分器 → 再走真实融合裁决。VERICALL_OFFLINE=1 时由 pipeline._offline_result 读取。",
+  "scenarios": {
+    "A": {
+      "title": "家人本人来电（真声，音色匹配）",
+      "transcript": "妈，我周末回来吃饭，你别买菜了我在路上买。对了爸的降压药吃完没？",
+      "acoustic": {"name": "acoustic", "score": 0.04, "label": "bonafide", "detail": "[离线缓存] AASIST 未加载，使用缓存判决", "confidence": 0.9},
+      "voiceprint": {"name": "voiceprint", "score": 0.05, "label": "match", "detail": "[离线缓存] 声纹一致", "confidence": 0.9}
+    },
+    "B": {
+      "title": "AIGC 冒充家人（同音色伪造声，索要钱财）",
+      "transcript": "喂妈，是我啊，我手机摔坏了这是同学的号。我在学校出点事急用钱，你先转五万到这个卡号，别告诉我爸，快点啊要不来不及了。",
+      "acoustic": {"name": "acoustic", "score": 0.92, "label": "spoof", "detail": "[离线缓存] AASIST 判定合成语音", "confidence": 0.95},
+      "voiceprint": {"name": "voiceprint", "score": 0.85, "label": "mismatch", "detail": "[离线缓存] 声纹不符", "confidence": 0.9}
+    },
+    "C": {
+      "title": "陌生人来电（真声，音色不匹配）",
+      "transcript": "您好，您的快递已放到小区丰巢柜，取件码是 3372，请及时领取。",
+      "acoustic": {"name": "acoustic", "score": 0.04, "label": "bonafide", "detail": "[离线缓存] AASIST 未加载，使用缓存判决", "confidence": 0.9},
+      "voiceprint": {"name": "voiceprint", "score": 0.70, "label": "mismatch", "detail": "[离线缓存] 声纹不符", "confidence": 0.85}
+    }
+  }
+}

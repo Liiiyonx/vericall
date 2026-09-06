@@ -1,22 +1,22 @@
 {
   "created": "2026-09-06",
   "backend": "cloud",
-  "total": 8501,
+  "total": 11953,
   "by_category": {
-    "impersonate_family": 1125,
-    "impersonate_authority": 1087,
-    "fake_investment": 1033,
-    "refund_cs": 1082,
-    "lottery_prize": 1093,
-    "online_loan": 1067,
-    "elder_healthcare": 1064,
-    "romance_pig": 950
+    "impersonate_family": 1578,
+    "impersonate_authority": 1518,
+    "fake_investment": 1447,
+    "refund_cs": 1518,
+    "lottery_prize": 1530,
+    "online_loan": 1499,
+    "elder_healthcare": 1518,
+    "romance_pig": 1345
   },
   "by_stage": {
-    "opening": 1908,
-    "buildup": 2310,
-    "pressure": 2019,
-    "ask": 2264
+    "opening": 2599,
+    "buildup": 3246,
+    "pressure": 2896,
+    "ask": 3212
   },
-  "review_sampled": 1136
+  "review_sampled": 1826
 }

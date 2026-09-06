@@ -1,6 +1,6 @@
 # 谛听 VeriCall
 
-[![CI](https://github.com/Liiiyonx/vericall/actions/workflows/ci.yml/badge.svg)](https://github.com/Liiiyonx/vericall/actions/workflows/ci.yml) ![AASIST dev EER](https://img.shields.io/badge/AASIST_dev_EER-0.745%25-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+[![CI](https://github.com/Liiiyonx/vericall/actions/workflows/ci.yml/badge.svg)](https://github.com/Liiiyonx/vericall/actions/workflows/ci.yml) ![AASIST dev EER](https://img.shields.io/badge/AASIST_dev_EER-0.745%25-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue)
 
 > 面向老年群体的 **AI 拟声电话诈骗拦截系统**（换脸检测为二期规划，见下）。
 > 当诈骗分子用 AI 伪造家人声音来电时，通话中实时给出"伪造检测 + 家庭声纹 + 话术风险"三重证据判定，保护老人不被转账诈骗。

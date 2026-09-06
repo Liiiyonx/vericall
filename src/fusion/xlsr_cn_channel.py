@@ -32,12 +32,14 @@ SSL_LOCAL = "D:/VeriCall_data/models/wav2vec2-xls-r-300m"
 class XlsrCnChannel:
     """通道①-X：XLS-R + 中文域 LR 声学伪造检测。
 
-    scorer 选择：'v4'（默认，aishell+FMFCC，专注 TTS/克隆，红队检出 97.9%）
-              或 'wide'（aishell+FMFCC+CFAD伪，全谱，红队 ~96% 且 CFAD 47→28%）。
+    scorer 选择：'wide'（**默认**，aishell+FMFCC+CFAD伪 全谱，生产均衡：红队切段更优且 CFAD 47→28%）
+              或 'v4'（aishell+FMFCC，专注 TTS/克隆，红队母本检出 97.9% 略高）。
     """
 
-    def __init__(self, scorer: str = "v4",
+    def __init__(self, scorer: str = "wide",
                  device: Optional[str] = None):
+        """scorer: 'wide'(默认,生产均衡: TTS+声码器双域) | 'v4'(专注TTS/克隆,母本检出更高)。
+        依据 redteam_full_wide_eval.md：wide 红队母本 95.9%/切段 93.8%，CFAD 47→28%。"""
         self.scorer = scorer
         self.scorer_pkl = SCORER_PKL if scorer == "v4" else SCORER_PKL.with_name("cn_lr_scorer_wide.pkl")
         self._ssl = None

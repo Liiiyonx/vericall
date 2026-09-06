@@ -70,7 +70,7 @@ def get_pipe():
         # xlsr_cn:wide 用宽覆盖（含 CFAD 声码器伪，CFAD 47→28%）；默认保持 AASIST（英文基线，向后兼容）。
         if os.environ.get("VERICALL_ACOUSTIC", "aasist").startswith("xlsr_cn"):
             from fusion.xlsr_cn_channel import XlsrCnChannel
-            _scorer = os.environ.get("VERICALL_ACOUSTIC", "").split(":")[1] if ":" in os.environ.get("VERICALL_ACOUSTIC", "") else "v4"
+            _scorer = os.environ.get("VERICALL_ACOUSTIC", "").split(":")[1] if ":" in os.environ.get("VERICALL_ACOUSTIC", "") else "wide"
             ac = XlsrCnChannel(scorer=_scorer, device=DEVICE)
             if not ac.load():
                 print("[API] XLS-R 中文域声学通道加载失败，回退 AASIST")

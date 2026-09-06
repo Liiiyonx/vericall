@@ -4,7 +4,8 @@
 =============================================
 职责：
   1. [ASR]   接收通话音频 -> 本地 SenseVoice 转写为文本（中文/方言/英文多语种）。
-  2. [LLM]   转写文本 -> 本地 Ollama deepseek-r1 -> 诈骗话术风险分与类别。
+  2. [LLM]   转写文本 -> 诈骗话术风险分与类别（**默认云端 DeepSeek deepseek-chat**，
+             仅显式 VERICALL_SEMANTIC_LLM=ollama 时才走本地 Ollama）。
 
 架构位置：
     通道① 声学伪造检测（AASIST）     -> "是不是合成语音"
@@ -12,20 +13,19 @@
     通道③ 本模块                     -> "内容是不是诈骗话术"  ← 这里
 
 设计要点：
-- 全本地：SenseVoice（paths.SENSEVOICE_DIR）+ Ollama（paths.OLLAMA_HOST），
-  语音与文本均不出户，零 API 成本。路径统一在 src/paths.py 配置，勿在此写死盘符。
+- LLM 后端（默认 cloud，铁律：不用本地 Ollama，太慢）：
+    cloud → DeepSeek OpenAI 兼容 API（SCAM_LLM_BASE/SCAM_LLM_KEY/SCAM_LLM_MODEL，
+            密钥由 D:/VeriCall_data/secrets/vericall_secrets.env 提供；无密钥不静默回退）
+    ollama → 仅显式 VERICALL_SEMANTIC_LLM=ollama 时启用（本地 paths.OLLAMA_HOST）
 - ASR 懒加载：import 本模块不依赖 funasr；只有调用 transcribe/analyze_audio 时才加载模型。
-- ⚠️ 显存约束（RTX 5060 8GB）：SenseVoice（ASR）与 deepseek-r1:8b（LLM）**不能同时占满 GPU**，
-  否则 Ollama 加载 LLM 时 OOM 报 HTTP 500。融合编排时务必二选一：
-  (a) ASR 跑完释放 GPU 后再调 LLM；或 (b) Ollama 限制 num_gpu_layers 走 CPU；
-  或 (c) 实时决策用更小的指令模型（如 1.5B）替代 r1:8b。两半链路已各自独立验证可用。
-- deepseek-r1 是思考型模型，响应带 <think>...</think>，自动剥离。
-- 输出统一为 SemanticResult（risk/category/reason/latency/model），供三通道决策融合。
+- ⚠️ 显存约束仅存在于 ollama 逃生口（RTX 5060 8GB）：SenseVoice（ASR）与 r1:8b 不能同占 GPU。
+  cloud 模式 LLM 在云端，无此约束。
+- 输出统一为 SemanticResult（risk/category/reason/latency/model/backend），供三通道决策融合。
 - 任意环节失败都返回带 reason 的兜底结果，融合层按"低置信"处理，绝不静默吞错。
 
 用法（作为库）：
     from fusion.semantic_channel import SemanticChannel
-    ch = SemanticChannel()                       # 默认 deepseek-r1:8b + 本地 SenseVoice
+    ch = SemanticChannel()                       # 默认云端 DeepSeek（无密钥→规则兜底）
     r = ch.analyze("妈，是我，手机摔了，急用五万块...")        # 纯文本
     r = ch.analyze_audio("call_20260831.wav")                  # 音频 -> ASR -> 风险
 
@@ -49,11 +49,28 @@ from typing import Optional
 # 让本模块既能被 `from fusion.semantic_channel import` 导入，
 # 也能 `python semantic_channel.py` 直接跑。
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from paths import SENSEVOICE_DIR, OLLAMA_HOST, OLLAMA_MODEL, DEVICE, OFFLINE  # noqa: E402
+from paths import (SENSEVOICE_DIR, OLLAMA_HOST, OLLAMA_MODEL, DEVICE, OFFLINE,  # noqa: E402
+                   SEMANTIC_LLM_BACKEND)
 
 OLLAMA_URL = f"{OLLAMA_HOST.rstrip('/')}/api/chat"
 DEFAULT_MODEL = OLLAMA_MODEL
-TIMEOUT_SECONDS = 120  # r1 思考型模型，给足时间
+TIMEOUT_SECONDS = 120  # 给足时间（本地 r1 思考型慢；云端一般数秒内返回）
+
+# ---- 云端 DeepSeek（默认后端；OpenAI 兼容 API，密钥来自 secrets env）----
+CLOUD_BASE = (os.environ.get("SCAM_LLM_BASE") or "https://api.deepseek.com/v1").rstrip("/")
+CLOUD_KEY = os.environ.get("SCAM_LLM_KEY") or ""
+CLOUD_MODEL = os.environ.get("SCAM_LLM_MODEL") or "deepseek-chat"
+
+
+def resolve_backend(explicit: Optional[str] = None) -> str:
+    """解析 LLM 后端。铁律：默认 cloud，绝不静默回退 ollama。
+
+    cloud  → DeepSeek 云端（需要 SCAM_LLM_KEY；无密钥由调用方/analyze 走规则兜底）
+    ollama → 仅当显式 env VERICALL_SEMANTIC_LLM=ollama 或显式传参才启用
+    """
+    raw = (explicit or os.environ.get("VERICALL_SEMANTIC_LLM") or SEMANTIC_LLM_BACKEND or "cloud")
+    b = str(raw).strip().lower()
+    return "ollama" if b == "ollama" else "cloud"
 
 # ASR 推理设备：cuda:0 / cpu，由 VERICALL_DEVICE 控制（见 src/paths.py）
 ASR_DEVICE = "cuda:0" if DEVICE == "cuda" else "cpu"
@@ -94,6 +111,7 @@ class SemanticResult:
     latency_s: float       # 端到端时延（秒）
     model: str             # 使用的风险模型名
     transcript: str = ""   # ASR 转写文本（纯文本分析时为空）
+    backend: str = ""      # llm 后端：cloud | ollama | rule | rule-offline
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -155,36 +173,38 @@ class SenseVoiceASR:
 class SemanticChannel:
     """通道③：话术语义风险分析。可纯文本，也可音频->ASR->风险。"""
 
-    def __init__(self, model: str = DEFAULT_MODEL, url: str = OLLAMA_URL,
-                 timeout: int = TIMEOUT_SECONDS, asr: Optional[SenseVoiceASR] = None):
-        self.model = model
-        self.url = url
+    def __init__(self, model: Optional[str] = None, url: Optional[str] = None,
+                 timeout: int = TIMEOUT_SECONDS, asr: Optional[SenseVoiceASR] = None,
+                 backend: Optional[str] = None):
+        # 铁律（2026-09-06）：默认 cloud（DeepSeek 云端），ollama 仅显式开启
+        self.backend = resolve_backend(backend)
+        if self.backend == "cloud":
+            self.model = model or CLOUD_MODEL
+            self.url = f"{CLOUD_BASE}/chat/completions"
+        else:
+            self.model = model or DEFAULT_MODEL
+            self.url = url or OLLAMA_URL
         self.timeout = timeout
         self.asr = asr or SenseVoiceASR()
-        self._llm_cache: Optional[bool] = None   # Ollama 可达性缓存
+        self._llm_cache: Optional[bool] = None   # LLM 可达性缓存（cloud/ollama 共用）
 
     # ------------------------------------------------------------------ #
     def analyze(self, transcript: str) -> SemanticResult:
         """分析一段转写文本。transcript 需非空。"""
-        if OFFLINE or not self.llm_available():
-            # 离线降级 / Ollama 不可达：走规则评分器（零依赖，答辩现场可演示）
-            return self._rule_score(transcript)
         if not transcript or not transcript.strip():
             return self._fallback("空文本")
-        payload = json.dumps({
-            "model": self.model,
-            "stream": False,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": transcript.strip()[:2000]},
-            ],
-            "options": {"temperature": 0.2},  # 分类任务要稳定
-        }).encode("utf-8")
+        if OFFLINE or not self.llm_available():
+            # 离线 / LLM 不可达（cloud 缺密钥 或 ollama 未起）：规则评分器兜底（零依赖）
+            return self._rule_score(transcript)
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": transcript.strip()[:2000]},
+        ]
         t0 = time.time()
-        data = self._call_ollama(payload)
-        if data is None:
-            return self._fallback("Ollama 调用失败(含重试)", t0)
-        content = self._strip_think(data.get("message", {}).get("content", ""))
+        content = self._call_llm(messages)   # 返回模型原始文本；失败为 None
+        if content is None:
+            return self._fallback("LLM 调用失败(含重试)", t0)
+        content = self._strip_think(content)
         parsed = self._parse_json(content)
         if parsed is None:
             return self._fallback(f"LLM 输出无法解析: {content[:80]!r}", t0)
@@ -199,6 +219,7 @@ class SemanticChannel:
             latency_s=round(time.time() - t0, 2),
             model=self.model,
             transcript=transcript.strip(),
+            backend=self.backend,
         )
 
     def analyze_audio(self, audio_path: str, language: str = "auto") -> SemanticResult:
@@ -208,7 +229,7 @@ class SemanticChannel:
             return SemanticResult(
                 risk=0.5, category="unknown",
                 reason="离线模式无法转写(无 SenseVoice)", latency_s=0.0,
-                model="rule-offline", transcript="")
+                model="rule-offline", transcript="", backend="rule-offline")
         t0 = time.time()
         try:
             transcript = self.asr.transcribe(audio_path, language=language)
@@ -228,32 +249,47 @@ class SemanticChannel:
         return r
 
     # ------------------------------------------------------------------ #
-    def _call_ollama(self, payload: bytes):
-        """调用 Ollama，遇到 500（冷加载/OOM 瞬时失败）自动重试。
+    def _call_llm(self, messages: list, temperature: float = 0.2) -> Optional[str]:
+        """调 LLM 并返回模型原始文本（cloud=DeepSeek chat/completions，
+        ollama=/api/chat）。网络抖动 / HTTP 429/500/503 有限退避重试；失败返回 None。
 
-        实测：deepseek-r1:8b 首次加载时若与 GPU 其它模型释放节奏冲突，
-        Ollama 会瞬时返回 500（Internal Server Error）。模型常驻后重试即可成功，
-        故此处做有限次退避重试而非直接兜底，避免丢失真实语义评分。
+        cloud 模式分类任务 temperature 直接传顶层；ollama 走 options 包装。
         """
+        if self.backend == "cloud":
+            body = {"model": self.model, "stream": False,
+                    "messages": messages, "temperature": temperature}
+            headers = {"Content-Type": "application/json",
+                       "Authorization": f"Bearer {CLOUD_KEY}"}
+
+            def pick(d):
+                return d["choices"][0]["message"]["content"]
+        else:
+            body = {"model": self.model, "stream": False,
+                    "messages": messages, "options": {"temperature": temperature}}
+            headers = {"Content-Type": "application/json"}
+
+            def pick(d):
+                return d.get("message", {}).get("content", "")
+
         last_err = None
         for attempt in range(3):
             try:
                 req = urllib.request.Request(
-                    self.url, data=payload,
-                    headers={"Content-Type": "application/json"})
+                    self.url, data=json.dumps(body).encode("utf-8"), headers=headers)
                 with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                    return json.loads(resp.read().decode("utf-8"))
+                    return pick(json.loads(resp.read().decode("utf-8")))
             except urllib.error.HTTPError as e:
                 last_err = f"HTTP {e.code}"
-                if e.code == 500:
-                    time.sleep(2 + attempt * 3)   # 退避：等模型加载完成
+                if e.code in (429, 500, 503):
+                    time.sleep(2 + attempt * 3)   # 退避后重试
                     continue
                 return None
-            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+            except (urllib.error.URLError, TimeoutError,
+                    json.JSONDecodeError, KeyError) as e:
                 last_err = str(e)
                 time.sleep(1 + attempt * 2)
                 continue
-        print(f"[话术] Ollama 重试后仍失败: {last_err}")
+        print(f"[话术] {self.backend} 重试后仍失败: {last_err}")
         return None
 
     # ------------------------------------------------------------------ #
@@ -283,30 +319,38 @@ class SemanticChannel:
         res = rule_score(text)
         return SemanticResult(
             risk=res.risk, category=res.category, reason=res.reason,
-            latency_s=0.0, model="rule-offline", transcript=(text or "").strip())
+            latency_s=0.0, model="rule-offline", backend="rule",
+            transcript=(text or "").strip())
 
     def llm_available(self) -> bool:
-        """探测 Ollama 是否可达（结果缓存，避免每次分析都发请求）。"""
+        """LLM 可达性探测（结果缓存，避免每次分析都发请求）。
+
+        cloud：有 SCAM_LLM_KEY 即视为可用（真实连通性由调用重试兜底）；
+        ollama：探测 /api/tags。
+        """
         if OFFLINE:
             return False
         if self._llm_cache is not None:
             return self._llm_cache
         ok = False
-        try:
-            import urllib.request
-            with urllib.request.urlopen(
-                    f"{OLLAMA_HOST.rstrip('/')}/api/tags", timeout=1.5) as resp:
-                ok = resp.status == 200
-        except Exception:  # noqa: BLE001
-            ok = False
+        if self.backend == "cloud":
+            ok = bool(CLOUD_KEY)
+        else:
+            try:
+                with urllib.request.urlopen(
+                        f"{OLLAMA_HOST.rstrip('/')}/api/tags", timeout=1.5) as resp:
+                    ok = resp.status == 200
+            except Exception:  # noqa: BLE001
+                ok = False
         self._llm_cache = ok
         return ok
 
-    def _fallback(self, why: str, t0: Optional[float] = None) -> SemanticResult:
+    def _fallback(self, why: str, t0: Optional[float] = None,
+                  backend: Optional[str] = None) -> SemanticResult:
         lat = round(time.time() - t0, 2) if t0 else 0.0
         return SemanticResult(risk=0.5, category="unknown",
                               reason=f"低置信: {why}", latency_s=lat,
-                              model=self.model)
+                              model=self.model, backend=backend or self.backend)
 
 
 # ---------------------------------------------------------------------- #
@@ -320,7 +364,7 @@ def _demo():
         ("正常-业务", "您好，您的快递已放到小区丰巢柜，取件码是 3372，请及时领取。"),
     ]
     ch = SemanticChannel()
-    print(f"风险模型: {ch.model} @ {ch.url}\n")
+    print(f"风险模型: {ch.model} @ {ch.url} (backend={ch.backend})\n")
     for name, text in samples:
         r = ch.analyze(text)
         flag = "⚠️" if r.risk >= 0.7 else "✓"

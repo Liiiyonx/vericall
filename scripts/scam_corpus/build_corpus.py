@@ -9,12 +9,12 @@
   seeds 网格（8 类 × 4 阶段）→ LLM 扩写 → 清洗 → 去重（精确 + 近重复）
   → 风险要素自动标注 → 通道③自洽过滤（可选）→ jsonl + 抽检 CSV + 统计
 
-LLM 后端（优先级从高到低）：
-  云端 OpenAI 兼容 API（不计算力主力）：
+LLM 后端（2026-09-06 起铁律：默认云端 DeepSeek，本地 Ollama 已弃用）：
+  云端 OpenAI 兼容 API（默认，快）：
       set SCAM_LLM_BASE=https://api.deepseek.com/v1
       set SCAM_LLM_KEY=sk-...
       set SCAM_LLM_MODEL=deepseek-chat
-  本地 Ollama 回退：默认 http://localhost:11434，模型 deepseek-r1:8b
+  本地 Ollama：仅显式 `--backend ollama`（慢，不推荐）
 
 用法：
   python build_corpus.py --per-cell 5                 # 8类×4阶段×5 = 160 条/轮
@@ -119,9 +119,16 @@ def call_cloud(prompt: str, timeout: int = 120) -> str:
 
 
 def pick_backend(name: str):
-    if name == "cloud" or (name == "auto" and os.environ.get("SCAM_LLM_KEY")):
-        return "cloud", call_cloud
-    return "ollama", call_ollama
+    # 铁律（2026-09-06）：默认云端 DeepSeek；ollama 仅显式 --backend ollama 才启用（太慢）
+    if name == "ollama":
+        print("[警告] 使用本地 Ollama 后端（慢，仅显式选择时启用）")
+        return "ollama", call_ollama
+    if not os.environ.get("SCAM_LLM_KEY"):
+        raise SystemExit(
+            "[错误] 未找到 SCAM_LLM_KEY，无法用云端后端。请先：\n"
+            "  set -a; source /d/VeriCall_data/secrets/vericall_secrets.env; set +a\n"
+            "（默认云端 DeepSeek；本地 Ollama 已弃用，仅显式 --backend ollama 可用）")
+    return "cloud", call_cloud
 
 
 # ---------------- 去重 ----------------

@@ -130,12 +130,21 @@ def _model_status() -> dict:
             ollama = resp.status == 200
     except Exception:  # noqa: BLE001
         pass
+    # 2026-09-06：语义通道 LLM 后端（cloud=DeepSeek 默认 / ollama 显式 / rule 兜底）
+    _sem = os.environ.get("VERICALL_SEMANTIC_LLM", "cloud").strip().lower()
+    if OFFLINE:
+        sem_backend = "rule"
+    elif _sem == "ollama":
+        sem_backend = "ollama"
+    else:
+        sem_backend = "cloud" if os.environ.get("SCAM_LLM_KEY") else "rule"
     return {
         "aasist_dev_eer": eer,
         "eval_eer": (json.loads(q.read_text(encoding="utf-8"))
                      .get("eval_eer_best_verified") if q.is_file() else None),
         "voices": voices,
         "ollama": ollama,
+        "semantic_backend": sem_backend,
         "device": DEVICE,
         # 09-06 前端展示：当前声学通道（aasist | xlsr_cn | xlsr_cn:wide）
         "acoustic": os.environ.get("VERICALL_ACOUSTIC", "aasist"),

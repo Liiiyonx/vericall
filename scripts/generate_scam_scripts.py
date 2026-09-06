@@ -36,7 +36,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from fusion.semantic_channel import SemanticChannel, SemanticResult  # noqa: E402
 
 OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL = "deepseek-r1:8b"
+# 2026-09-06 铁律：默认云端 DeepSeek；ollama 仅显式 VERICALL_SEMANTIC_LLM=ollama
+CLOUD_BASE = (os.environ.get("SCAM_LLM_BASE") or "https://api.deepseek.com/v1").rstrip("/")
+CLOUD_KEY = os.environ.get("SCAM_LLM_KEY") or ""
+CLOUD_MODEL = os.environ.get("SCAM_LLM_MODEL") or "deepseek-chat"
+BACKEND = ("ollama" if os.environ.get("VERICALL_SEMANTIC_LLM", "").lower() == "ollama"
+           else ("cloud" if CLOUD_KEY else "no-key"))
+MODEL = CLOUD_MODEL if BACKEND == "cloud" else "deepseek-r1:8b"
 OUT_PATH = Path(__file__).resolve().parents[1] / "data" / "redteam" / "scam_scripts.jsonl"
 
 # 四类诈骗种子模板（{var} 由风格轴填充）
@@ -105,6 +111,22 @@ def _strip_think(text: str) -> str:
 
 
 def _call_llm(prompt: str, timeout: int = 120) -> str:
+    if BACKEND == "no-key":
+        raise SystemExit(
+            "[错误] 未找到 SCAM_LLM_KEY：请先 source /d/VeriCall_data/secrets/"
+            "vericall_secrets.env。默认云端 DeepSeek；本地 Ollama 已弃用。")
+    if BACKEND == "cloud":
+        body = {"model": CLOUD_MODEL, "stream": False, "temperature": 0.9,
+                "messages": [{"role": "user", "content": prompt}]}
+        req = urllib.request.Request(
+            f"{CLOUD_BASE}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json",
+                     "Authorization": f"Bearer {CLOUD_KEY}"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        return _strip_think(data["choices"][0]["message"]["content"])
+    # ollama（显式逃生口）
     payload = json.dumps({
         "model": MODEL,
         "stream": False,

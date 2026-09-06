@@ -88,6 +88,8 @@ SENSEVOICE_DIR = _p("VERICALL_SENSEVOICE_DIR", str(MODELS_ROOT / "SenseVoiceSmal
 SV_EXAMPLE = SENSEVOICE_DIR / "example"          # 自带 zh.mp3 / en.mp3，用于自测
 OLLAMA_HOST = env("VERICALL_OLLAMA_HOST", "http://localhost:11434") or "http://localhost:11434"
 OLLAMA_MODEL = env("VERICALL_OLLAMA_MODEL", "deepseek-r1:8b") or "deepseek-r1:8b"
+# 话术语义 LLM 后端（2026-09-06 起默认 cloud=DeepSeek 云端；ollama 仅显式开启——太慢）
+SEMANTIC_LLM_BACKEND = (env("VERICALL_SEMANTIC_LLM", "cloud") or "cloud").strip().lower()
 
 # AASIST（clovaai/aasist 需自行 clone 到 external/，见 README）
 AASIST_DIR = _p("VERICALL_AASIST_DIR", str(ROOT / "external" / "aasist"))

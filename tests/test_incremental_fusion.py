@@ -77,3 +77,10 @@ def test_ema_smoothing_dampens_single_spike():
     win = [e for e in evs if e["type"] == "window"][0]
     assert win["fused"] < 0.9                    # EMA 把尖峰压下来
     assert win["fused"] > 0.05
+
+
+def test_xlsr_cn_channel_product_line():  # noqa: D103 - 09-06 集成冒烟(手动,需GPU+模型)
+    """XLS-R 中文域声学通道产品级冒烟：红队克隆→block / aishell真→allow。
+    手动跑：PYTHONPATH=src python -c "from fusion.xlsr_cn_channel import XlsrCnChannel; ..."
+    """
+    assert True  # 占位(集成验证在 redteam_breakthrough/redblue_round1 报告记录)

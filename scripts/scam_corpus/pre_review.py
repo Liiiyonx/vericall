@@ -130,10 +130,35 @@ def main():
 
     print(f"待预筛: {len(tasks)} 条 (kind={args.kind})", flush=True)
     results, t0 = [], time.time()
+
+    # 既有结果合并保护：若 OUT_CSV 已有数据且本次只跑单一 kind，
+    # 先把旧结果读回，避免覆盖另一 kind 的历史预筛（2026-09-06 修复）。
+    legacy = []  # [(kind,id,category,stage,near_boundary,verdict,reason,text)]
+    if OUT_CSV.exists() and args.kind in ("scam", "benign"):
+        try:
+            with open(OUT_CSV, encoding="utf-8-sig", newline="") as f:
+                rd = csv.reader(f)
+                _h = next(rd, None)
+                for row in rd:
+                    if row:
+                        legacy.append(row)
+            print(f"  合并保护：读回既有结果 {len(legacy)} 行（仅覆盖 kind={args.kind} 的部分）", flush=True)
+        except Exception:  # noqa: BLE001
+            legacy = []
+
     with open(OUT_CSV, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f)
         w.writerow(["kind", "id", "category", "stage", "near_boundary",
                     "verdict", "reason", "text"])
+        # 先写非本次 kind 的既有行（保留）
+        for row in legacy:
+            if len(row) >= 8 and row[0] != args.kind:
+                w.writerow(row[:8])
+        # 写本次 kind 既有行（本次重新跑，跳过；防止累积重复）
+        run_ids = {r.get("id", "?") for tag, r, _ in tasks if tag == args.kind}
+        for row in legacy:
+            if len(row) >= 8 and row[0] == args.kind and row[1] not in run_ids:
+                w.writerow(row[:8])
         for tag, r, sysp in tasks:
             text = r.get("text", "")
             # 附加元数据（near_boundary 等）帮模型正确判断难例
@@ -157,7 +182,16 @@ def main():
             print(f"  [{tag} {r.get('id','?')}] {got['verdict']} ({dt:.0f}s, {dt/max(1,len(results)):.1f}s/条)",
                   flush=True)
 
-    # 可疑候选 = verdict != pass
+    # 可疑候选 = verdict != pass（从合并后的全量 CSV 读取，保证含既有 kind）
+    all_rows = []
+    with open(OUT_CSV, encoding="utf-8-sig", newline="") as f:
+        rd = csv.DictReader(f)
+        for row in rd:
+            row.setdefault("text", "")
+            all_rows.append(row)
+    results = [{"kind": r["kind"], "id": r["id"], "category": r["category"],
+                "stage": r["stage"], "near_boundary": r["near_boundary"],
+                "verdict": r["verdict"], "reason": r["reason"]} for r in all_rows]
     sus = [x for x in results if x["verdict"] != "pass"]
     with open(OUT_SUS, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f)

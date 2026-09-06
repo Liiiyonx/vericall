@@ -30,11 +30,16 @@ SSL_LOCAL = "D:/VeriCall_data/models/wav2vec2-xls-r-300m"
 
 
 class XlsrCnChannel:
-    """通道①-X：XLS-R + 中文域 LR 声学伪造检测。"""
+    """通道①-X：XLS-R + 中文域 LR 声学伪造检测。
 
-    def __init__(self, scorer_pkl: Optional[Path] = None,
+    scorer 选择：'v4'（默认，aishell+FMFCC，专注 TTS/克隆，红队检出 97.9%）
+              或 'wide'（aishell+FMFCC+CFAD伪，全谱，红队 ~96% 且 CFAD 47→28%）。
+    """
+
+    def __init__(self, scorer: str = "v4",
                  device: Optional[str] = None):
-        self.scorer_pkl = Path(scorer_pkl) if scorer_pkl else SCORER_PKL
+        self.scorer = scorer
+        self.scorer_pkl = SCORER_PKL if scorer == "v4" else SCORER_PKL.with_name("cn_lr_scorer_wide.pkl")
         self._ssl = None
         self._fe = None
         self._clf = None
@@ -47,10 +52,14 @@ class XlsrCnChannel:
             self._device = "cpu"
         if device:
             self._device = device
-        self.eer: Optional[float] = 0.0       # 同域说话人外 0.00%
-        self.eer_source = "aishell 90/10 说话人外同域评测"
-        self.cap: float = 0.95                # 高置信
-        self.cap_reason = "中文域训练（aishell+FMFCC），同域 EER 0.00%"
+        if scorer == "wide":
+            self.eer = 28.2            # CFAD 严谨 3 折均值
+            self.eer_source = "宽覆盖：CFAD 排除锚点 3 折 ~28% / 红队检出 ~96%"
+        else:
+            self.eer = 0.0             # 同域说话人外 0.00%
+            self.eer_source = "aishell 90/10 说话人外同域评测"
+        self.cap: float = 0.95         # 高置信
+        self.cap_reason = f"中文域训练（{scorer}），同域/红队双验通过"
 
     def load(self) -> bool:
         """加载 XLS-R + 中文域 LR。依赖缺时返回 False（离线演示机回退）。"""

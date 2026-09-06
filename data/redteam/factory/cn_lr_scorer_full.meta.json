@@ -1,6 +1,4 @@
 {
-  "train": "aishell真7389(21人) + FMFCC伪17636",
-  "date": "2026-09-06",
-  "feat": "XLS-R mean-pool 1024d",
-  "verdict": "spoof_prob<0.3判真"
+  "train": "aishell真13565(39人)+FMFCC伪17636",
+  "date": "2026-09-06 12:40"
 }

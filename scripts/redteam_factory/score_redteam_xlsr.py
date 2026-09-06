@@ -41,6 +41,7 @@ def main():
     ap.add_argument("--limit", type=int, default=0, help=">0 仅前 N 条（冒烟）")
     ap.add_argument("--resume", action="store_true", help="断点续跑（跳过已有结果）")
     ap.add_argument("--seg-only", action="store_true", help="只对切段(seg=True)打分，输出到独立文件")
+    ap.add_argument("--scorer", choices=["cfad", "full"], default="cfad", help="打分器：cfad=CFAD拟合(默认) / full=aishell+FMFCC中文域正式版")
     args = ap.parse_args()
 
     import librosa
@@ -53,7 +54,8 @@ def main():
     fe = AutoFeatureExtractor.from_pretrained(SSL_LOCAL)
     ssl = AutoModel.from_pretrained(SSL_LOCAL).to(device).eval()
 
-    with open(SCORER_PKL, "rb") as f:
+    _pkl = SCORER_PKL if args.scorer == "cfad" else SCORER_PKL.with_name("cn_lr_scorer_full.pkl")
+    with open(_pkl, "rb") as f:
         clf = pickle.load(f)
     print(f"中文域 LR 打分器加载 OK", flush=True)
 

@@ -22,7 +22,7 @@ jobs:
       # 测试只依赖 numpy + pytest：融合决策是纯 stdlib，指标计算零依赖。
       # 不装 torch / aasist，避免 CI 拉重型依赖、与模型权重解耦。
       - name: Install test deps
-        run: pip install numpy pytest
+        run: pip install numpy pytest soundfile
 
       - name: Run tests
         run: pytest -q

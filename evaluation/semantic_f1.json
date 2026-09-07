@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-07",
+  "model": "deepseek-chat",
+  "n": 2868,
+  "api_error": 0,
+  "accuracy": 0.7779,
+  "macro_f1": 0.7384,
+  "weighted_f1": 0.7582,
+  "binary_scam_vs_normal": {
+    "tp": 2334,
+    "fp": 3,
+    "fn": 53,
+    "precision": 0.9987,
+    "recall": 0.9778,
+    "f1": 0.9881
+  },
+  "per_class": {
+    "elder_healthcare": {
+      "tp": 254,
+      "fp": 65,
+      "fn": 47,
+      "precision": 0.7962,
+      "recall": 0.8439,
+      "f1": 0.8194
+    },
+    "fake_investment": {
+      "tp": 141,
+      "fp": 185,
+      "fn": 148,
+      "precision": 0.4325,
+      "recall": 0.4879,
+      "f1": 0.4585
+    },
+    "impersonate_authority": {
+      "tp": 304,
+      "fp": 172,
+      "fn": 0,
+      "precision": 0.6387,
+      "recall": 1.0,
+      "f1": 0.7795
+    },
+    "impersonate_family": {
+      "tp": 244,
+      "fp": 27,
+      "fn": 70,
+      "precision": 0.9004,
+      "recall": 0.7771,
+      "f1": 0.8342
+    },
+    "lottery_prize": {
+      "tp": 210,
+      "fp": 48,
+      "fn": 96,
+      "precision": 0.814,
+      "recall": 0.6863,
+      "f1": 0.7447
+    },
+    "online_loan": {
+      "tp": 262,
+      "fp": 39,
+      "fn": 38,
+      "precision": 0.8704,
+      "recall": 0.8733,
+      "f1": 0.8719
+    },
+    "refund_cs": {
+      "tp": 294,
+      "fp": 46,
+      "fn": 10,
+      "precision": 0.8647,
+      "recall": 0.9671,
+      "f1": 0.913
+    },
+    "romance_pig": {
+      "tp": 44,
+      "fp": 2,
+      "fn": 225,
+      "precision": 0.9565,
+      "recall": 0.1636,
+      "f1": 0.2794
+    },
+    "benign": {
+      "tp": 478,
+      "fp": 53,
+      "fn": 3,
+      "precision": 0.9002,
+      "recall": 0.9938,
+      "f1": 0.9447
+    }
+  }
+}

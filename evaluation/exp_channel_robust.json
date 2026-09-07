@@ -1,0 +1,84 @@
+{
+ "date": "2026-09-08 01:51",
+ "design": "退化增强训练：clean(aishell真+FMFCC伪+CFAD伪1000) + 退化副本(aishell真500/说话人K=5 + FMFCC伪2000, ×amr/phone8k/mp3_16k)",
+ "models": {
+  "base": "cn_lr_scorer_wide_chbase.pkl",
+  "enh": "cn_lr_scorer_wide_chenh.pkl"
+ },
+ "base": {
+  "set_c": {
+   "n": 23,
+   "breakthrough": 23,
+   "rate_pct": 100.0
+  },
+  "set_d": {
+   "amr": {
+    "n": 22,
+    "breakthrough": 5,
+    "rate_pct": 22.73
+   },
+   "phone8k": {
+    "n": 22,
+    "breakthrough": 1,
+    "rate_pct": 4.55
+   },
+   "mp3_16k": {
+    "n": 22,
+    "breakthrough": 2,
+    "rate_pct": 9.09
+   },
+   "noise": {
+    "n": 22,
+    "breakthrough": 0,
+    "rate_pct": 0.0
+   }
+  },
+  "aishell_far": null,
+  "cfad_eer": 29.2,
+  "cfad_deg_eer": {
+   "amr": 26.9,
+   "phone8k": 30.8,
+   "mp3_16k": 27.0,
+   "noise": 36.8
+  },
+  "aishell_true_accept": 99.98
+ },
+ "enh": {
+  "set_c": {
+   "n": 23,
+   "breakthrough": 8,
+   "rate_pct": 34.78
+  },
+  "set_d": {
+   "amr": {
+    "n": 22,
+    "breakthrough": 2,
+    "rate_pct": 9.09
+   },
+   "phone8k": {
+    "n": 22,
+    "breakthrough": 0,
+    "rate_pct": 0.0
+   },
+   "mp3_16k": {
+    "n": 22,
+    "breakthrough": 2,
+    "rate_pct": 9.09
+   },
+   "noise": {
+    "n": 22,
+    "breakthrough": 0,
+    "rate_pct": 0.0
+   }
+  },
+  "aishell_far": null,
+  "cfad_eer": 29.2,
+  "cfad_deg_eer": {
+   "amr": 25.8,
+   "phone8k": 30.2,
+   "mp3_16k": 26.6,
+   "noise": 36.1
+  },
+  "aishell_true_accept": 99.98
+ }
+}

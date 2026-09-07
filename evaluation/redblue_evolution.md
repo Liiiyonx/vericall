@@ -78,3 +78,13 @@
 - 新语料全量重扫 14,259 clean 母本（wide defender 不变）：**corpus clean 击穿 0.16%**，极难 6→23；
 - SET-D 退化复测：amr 22.73% 最高（三次一致：真实电话信道为主要盲区）、phone8k 4.55%、mp3 9.09%、noise 0%（加噪反可检）；
 - 结论：wide 防御对全新话术泛化成立；盲区指向电话信道增强训练立项。详见 redblue_round3.md。
+
+## 第 4 点（2026-09-08）：退化增强训练收敛盲区（exp_channel_robust）
+
+- 前置：第 3 点定论"电话信道（amr/低码率重编码）为声学主盲区，SET-D amr 22.73% 三次一致"；wide 表补扫扩至 21,144 母本（极难 31）；
+- 动作（defender 升级 ≠ 攻击升级）：训练侧退化增强——clean（aishell 真 34,715 + FMFCC 伪 17,636 + CFAD 伪 1,000）+ 退化副本（aishell 真 100人×5 + FMFCC 伪 2,000，×amr/phone8k/mp3_16k = 7,500 条）重训 LR → `cn_lr_scorer_wide_chenh.pkl`；对照 m_base 复现 wide 口径；
+- **SET-D 合计击穿 8/88（9.1%）→ 4/88（4.5%）**：amr 22.73→9.09%、phone8k 4.55→0%、mp3 9.09→9.09%（2 条顽固）、noise 0→0；
+- **增益泛化回 clean**：SET-C（round3 极难 23，base 定义性 100% 击穿）→ enh 34.8%（15/23 修复）；
+- 能力零回退：aishell 判真率 99.98%、CFAD clean EER 29.2%（=wide）、CFAD 退化 4 信道 EER 全线微降；
+- 意义：第 3 点的"11 月电话信道增强训练立项"以最低成本（+14% 训练数据，无新采集/无新架构）在当日收敛——盲区叙事从"发现"推进到"收敛路径已验证"；
+- 报告 `evaluation/exp_channel_robust.md/.json`；模型 `cn_lr_scorer_wide_ch{base,enh}.pkl`；复现 `exp_channel_robust.py --stage degrade|feat|train|eval`。

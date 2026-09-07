@@ -270,9 +270,9 @@ def stage_eval():
                      if float(_spoof_scores(clf, score_wav(p))[0]) < 0.3)
             r["set_d"][ch] = {"n": len(paths), "breakthrough": bt,
                               "rate_pct": round(bt / len(paths) * 100, 2)}
-        # aishell clean 真样本 FAR（spoof<0.3 判伪 = 误杀真）
+        # aishell clean 真样本判真率（spoof<0.3 即 P(真)>0.7 判真；≈1-FAR）
         s = _spoof_scores(clf, ais["X"])
-        r["aishell_far"] = round(float(np.mean(s < 0.3) * 100), 2)
+        r["aishell_true_accept"] = round(float(np.mean(s < 0.3) * 100), 2)
         # CFAD clean EER（乐观口径，与 wide 基线可比；spoof 高分=伪）
         s_cf = _spoof_scores(clf, cf["X"])
         bon, spo = split_by_label(s_cf, cf["y"])
@@ -285,7 +285,7 @@ def stage_eval():
         report[tag] = r
         print(f"[{tag}] SET-C {r['set_c']}", flush=True)
         print(f"[{tag}] SET-D {r['set_d']}", flush=True)
-        print(f"[{tag}] aishell FAR {r['aishell_far']}%  CFAD EER {r['cfad_eer']}%", flush=True)
+        print(f"[{tag}] aishell 判真率 {r['aishell_true_accept']}%  CFAD EER {r['cfad_eer']}%", flush=True)
         print(f"[{tag}] CFAD-deg {r['cfad_deg_eer']}", flush=True)
 
     # 汇总相对变化（enh vs base）
@@ -313,7 +313,7 @@ def stage_eval():
               "| 指标 | base | enh | 参照 |",
               "|---|---|---|---|",
               f"| SET-C clean 极难击穿率 | {b['set_c']['rate_pct']}% | {e['set_c']['rate_pct']}% | 第3轮 0.16%口径(母本更广) |",
-              f"| aishell 真样本误杀 FAR | {b['aishell_far']}% | {e['aishell_far']}% | 第3轮 aishell 判真 100% |",
+              f"| aishell 真样本判真率(≈1-FAR) | {b['aishell_true_accept']}% | {e['aishell_true_accept']}% | 第3轮 aishell 判真 100% |",
               f"| CFAD EER（乐观口径） | {b['cfad_eer']}% | {e['cfad_eer']}% | wide ~29% |",
               "",
               "## CFAD 退化信道 EER（额外参照）",

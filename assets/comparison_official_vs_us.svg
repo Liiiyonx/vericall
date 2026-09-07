@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="420" viewBox="0 0 880 420" font-family="'Microsoft YaHei','PingFang SC',sans-serif">
+  <rect width="880" height="420" fill="#ffffff"/>
+  <!-- 左侧：官方 -->
+  <rect x="24" y="24" width="400" height="372" rx="14" fill="#f5f7fa" stroke="#9aa4b2"/>
+  <text x="224" y="60" text-anchor="middle" font-size="20" font-weight="700" fill="#1f2937">官方 · 国家反诈中心 AIGC 鉴定</text>
+  <text x="224" y="86" text-anchor="middle" font-size="13" fill="#6b7280">2026-07 上线 · 离线单条上传 · 事后鉴定</text>
+  <rect x="64" y="110" width="320" height="44" rx="8" fill="#eef2f7"/>
+  <text x="224" y="139" text-anchor="middle" font-size="14" fill="#374151">1. 已接完/已受骗 → 用户手动上传音频</text>
+  <rect x="64" y="162" width="320" height="44" rx="8" fill="#eef2f7"/>
+  <text x="224" y="191" text-anchor="middle" font-size="14" fill="#374151">2. 平台侧离线批量鉴定（非实时）</text>
+  <rect x="64" y="214" width="320" height="44" rx="8" fill="#eef2f7"/>
+  <text x="224" y="243" text-anchor="middle" font-size="14" fill="#374151">3. 结果用于案件与反制，无法拦住当下这通</text>
+  <rect x="64" y="282" width="320" height="54" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="224" y="305" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">已知号码 · 黑名单联防</text>
+  <text x="224" y="325" text-anchor="middle" font-size="12" fill="#92400e">事后取证 / 库规模大 / 不能实时介入通话</text>
+  <text x="224" y="372" text-anchor="middle" font-size="13" fill="#9aa4b2">→ 我们可调用它的公开号码库做自己的第 0 层</text>
+  <!-- VS -->
+  <text x="444" y="226" text-anchor="middle" font-size="26" font-weight="900" fill="#111827">VS</text>
+  <!-- 右侧：我们 -->
+  <rect x="456" y="24" width="400" height="372" rx="14" fill="#f0f9ff" stroke="#2563eb"/>
+  <text x="656" y="60" text-anchor="middle" font-size="20" font-weight="700" fill="#1e3a8a">谛听 VeriCall · 通话中实时融合</text>
+  <text x="656" y="86" text-anchor="middle" font-size="13" fill="#64748b">座机/一体机旁路采集 · 流式检测（P90 ≤2s）</text>
+  <rect x="496" y="110" width="320" height="44" rx="8" fill="#dbeafe"/>
+  <text x="656" y="139" text-anchor="middle" font-size="14" fill="#1e3a8a">⓪ 号码先验命中 → 铃响即拦（0ms 查表）</text>
+  <rect x="496" y="162" width="320" height="44" rx="8" fill="#dbeafe"/>
+  <text x="656" y="191" text-anchor="middle" font-size="14" fill="#1e3a8a">① 声学伪造 + ② 家庭声纹 + ③ 话术语义</text>
+  <rect x="496" y="214" width="320" height="44" rx="8" fill="#dbeafe"/>
+  <text x="656" y="243" text-anchor="middle" font-size="14" fill="#1e3a8a">未命中（新号/AI 拟声）→ 内容级流式检测</text>
+  <rect x="496" y="282" width="320" height="54" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="656" y="305" text-anchor="middle" font-size="14" font-weight="700" fill="#14532d">未知号码 · 内容级实时检测</text>
+  <text x="656" y="325" text-anchor="middle" font-size="12" fill="#14532d">通话进行中拦截 · 绿黄红三级提示 · 适老交互</text>
+  <text x="656" y="372" text-anchor="middle" font-size="13" fill="#2563eb">→ 官方号码库做第 0 层 = 双方互补合作</text>
+</svg>

@@ -86,7 +86,9 @@ footer{margin-top:56px;padding-top:20px;border-top:1px solid #E3E1DA;color:#8887
 
 <h2>三、系统架构</h2>
 <div class="arch">
-<div class="layer"><b>① 采集层（终端旁路）</b>手机 App 麦克风流（免提通话场景）／通话录音文件检测。诚实定位：微信/系统通话无法直接截获音频流，采用"免提外放 + 麦克风旁路采集"的现实路径，延迟预算 ≤ 2 秒。</div>
+<div class="layer"><b>⓪ 号码先验层（第 0 道闸门）</b>来电号码先查公开涉诈号码库（12321 举报 / 运营商标记 / 开源黑名单），命中即拦；未命中（新号 / 改号 / AI 拟声）才进音频检测——官方防「已知号码」，我们防「未知号码」，互补不竞争。</div>
+<div class="arrow">↓</div>
+<div class="layer"><b>① 采集层（独立终端为主）</b>家庭座机 / 桌面一体机旁路采集（主战场）；iPhone 降级为号码预警端 + 家属远程提醒。诚实定位：iOS 生态封锁通话音频（第三方 App 仅能拿号码、无法在 App 内实时分析），微信 / 系统通话亦无法直接截获音频流——故主战场锚定家庭座机 / 桌面一体机，手机端只做号码预警；延迟预算 ≤ 2 秒。</div>
 <div class="arrow">↓</div>
 <div class="layer"><b>② 检测引擎（双模态并行）</b>音频线：VAD 分段（3–4s 滑窗）→ 深度伪造检测（AASIST/SSL 前端，ONNX 端侧推理）＋ 声纹确认（ECAPA-TDNN vs 家庭声纹库余弦相似度）。视频线（二期）：帧级人脸篡改检测 + 时序聚合。</div>
 <div class="arrow">↓</div>

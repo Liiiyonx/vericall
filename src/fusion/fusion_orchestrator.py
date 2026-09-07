@@ -95,7 +95,25 @@ class FusionOrchestrator:
     # ------------------------------------------------------------------ #
     def decide(self, acoustic: ChannelVerdict,
                voiceprint: ChannelVerdict,
-               semantic: ChannelVerdict) -> FusionResult:
+               semantic: ChannelVerdict,
+               number=None) -> FusionResult:
+        """三通道融合决策（通道⓪ 号码先验可选：命中即短路 block，省三通道算力）。
+
+        number: NumberChannel.check() 的返回（None 或含 matched/score/confidence/to_channel_dict）。
+        命中（score>=0.5 且 conf>=0.8，即公开黑名单 0.99 或启发式 0.85）→ 直接 block，
+        不跑/不汇总三通道，rationale 说明"号码命中，跳过三通道"。
+        未命中/无号码 → 原逻辑三通道融合。
+        """
+        if number is not None and number.matched and number.score >= 0.5 \
+                and number.confidence >= 0.8:
+            return FusionResult(
+                final="block",
+                score=round(number.score, 2),
+                confidence=round(number.confidence, 2),
+                rationale=f"⓪号码先验拦截（{number.source}：{number.detail}）——"
+                          f"命中已知涉诈号码，直接拦截，跳过三通道推理（省算力）",
+                channels=[number.to_channel_dict()],
+            )
         chans = [acoustic, voiceprint, semantic]
 
         # 1) 硬规则：任一通道高置信危险 -> 直接拦截

@@ -1,22 +1,37 @@
 {
-  "created": "2026-09-06",
-  "backend": "cloud",
-  "total": 11953,
+  "created": "2026-09-03",
+  "total": 11934,
   "by_category": {
-    "impersonate_family": 1578,
-    "impersonate_authority": 1518,
+    "elder_healthcare": 1506,
     "fake_investment": 1447,
-    "refund_cs": 1518,
-    "lottery_prize": 1530,
+    "impersonate_authority": 1518,
+    "impersonate_family": 1572,
+    "lottery_prize": 1529,
     "online_loan": 1499,
-    "elder_healthcare": 1518,
+    "refund_cs": 1518,
     "romance_pig": 1345
   },
   "by_stage": {
+    "ask": 3210,
+    "buildup": 3229,
     "opening": 2599,
-    "buildup": 3246,
-    "pressure": 2896,
-    "ask": 3212
+    "pressure": 2896
   },
-  "review_sampled": 1826
+  "v0.2_finalized": "2026-09-07",
+  "applied": {
+    "pass": 93,
+    "fix": 15,
+    "drop": 19,
+    "dropped_actually": 19,
+    "missing": 0,
+    "by_source": {
+      "auto_drop2_keep": 72,
+      "auto_fix": 8,
+      "auto_drop2": 16,
+      "llm_fill_repass": 7,
+      "llm_fill_keep": 14,
+      "llm_fill_drop2": 3,
+      "llm_fill": 7
+    }
+  }
 }

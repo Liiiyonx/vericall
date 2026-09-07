@@ -61,6 +61,9 @@ def load_corpus(path: Path) -> list[dict]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true", help="正式落地（默认 dry-run）")
+    ap.add_argument("--llm-fill", action="store_true",
+                    help="M1 兜底：未填 human_verdict 的 worksheet 行改按 LLM 结论链裁决"
+                         "（计划书风险条款：人工拖过时限则按预筛结论定稿）")
     args = ap.parse_args()
 
     ws_rows = read_csv(WS)
@@ -71,14 +74,16 @@ def main():
         print(f"[错误] worksheet 含非法 verdict: {sorted(unknown)}（仅允许 pass/fix/drop）")
         return 1
     pending_ws = sorted(i for i, v in human.items() if not v)
-    print(f"[M1 人工] worksheet {len(ws_rows)} 行；已填 {sum(1 for v in human.values() if v)}；未填 {len(pending_ws)}")
+    print(f"[M1 人工] worksheet {len(ws_rows)} 行；已填 {sum(1 for v in human.values() if v)}；未填 {len(pending_ws)}"
+          + ("；--llm-fill 兜底开启" if args.llm_fill else ""))
 
     sus = {r["id"]: r["verdict"].strip().lower() for r in read_csv(SUS)}
     d2 = {r["id"]: r["confirm"].strip().lower() for r in read_csv(D2)}
     print(f"[一审可疑] {len(sus)} 条（drop 二审参考 {len(d2)} 条）")
 
     # 合并终局判定：id -> (action, source, note)
-    # worksheet 行（含未填）一律排除出 auto——保留给人工裁决，未填只算 pending
+    # worksheet 行（含未填）默认排除出 auto——保留给人工裁决，未填只算 pending；
+    # --llm-fill 时未填行按 LLM 结论链兜底（sus 一审 + drop2 二审 + 全量重判 pass）
     final: dict[str, tuple[str, str, str]] = {}
     ws_ids = set(human.keys())
     for i, v in human.items():
@@ -93,10 +98,27 @@ def main():
                 final[i] = ("drop", "auto_drop2", "一审drop+二审drop，两轮确认")
             else:
                 final[i] = ("pass", "auto_drop2_keep", "一审drop但二审keep，误杀纠回")
+    if args.llm_fill:
+        for i in ws_ids:
+            if i in final:
+                continue  # 已人工填
+            v_sus = sus.get(i)
+            if v_sus == "fix":
+                final[i] = ("fix", "llm_fill", "兜底：一审fix，标记保留待改写")
+            elif v_sus == "drop":
+                if d2.get(i) == "drop":
+                    final[i] = ("drop", "llm_fill_drop2", "兜底：一审drop+二审drop，两轮确认")
+                else:
+                    final[i] = ("pass", "llm_fill_keep", "兜底：一审drop但二审keep，误杀纠回")
+            else:
+                final[i] = ("pass", "llm_fill_repass", "兜底：09-07 全量预筛判 pass")
     n_human = sum(1 for _, s, _ in final.values() if s == "human")
     n_auto = sum(1 for _, s, _ in final.values() if s.startswith("auto"))
-    print(f"[终局] {len(final)} 条 = human {n_human} + auto {n_auto}；"
-          f"另有 {len(ws_ids) - n_human} 行 worksheet 待人工（不参与 auto）")
+    n_fill = sum(1 for _, s, _ in final.values() if s.startswith("llm_fill"))
+    print(f"[终局] {len(final)} 条 = human {n_human} + auto {n_auto}"
+          + (f" + llm_fill {n_fill}" if args.llm_fill else "")
+          + (f"；另有 {len(ws_ids) - n_human - n_fill} 行 worksheet 待人工（不参与 auto）"
+             if not args.llm_fill else ""))
 
     recs = load_corpus(CORPUS)
     by_id = {r["id"]: r for r in recs}
@@ -120,8 +142,8 @@ def main():
     if not args.apply:
         print("[dry-run] 未改动任何文件。加 --apply 落地。")
         return 0
-    if pending_ws:
-        print(f"[中止] worksheet 还有 {len(pending_ws)} 行未填 verdict，拒绝 --apply。")
+    if pending_ws and not args.llm_fill:
+        print(f"[中止] worksheet 还有 {len(pending_ws)} 行未填 verdict（未开 --llm-fill），拒绝 --apply。")
         return 2
 
     n_drop = 0

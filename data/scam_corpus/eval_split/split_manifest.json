@@ -1,0 +1,93 @@
+{
+  "seed": 2026,
+  "ratio": 0.2,
+  "note": "话术分类评测集(A1)：80/20 留出，冻结 id 清单，正文随语料版本现取",
+  "sets": {
+    "scam": {
+      "total": 11934,
+      "train": 9547,
+      "eval": 2387,
+      "isolation_ok": true,
+      "by_category": {
+        "elder_healthcare": {
+          "total": 1506,
+          "train": 1205,
+          "eval": 301
+        },
+        "fake_investment": {
+          "total": 1447,
+          "train": 1158,
+          "eval": 289
+        },
+        "impersonate_authority": {
+          "total": 1518,
+          "train": 1214,
+          "eval": 304
+        },
+        "impersonate_family": {
+          "total": 1572,
+          "train": 1258,
+          "eval": 314
+        },
+        "lottery_prize": {
+          "total": 1529,
+          "train": 1223,
+          "eval": 306
+        },
+        "online_loan": {
+          "total": 1499,
+          "train": 1199,
+          "eval": 300
+        },
+        "refund_cs": {
+          "total": 1518,
+          "train": 1214,
+          "eval": 304
+        },
+        "romance_pig": {
+          "total": 1345,
+          "train": 1076,
+          "eval": 269
+        }
+      }
+    },
+    "benign": {
+      "total": 2404,
+      "train": 1923,
+      "eval": 481,
+      "isolation_ok": true,
+      "by_category": {
+        "family_chat": {
+          "total": 398,
+          "train": 318,
+          "eval": 80
+        },
+        "festival": {
+          "total": 397,
+          "train": 318,
+          "eval": 79
+        },
+        "health_care": {
+          "total": 408,
+          "train": 326,
+          "eval": 82
+        },
+        "legit_money": {
+          "total": 398,
+          "train": 318,
+          "eval": 80
+        },
+        "legit_service": {
+          "total": 406,
+          "train": 325,
+          "eval": 81
+        },
+        "life_reminder": {
+          "total": 397,
+          "train": 318,
+          "eval": 79
+        }
+      }
+    }
+  }
+}

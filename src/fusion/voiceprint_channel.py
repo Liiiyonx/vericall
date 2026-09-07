@@ -17,8 +17,9 @@
 
 设计要点：
 - 懒加载：import 不依赖 funasr/模型；首次 enroll/verify 才加载（自动下载 CAMPPlus）。
-- 声纹相似度 -> 可疑度映射：相似度>=MATCH_T(0.55) 视为本人(score≈0)，
-  低于阈值则可疑度随差距上升；低于 REJECT_T(0.35) 视为"完全不像本人"(score→1)。
+- 声纹相似度 -> 可疑度映射：相似度>=MATCH_T(0.520，2026-09-07 标定) 视为本人(score≈0)，
+  低于阈值则可疑度随差距上升；低于 REJECT_T(0.443) 视为"完全不像本人"(score→1)。
+  出处：evaluation/voiceprint_calibration.md（200 人合库 EER 0.51%）。
 - 未登记任何家人时 verify 返回低置信 stub（融合器不会误拦）。
 - 关于"克隆语音"：CAMPPlus 对高保真声纹克隆有一定区分力但非绝对；
   这正是为何本系统要三通道融合——声纹被攻破时，通道①③仍能兜底。
@@ -53,8 +54,14 @@ SV_MODEL_ID = "iic/speech_campplus_sv_zh-cn_16k-common"
 DEVICE = "cuda:0" if DEVICE == "cuda" else "cpu"  # paths.DEVICE 由 VERICALL_DEVICE 控制
 
 # 相似度阈值（余弦，CAMPPlus 192 维；同人通常 0.6~0.9，异人 0.1~0.4）
-MATCH_THRESHOLD = 0.55    # 高于此视为"本人"
-REJECT_THRESHOLD = 0.35   # 低于此视为"完全不像本人"
+# 【科学标定 2026-09-07 · 出处 evaluation/voiceprint_calibration.md】
+#   200 人合库（AISHELL-1 100 + AISHELL-3 100）K=12 抽话语两两比对：
+#   EER 0.51% @0.472；工作点 κ∈{1:1, 3:1误拒贵, 1:3误受贵} → 阈值 0.471/0.443/0.520。
+#   映射：MATCH = 0.520（1:3 误受贵点：高置信才认"本人"，少把陌生人放成家人）；
+#         REJECT = 0.443（3:1 误拒贵点之下判"非家人"高可疑，宁可疑不误放）；
+#         中间 [0.443, 0.520) 为"不确定"→ 线性映射 + unknown 标签（融合器 caution）。
+MATCH_THRESHOLD = 0.520   # 高于此视为"本人"（= 误受3x贵工作点，FAR 0.17%）
+REJECT_THRESHOLD = 0.443  # 低于此视为"完全不像本人"（= 误拒3x贵工作点，FRR 0.26%）
 
 
 class VoiceprintChannel:

@@ -29,7 +29,10 @@ SV_MODEL_ID = "iic/speech_campplus_sv_zh-cn_16k-common"
 
 def list_speakers(wav_root: Path, limit: int = 0) -> list[Path]:
     spk = sorted(p for p in wav_root.iterdir() if p.is_dir())
-    return spk if not limit else spk[:limit]def pick_utterances(spk_dir: Path, k: int, rng: random.Random) -> list[Path]:
+    return spk if not limit else spk[:limit]
+
+
+def pick_utterances(spk_dir: Path, k: int, rng: random.Random) -> list[Path]:
     wavs = sorted(spk_dir.glob("*.wav"))
     if not wavs:
         return []

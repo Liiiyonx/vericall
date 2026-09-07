@@ -13,3 +13,8 @@
 2. **CPU 可行**：75ms/窗仍仅为 2s 流式预算的 ~4%，**无 GPU 家庭一体机可端侧跑**（架构卖点：离线/低配终端）；
 3. GPU 直跑仍是单窗 9.6ms，瓶颈不在单模型推理而在调度/特征/IO（5.1 并行调度已接 VERICALL_PARALLEL=1 可选）。
 4. CAMPPlus（funasr 封装）ONNX 导出算子复杂，待专项；AASIST 已闭环。
+
+## 追加：CAMPPlus ONNX 可行性结论（2026-09-07）
+funasr 1.4.14 `AutoModel.export` 对 cam++（rawTorch 类）**不支持**（AttributeError: CAMPPlus has no export）；
+需按 cam++ 架构自建计算图并外接 logmel 前端才能导出——成本高、收益小（torch-GPU 路径已足够快，ONNX 卖点由 AASIST 已承接）。
+**5.2 收口**：AASIST ✅（1.6MB，CPU 74.7ms）；CAMPPlus 保持 torch，记录可行性结论。

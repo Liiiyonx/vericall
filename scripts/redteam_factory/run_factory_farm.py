@@ -56,6 +56,13 @@ def main():
 
     procs = []
     t0 = time.time()
+    # 防再犯：历史分片若残留（上次 merge 遗漏），会被 append 式合并重复入库。
+    # 启动前先清理旧分片，保证合并段只含本次新产行。
+    for old in out_root.glob("meta_shard_*.csv"):
+        try:
+            old.unlink()
+        except OSError as e:
+            print(f"[warn] 旧分片删除失败 {old.name}: {e}")
     for i in range(n):
         meta_shard = out_root / f"meta_shard_{i}.csv"
         meta_shards.append(meta_shard)
@@ -78,6 +85,12 @@ def main():
     final = out_root / "meta.csv"
     wrote_header = not final.exists()
     with open(final, "a", encoding="utf-8", newline="") as mf:
+        # 防重复：合并前加载 final 已有行集合，只补缺失行
+        existing = set()
+        if final.exists():
+            for ln in final.read_text(encoding="utf-8-sig").splitlines():
+                if ln and not ln.startswith("path,"):
+                    existing.add(ln)
         for shard in meta_shards:
             if not shard.exists():
                 continue
@@ -87,7 +100,9 @@ def main():
             if lines[0].startswith("path,"):  # 表头
                 lines = lines[1:]
             for ln in lines:
-                mf.write(ln + "\n")
+                if ln and ln not in existing:
+                    mf.write(ln + "\n")
+                    existing.add(ln)
             mf.flush()
     print(f"\n全部完成：{n} 片，失败分片 {failed}，耗时 {time.time()-t0:.0f}s")
     print(f"meta -> {final}（分片文件可删：meta_shard_*.csv）")

@@ -33,7 +33,7 @@ LABEL_ZH = {"elder_healthcare": "养老健康", "fake_investment": "虚假投资
             "lottery_prize": "中奖", "online_loan": "网贷", "refund_cs": "退款客服",
             "romance_pig": "杀猪盘", "benign": "正常"}
 
-PROMPT = """你是电信诈骗话术分类器。把下面这条中文通话话术归到 9 类之一，只输出 JSON。
+PROMPT_V1 = """你是电信诈骗话术分类器。把下面这条中文通话话术归到 9 类之一，只输出 JSON。
 类别：elder_healthcare 养老健康/保健品诈骗 | fake_investment 虚假投资/荐股 |
 impersonate_authority 冒充公检法/领导 | impersonate_family 冒充亲友/子女/孙辈 |
 lottery_prize 中奖/兑奖缴费 | online_loan 网贷/贷款 | refund_cs 退款/客服 |
@@ -42,6 +42,27 @@ romance_pig 杀猪盘/婚恋诱导投资 | benign 正常日常通话（含家人
 正常生活场景即使提到转账（亲属借钱、正常还款）也判 benign。
 输出 JSON：{"label":"<上列英文键>","risk":<0到1>}
 """
+
+# v2：加入 romance↔investment 与 authority↔family 的显式界定规则（A4 细分迭代 v2，2026-09-08）。
+PROMPT_V2 = """你是电信诈骗话术分类器。把下面这条中文通话话术归到 9 类之一，只输出 JSON。
+类别：elder_healthcare 养老健康/保健品诈骗 | fake_investment 虚假投资/荐股 |
+impersonate_authority 冒充公检法/领导 | impersonate_family 冒充亲友/子女/孙辈 |
+lottery_prize 中奖/兑奖缴费 | online_loan 网贷/贷款 | refund_cs 退款/客服 |
+romance_pig 杀猪盘/婚恋诱导投资 | benign 正常日常通话（含家人借钱、缴费提醒、客服回访等）。
+规则：
+1. 话术可能只是完整诈骗链的一段（开场/铺垫/索要/施压），凭内容语气判其归属类别即可；正常生活场景
+   即使提到转账（亲属借钱、正常还款、缴费提醒）也判 benign。
+2. romance_pig 与 fake_investment 的界定：fake_investment = 陌生人/社群/直播间荐股带单，无情感关系
+   经营；若话术含婚恋语境（婚恋平台/相亲/红娘介绍、情感称谓如亲爱的/老婆/老公/宝贝、嘘寒问暖建立
+   信任、异地恋/见面铺垫后再引到投资赚钱、礼物/转账测试真心等），即使主体在讲"带你投资/一起赚钱/
+   内幕消息"，也判 romance_pig（杀猪盘=婚恋诱导投资）。
+3. impersonate_authority 与 impersonate_family 的界定：自称公检法/客服/机构并以法律威慑、涉案、
+   安全账户、索要验证码施压 → impersonate_authority；以亲人身份急事求助（出车祸/被抓/生病住院/
+   手机丢失借号/要医药费保释金）→ impersonate_family，即使带恐吓语气。
+输出 JSON：{"label":"<上列英文键>","risk":<0到1>}
+"""
+
+CURRENT_PROMPT = PROMPT_V1
 
 
 def load_texts() -> dict[str, str]:
@@ -58,8 +79,8 @@ def load_texts() -> dict[str, str]:
 
 
 def call_llm(base: str, key: str, model: str, text: str) -> str:
-    payload = json.dumps({"model": model, "temperature": 0.1, "max_tokens": 32,
-                          "messages": [{"role": "system", "content": PROMPT},
+    payload = json.dumps({"model": model, "temperature": 0.1, "max_tokens": 80,
+                          "messages": [{"role": "system", "content": CURRENT_PROMPT},
                                        {"role": "user", "content": text.strip()[:800]}]}
                          ).encode("utf-8")
     req = urllib.request.Request(f"{base}/chat/completions", data=payload,
@@ -96,7 +117,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--threads", type=int, default=8)
+    ap.add_argument("--variant", type=int, default=1, choices=[1, 2],
+                    help="提示词版本：1=基线(默认) 2=romance/authority 界定增强")
     args = ap.parse_args()
+    global CURRENT_PROMPT
+    CURRENT_PROMPT = PROMPT_V1 if args.variant == 1 else PROMPT_V2
+    tag = f"_v{args.variant}"
 
     base = os.environ["SCAM_LLM_BASE"].rstrip("/")
     key = os.environ["SCAM_LLM_KEY"]
@@ -136,7 +162,7 @@ def main():
     print(f"[完成] {done}/{len(items)} ({time.time()-t0:.0f}s)", flush=True)
 
     # 行级落盘（A5 校准数据，避免重复调用云端）
-    rows_csv = ROOT / "evaluation" / "semantic_f1_rows.csv"
+    rows_csv = ROOT / "evaluation" / f"semantic_f1_rows{tag}.csv"
     with open(rows_csv, "w", encoding="utf-8-sig", newline="") as fcsv:
         wcsv = csv.writer(fcsv)
         wcsv.writerow(["id", "expected", "pred", "risk"])
@@ -176,13 +202,14 @@ def main():
     scam = lambda l: l != "benign"
     bin_scam = bin_metrics(lambda e: e != "benign", lambda p: p != "benign")
 
-    payload = {"date": "2026-09-07", "model": model, "n": n, "api_error": len(errs),
+    payload = {"date": time.strftime("%Y-%m-%d"), "variant": args.variant,
+               "model": model, "n": n, "api_error": len(errs),
                "accuracy": round(acc, 4), "macro_f1": round(macro, 4),
                "weighted_f1": round(weighted, 4), "binary_scam_vs_normal": bin_scam,
                "per_class": per}
-    (ROOT / "evaluation/semantic_f1.json").write_text(
+    (ROOT / f"evaluation/semantic_f1{tag}.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    lines = ["# 话术分类多分类 F1（线 A4，2026-09-07）", "",
+    lines = [f"# 话术分类多分类 F1（线 A4，{payload['date']}，variant {args.variant}）", "",
              f"- 评测集：A1 冻结 {n} 条（scam eval 2,387 + benign eval 481，API error {len(errs)}）",
              f"- 模型：cloud {model}；**准确率 {acc*100:.1f}% / 宏 F1 {macro*100:.1f}% / 加权 F1 {weighted*100:.1f}%**",
              f"- 二分类(诈骗 vs 正常)：P {bin_scam['precision']*100:.1f}% / R {bin_scam['recall']*100:.1f}% / "
@@ -193,9 +220,9 @@ def main():
         lines.append(f"| {lab} | {LABEL_ZH[lab]} | {v['tp']} | {v['fp']} | {v['fn']} | "
                      f"{v['precision']*100:.1f}% | {v['recall']*100:.1f}% | {v['f1']*100:.1f}% |")
     lines += ["", "## 结论判定", "- 二分类诈骗 F1 ≥0.90 即 A4 达标；多分类加权 F1 作参考（8 类细分更难）。"]
-    (ROOT / "evaluation/semantic_f1.md").write_text("\n".join(lines), encoding="utf-8")
+    (ROOT / f"evaluation/semantic_f1{tag}.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"acc {acc*100:.1f}%  macro {macro*100:.1f}%  weighted {weighted*100:.1f}%")
-    print("产物: evaluation/semantic_f1.json / .md")
+    print(f"产物: evaluation/semantic_f1{tag}.json / .md")
 
 
 if __name__ == "__main__":

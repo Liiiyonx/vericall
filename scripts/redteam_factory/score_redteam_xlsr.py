@@ -41,8 +41,17 @@ def main():
     ap.add_argument("--limit", type=int, default=0, help=">0 仅前 N 条（冒烟）")
     ap.add_argument("--resume", action="store_true", help="断点续跑（跳过已有结果）")
     ap.add_argument("--seg-only", action="store_true", help="只对切段(seg=True)打分，输出到独立文件")
-    ap.add_argument("--scorer", choices=["cfad", "full"], default="cfad", help="打分器：cfad=CFAD拟合(默认) / full=aishell+FMFCC中文域正式版")
+    ap.add_argument("--scorer", choices=["cfad", "full", "wide"], default="cfad", help="打分器：cfad=CFAD拟合(默认) / full=aishell+FMFCC中文域正式版 / wide=生产口径(第2轮同款)")
     args = ap.parse_args()
+
+    global OUT_CSV, OUT_MD, SEG_CSV, SEG_MD
+    if args.scorer in ("full", "wide"):
+        tag = "_full" if args.scorer == "full" else "_wide"
+        OUT_CSV = OUT_CSV.with_name(f"redteam_difficulty{tag}.csv")
+        OUT_MD = OUT_MD.with_name(f"redteam_difficulty{tag}_summary.md")
+        SEG_CSV = SEG_CSV.with_name(f"redteam_seg_difficulty{tag}.csv")
+        SEG_MD = SEG_MD.with_name(f"redteam_seg_difficulty{tag}_summary.md")
+
 
     import librosa
     import soundfile as sf
@@ -54,7 +63,7 @@ def main():
     fe = AutoFeatureExtractor.from_pretrained(SSL_LOCAL)
     ssl = AutoModel.from_pretrained(SSL_LOCAL).to(device).eval()
 
-    _pkl = SCORER_PKL if args.scorer == "cfad" else SCORER_PKL.with_name("cn_lr_scorer_full.pkl")
+    _pkl = SCORER_PKL if args.scorer == "cfad" else (SCORER_PKL.with_name("cn_lr_scorer_full.pkl") if args.scorer == "full" else SCORER_PKL.with_name("cn_lr_scorer_wide.pkl"))
     with open(_pkl, "rb") as f:
         clf = pickle.load(f)
     print(f"中文域 LR 打分器加载 OK", flush=True)

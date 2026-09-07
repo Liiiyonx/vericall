@@ -29,10 +29,7 @@ SV_MODEL_ID = "iic/speech_campplus_sv_zh-cn_16k-common"
 
 def list_speakers(wav_root: Path, limit: int = 0) -> list[Path]:
     spk = sorted(p for p in wav_root.iterdir() if p.is_dir())
-    return spk if not limit else spk[:limit]
-
-
-def pick_utterances(spk_dir: Path, k: int, rng: random.Random) -> list[Path]:
+    return spk if not limit else spk[:limit]def pick_utterances(spk_dir: Path, k: int, rng: random.Random) -> list[Path]:
     wavs = sorted(spk_dir.glob("*.wav"))
     if not wavs:
         return []
@@ -79,24 +76,36 @@ def _cuda() -> bool:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--wav", default="D:/VeriCall_data/aishell3/repo/train/wav")
-    ap.add_argument("--limit-speakers", type=int, default=0, help=">0 仅前 N 说话人(冒烟)")
+    ap.add_argument("--wav", default="D:/VeriCall_data/aishell1_sub/train,"
+                    "D:/VeriCall_data/aishell3/data/train/wav",
+                    help="底库根（逗号分隔多源：AISHELL-1 + AISHELL-3）")
+    ap.add_argument("--limit-speakers", type=int, default=0, help=">0 每根仅前 N 说话人(冒烟)")
     ap.add_argument("--k", type=int, default=12, help="每说话人抽取话语数")
     ap.add_argument("--max-imp", type=int, default=60000, help="异人对抽样上限")
     ap.add_argument("--seed", type=int, default=2026)
     args = ap.parse_args()
 
-    wav_root = Path(args.wav)
-    spk_dirs = list_speakers(wav_root, args.limit_speakers)
-    print(f"[底库] {len(spk_dirs)} 说话人 @ {wav_root}")
+    # 多底库根（逗号分隔）：AISHELL-1 + AISHELL-3 合库
+    # 支持多底库根（逗号分隔）：AISHELL-1 + AISHELL-3 合库
+    roots = [Path(x.strip()) for x in args.wav.split(",") if x.strip()]
     rng = random.Random(args.seed)
-
     uid2spk, paths = {}, []
-    for sp in spk_dirs:
-        for p in pick_utterances(sp, args.k, rng):
-            uid = f"{sp.name}/{p.stem}"
-            uid2spk[uid] = sp.name
-            paths.append((uid, p))
+    spk_dirs_all = []
+    for wav_root in roots:
+        if not wav_root.is_dir():
+            print(f"[跳过] 底库根不存在: {wav_root}")
+            continue
+        spk_dirs = list_speakers(wav_root, args.limit_speakers)
+        spk_dirs_all += spk_dirs
+        tag = wav_root.name
+        for sp in spk_dirs:
+            for p in pick_utterances(sp, args.k, rng):
+                uid = f"{tag}:{sp.name}/{p.stem}"
+                uid2spk[uid] = f"{tag}:{sp.name}"
+                paths.append((uid, p))
+    spk_dirs = spk_dirs_all
+    print(f"[底库] 根 {len(roots)} 个，说话人 {len(spk_dirs)} @ "
+          f"{[str(r) for r in roots]}")
     print(f"[样本] 共 {len(paths)} 条话语（≈{len(paths)/max(1,len(spk_dirs)):.0f} 条/人）")
 
     print("[嵌入] CAMPPlus ...", flush=True)

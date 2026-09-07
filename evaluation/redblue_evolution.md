@@ -75,6 +75,6 @@
 | 特征缓存 | `.tmp_ssl/{aishell,fmfcc,redteam}/` · 数据下载 `docs/中文域增量训练_数据侧准备.md` |
 
 ## 第 3 点（2026-09-07）：语料扩产后复测
-- 新语料全量重扫 12,668 clean 母本（wide defender 不变）：**corpus clean 击穿 0.17%**，极难 6→22；
+- 新语料全量重扫 14,259 clean 母本（wide defender 不变）：**corpus clean 击穿 0.16%**，极难 6→23；
 - SET-D 退化复测：amr 22.73% 最高（三次一致：真实电话信道为主要盲区）、phone8k 4.55%、mp3 9.09%、noise 0%（加噪反可检）；
 - 结论：wide 防御对全新话术泛化成立；盲区指向电话信道增强训练立项。详见 redblue_round3.md。

@@ -149,11 +149,13 @@ def main():
     dial = Counter(r["dialect"] for r in n_ok)
     verd = Counter(r["verdict"] for r in n_ok)
     probs = [float(r["difficulty_spoof_prob"]) for r in n_ok]
+    desc = ("CFAD 拟合中文域 LR（AUC 0.950，cn_lr_scorer.pkl）" if args.scorer == "cfad"
+            else f"中文域 XLS-R+LR（cn_lr_scorer{'_wide' if args.scorer=='wide' else '_full'}.pkl）")
     lines = [
         "# 红队音频难度分汇总（XLS-R + 中文域 LR）",
         "",
         f"> 生成：{time.strftime('%Y-%m-%d %H:%M')} · `score_redteam_xlsr.py`",
-        f"> 打分器：CFAD 拟合中文域 LR（AUC 0.950）· 共 {len(n_ok)} 条 clean 母本",
+        f"> 打分器：{desc} · 共 {len(n_ok)} 条 clean 母本",
         "",
         "## 判定分布（spoof 概率越低 = 检测器越判真 = 越隐蔽难检）",
         f"- **隐蔽(难检) <0.3**：{verd.get('隐蔽(难检)', 0)} 条",

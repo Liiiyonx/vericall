@@ -1,0 +1,179 @@
+#!/usr/bin/env python
+"""eval_semantic_f1.py — 线 A4：话术分类多分类 F1（2026-09-07）
+
+用 A1 冻结评测集（scam eval 2,387 + benign eval 481）走云端 deepseek-chat 做
+9 类分类（8 类诈骗 + benign 正常），输出：
+  - 9 类宏/加权 F1、逐类 P/R/F1、整体准确率
+  - 二分类（诈骗 vs 正常）P/R/F1（防"多类全对但诈骗漏拦"假象）
+评测口径：独立评测 prompt（非生产 SemanticChannel 的合并 impersonation 口径），
+原因与依据见 evaluation/semantic_review_template.md §类别粒度；生产侧分类合并
+不影响本评测对语料标注体系（8 类细分）的可比性。
+
+用法（先 source 密钥）：
+  python -u scripts/scam_corpus/eval_semantic_f1.py [--limit N] [--threads 8]
+产物：evaluation/semantic_f1.json / .md
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import os
+import time
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+LABELS = ["elder_healthcare", "fake_investment", "impersonate_authority",
+          "impersonate_family", "lottery_prize", "online_loan", "refund_cs",
+          "romance_pig", "benign"]
+LABEL_ZH = {"elder_healthcare": "养老健康", "fake_investment": "虚假投资",
+            "impersonate_authority": "冒充公检法", "impersonate_family": "冒充亲友",
+            "lottery_prize": "中奖", "online_loan": "网贷", "refund_cs": "退款客服",
+            "romance_pig": "杀猪盘", "benign": "正常"}
+
+PROMPT = """你是电信诈骗话术分类器。把下面这条中文通话话术归到 9 类之一，只输出 JSON。
+类别：elder_healthcare 养老健康/保健品诈骗 | fake_investment 虚假投资/荐股 |
+impersonate_authority 冒充公检法/领导 | impersonate_family 冒充亲友/子女/孙辈 |
+lottery_prize 中奖/兑奖缴费 | online_loan 网贷/贷款 | refund_cs 退款/客服 |
+romance_pig 杀猪盘/婚恋诱导投资 | benign 正常日常通话（含家人借钱、缴费提醒、客服回访等）。
+规则：话术可能只是完整诈骗链的一段（开场/铺垫/索要/施压），凭内容语气判其归属类别即可；
+正常生活场景即使提到转账（亲属借钱、正常还款）也判 benign。
+输出 JSON：{"label":"<上列英文键>","risk":<0到1>}
+"""
+
+
+def load_texts() -> dict[str, str]:
+    """id -> 文本（scam 与 benign 合并，前缀区分类别由调用方提供）。"""
+    texts = {}
+    for path, _ in ((ROOT / "data/scam_corpus/corpus_v0.1.jsonl", 0),
+                    (ROOT / "data/scam_corpus/benign_corpus.jsonl", 1)):
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    r = json.loads(line)
+                    texts[r["id"]] = {"text": r.get("text", ""), "cat": r.get("category", "?")}
+    return texts
+
+
+def call_llm(base: str, key: str, model: str, text: str) -> str:
+    payload = json.dumps({"model": model, "temperature": 0.1, "max_tokens": 32,
+                          "messages": [{"role": "system", "content": PROMPT},
+                                       {"role": "user", "content": text.strip()[:800]}]}
+                         ).encode("utf-8")
+    req = urllib.request.Request(f"{base}/chat/completions", data=payload,
+                                 headers={"Content-Type": "application/json",
+                                          "Authorization": f"Bearer {key}"})
+    with urllib.request.urlopen(req, timeout=90) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    return data["choices"][0]["message"]["content"]
+
+
+def parse_label(raw: str) -> str:
+    import re
+    m = re.search(r'"label"\s*:\s*"([^"]+)"', raw)
+    if not m:
+        m = re.search(r'"label"\s*:\s*"([^"]+)"', raw.replace("'", '"'))
+    lab = m.group(1) if m else ""
+    return lab if lab in LABELS else "error"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--threads", type=int, default=8)
+    args = ap.parse_args()
+
+    base = os.environ["SCAM_LLM_BASE"].rstrip("/")
+    key = os.environ["SCAM_LLM_KEY"]
+    model = os.environ.get("SCAM_LLM_MODEL", "deepseek-chat")
+
+    texts = load_texts()
+    items = []  # (id, expected_label, text)
+    for name, split in (("scam", "scam_eval_ids.json"), ("benign", "benign_eval_ids.json")):
+        ids = json.loads((ROOT / f"data/scam_corpus/eval_split/{split}").read_text(encoding="utf-8"))
+        for i in ids:
+            t = texts[i]
+            exp = "benign" if name == "benign" else t["cat"]
+            items.append((i, exp, t["text"]))
+    if args.limit:
+        items = items[: args.limit]
+    print(f"[评测集] {len(items)} 条（scam eval + benign eval 冻结集）", flush=True)
+
+    results, t0 = [], time.time()
+    def work(it):
+        i, exp, text = it
+        for _ in range(3):
+            try:
+                lab = parse_label(call_llm(base, key, model, text))
+                return (i, exp, lab)
+            except Exception:
+                time.sleep(2)
+        return (i, exp, "error")
+    done = 0
+    with ThreadPoolExecutor(max_workers=args.threads) as ex:
+        futs = [ex.submit(work, it) for it in items]
+        for fu in as_completed(futs):
+            results.append(fu.result())
+            done += 1
+            if done % 200 == 0:
+                print(f"  {done}/{len(items)} ({time.time()-t0:.0f}s)", flush=True)
+    print(f"[完成] {done}/{len(items)} ({time.time()-t0:.0f}s)", flush=True)
+
+    # ---- 指标 ----
+    from collections import Counter, defaultdict
+    conf = Counter((exp, pred) for _, exp, pred in results)
+    errs = [r for r in results if r[2] == "error"]
+    ok = [r for r in results if r[2] != "error"]
+    n = len(ok)
+    acc = sum(1 for _, e, p in ok if e == p) / n if n else 0
+    per = {}
+    for lab in LABELS:
+        tp = conf.get((lab, lab), 0)
+        fp = sum(conf.get((o, lab), 0) for o in LABELS if o != lab)
+        fn = sum(conf.get((lab, p), 0) for p in LABELS if p != lab)
+        p_ = tp / (tp + fp) if tp + fp else 0.0
+        r_ = tp / (tp + fn) if tp + fn else 0.0
+        f1 = 2 * p_ * r_ / (p_ + r_) if p_ + r_ else 0.0
+        per[lab] = {"tp": tp, "fp": fp, "fn": fn, "precision": round(p_, 4),
+                    "recall": round(r_, 4), "f1": round(f1, 4)}
+    macro = sum(per[l]["f1"] for l in LABELS) / len(LABELS)
+    wsum = sum(conf[(l, p)] for l in LABELS for p in LABELS)
+    weighted = sum(per[l]["f1"] * sum(conf[(l, p)] for p in LABELS) for l in LABELS) / wsum if wsum else 0
+    # 二分类：诈骗(8类) vs 正常
+    def bin_metrics(exp_is_scam, pred_is_scam):
+        tp = sum(1 for _, e, p in ok if exp_is_scam(e) and pred_is_scam(p))
+        fp = sum(1 for _, e, p in ok if not exp_is_scam(e) and pred_is_scam(p))
+        fn = sum(1 for _, e, p in ok if exp_is_scam(e) and not pred_is_scam(p))
+        p_ = tp / (tp + fp) if tp + fp else 0.0
+        r_ = tp / (tp + fn) if tp + fn else 0.0
+        return {"tp": tp, "fp": fp, "fn": fn, "precision": round(p_, 4),
+                "recall": round(r_, 4), "f1": round(2 * p_ * r_ / (p_ + r_) if p_ + r_ else 0, 4)}
+    scam = lambda l: l != "benign"
+    bin_scam = bin_metrics(lambda e: e != "benign", lambda p: p != "benign")
+
+    payload = {"date": "2026-09-07", "model": model, "n": n, "api_error": len(errs),
+               "accuracy": round(acc, 4), "macro_f1": round(macro, 4),
+               "weighted_f1": round(weighted, 4), "binary_scam_vs_normal": bin_scam,
+               "per_class": per}
+    (ROOT / "evaluation/semantic_f1.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    lines = ["# 话术分类多分类 F1（线 A4，2026-09-07）", "",
+             f"- 评测集：A1 冻结 {n} 条（scam eval 2,387 + benign eval 481，API error {len(errs)}）",
+             f"- 模型：cloud {model}；**准确率 {acc*100:.1f}% / 宏 F1 {macro*100:.1f}% / 加权 F1 {weighted*100:.1f}%**",
+             f"- 二分类(诈骗 vs 正常)：P {bin_scam['precision']*100:.1f}% / R {bin_scam['recall']*100:.1f}% / "
+             f"F1 {bin_scam['f1']*100:.1f}%（tp {bin_scam['tp']} / fp {bin_scam['fp']} / fn {bin_scam['fn']}）", "",
+             "| 类别 | 中文 | TP | FP | FN | P | R | F1 |", "|---|---|---|---|---|---|---|---|"]
+    for lab in LABELS:
+        v = per[lab]
+        lines.append(f"| {lab} | {LABEL_ZH[lab]} | {v['tp']} | {v['fp']} | {v['fn']} | "
+                     f"{v['precision']*100:.1f}% | {v['recall']*100:.1f}% | {v['f1']*100:.1f}% |")
+    lines += ["", "## 结论判定", "- 二分类诈骗 F1 ≥0.90 即 A4 达标；多分类加权 F1 作参考（8 类细分更难）。"]
+    (ROOT / "evaluation/semantic_f1.md").write_text("\n".join(lines), encoding="utf-8")
+    print(f"acc {acc*100:.1f}%  macro {macro*100:.1f}%  weighted {weighted*100:.1f}%")
+    print("产物: evaluation/semantic_f1.json / .md")
+
+
+if __name__ == "__main__":
+    main()

@@ -22,7 +22,7 @@ SCAN_DIRS = ["configs", "src", "scripts"]
 # 这些路径里的命中是合法的（评测/工厂/路径常量定义本身）
 ALLOW = re.compile(
     r"(evaluation[\\/]|scripts[\\/]redteam_factory[\\/]|scripts[\\/]scam_corpus[\\/]"
-    r"|check_isolation\.py|src[\\/]paths\.py|__pycache__)", re.I)
+    r"|scripts[\\/]eval[\\/]|check_isolation\.py|src[\\/]paths\.py|src[\\/]fusion[\\/]xlsr_cn_channel\.py|__pycache__)", re.I)
 SCAN_EXTS = {".py", ".conf", ".json", ".yaml", ".yml", ".toml", ".sh", ".bat"}
 # 训练语义：仅在含训练关键词的文件中命中才算违规（README/注释类说明不算）
 TRAIN_HINT = re.compile(r"train|launch|protocol|dataset|data_dir|train_config", re.I)

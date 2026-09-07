@@ -79,6 +79,19 @@ def parse_label(raw: str) -> str:
     return lab if lab in LABELS else "error"
 
 
+def parse_risk(raw: str) -> float:
+    """解析 risk 字段（LLM 0-1 语义风险分）；缺省给 0.5 中性。"""
+    import re
+    m = re.search(r'"risk"\s*:\s*([0-9]*\.?[0-9]+)', raw)
+    if not m:
+        m = re.search(r'"risk"\s*:\s*([0-9]*\.?[0-9]+)', raw.replace("'", '"'))
+    try:
+        v = float(m.group(1)) if m else 0.5
+    except Exception:  # noqa: BLE001
+        v = 0.5
+    return max(0.0, min(1.0, v))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
@@ -106,11 +119,12 @@ def main():
         i, exp, text = it
         for _ in range(3):
             try:
-                lab = parse_label(call_llm(base, key, model, text))
-                return (i, exp, lab)
+                raw = call_llm(base, key, model, text)
+                lab = parse_label(raw)
+                return (i, exp, lab, parse_risk(raw))
             except Exception:
                 time.sleep(2)
-        return (i, exp, "error")
+        return (i, exp, "error", 0.5)
     done = 0
     with ThreadPoolExecutor(max_workers=args.threads) as ex:
         futs = [ex.submit(work, it) for it in items]
@@ -121,13 +135,22 @@ def main():
                 print(f"  {done}/{len(items)} ({time.time()-t0:.0f}s)", flush=True)
     print(f"[完成] {done}/{len(items)} ({time.time()-t0:.0f}s)", flush=True)
 
+    # 行级落盘（A5 校准数据，避免重复调用云端）
+    rows_csv = ROOT / "evaluation" / "semantic_f1_rows.csv"
+    with open(rows_csv, "w", encoding="utf-8-sig", newline="") as fcsv:
+        wcsv = csv.writer(fcsv)
+        wcsv.writerow(["id", "expected", "pred", "risk"])
+        for i, exp, pred, risk in results:
+            wcsv.writerow([i, exp, pred, risk])
+    print(f"[行级] 已落盘 {rows_csv.name}（{len(results)} 行）", flush=True)
+
     # ---- 指标 ----
     from collections import Counter, defaultdict
-    conf = Counter((exp, pred) for _, exp, pred in results)
+    conf = Counter((exp, pred) for _, exp, pred, _ in results)
     errs = [r for r in results if r[2] == "error"]
     ok = [r for r in results if r[2] != "error"]
     n = len(ok)
-    acc = sum(1 for _, e, p in ok if e == p) / n if n else 0
+    acc = sum(1 for _, e, p, _ in ok if e == p) / n if n else 0
     per = {}
     for lab in LABELS:
         tp = conf.get((lab, lab), 0)
@@ -143,9 +166,9 @@ def main():
     weighted = sum(per[l]["f1"] * sum(conf[(l, p)] for p in LABELS) for l in LABELS) / wsum if wsum else 0
     # 二分类：诈骗(8类) vs 正常
     def bin_metrics(exp_is_scam, pred_is_scam):
-        tp = sum(1 for _, e, p in ok if exp_is_scam(e) and pred_is_scam(p))
-        fp = sum(1 for _, e, p in ok if not exp_is_scam(e) and pred_is_scam(p))
-        fn = sum(1 for _, e, p in ok if exp_is_scam(e) and not pred_is_scam(p))
+        tp = sum(1 for _, e, p, _ in ok if exp_is_scam(e) and pred_is_scam(p))
+        fp = sum(1 for _, e, p, _ in ok if not exp_is_scam(e) and pred_is_scam(p))
+        fn = sum(1 for _, e, p, _ in ok if exp_is_scam(e) and not pred_is_scam(p))
         p_ = tp / (tp + fp) if tp + fp else 0.0
         r_ = tp / (tp + fn) if tp + fn else 0.0
         return {"tp": tp, "fp": fp, "fn": fn, "precision": round(p_, 4),

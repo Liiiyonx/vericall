@@ -1,7 +1,7 @@
 {
-  "total": 6843,
-  "physical_pass": 6299,
-  "quarantined": 544,
+  "total": 16181,
+  "physical_pass": 13729,
+  "quarantined": 2452,
   "hard_examples": 0,
   "hard_note": "通道① spoof 分 <0.3 的高置信漏检难例（优先入评估集）",
   "thresholds": {

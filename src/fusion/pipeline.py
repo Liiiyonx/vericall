@@ -155,6 +155,46 @@ class VeriCallPipeline:
               f"conf={v.confidence}) {v.detail}")
         return v
 
+    # ------------------------------------------------------------------ #
+    def _three_channels_sequential(self, audio_path: str):
+        """顺序执行三通道（默认路径，单卡 GPU 下与并行几乎同价）。"""
+        acoustic = self._acoustic_verdict(audio_path)
+        print(f"[通道① 声学] score={acoustic.score} label={acoustic.label} "
+              f"({acoustic.confidence}) {acoustic.detail}")
+        voiceprint = self._voiceprint_verdict(audio_path)
+        print(f"[通道② 声纹] score={voiceprint.score} label={voiceprint.label} "
+              f"({voiceprint.confidence}) {voiceprint.detail}")
+        semantic = self._semantic_verdict(audio_path)
+        print(f"[通道③ 话术] score={semantic.score} label={semantic.label} "
+              f"({semantic.confidence}) {semantic.detail}")
+        return acoustic, voiceprint, semantic
+
+    def _three_channels_parallel(self, audio_path: str):
+        """并发三通道（VERICALL_PARALLEL=1）：语义含云端调用，可重叠 GPU 段。"""
+        import concurrent.futures as cf
+
+        def _ac():
+            v = self._acoustic_verdict(audio_path)
+            print(f"[P ①声学] score={v.score} label={v.label} conf={v.confidence}")
+            return v
+
+        def _vp():
+            v = self._voiceprint_verdict(audio_path)
+            print(f"[P ②声纹] score={v.score} label={v.label} conf={v.confidence}")
+            return v
+
+        def _se():
+            v = self._semantic_verdict(audio_path)
+            print(f"[P ③话术] score={v.score} label={v.label} conf={v.confidence}")
+            return v
+
+        with cf.ThreadPoolExecutor(max_workers=3) as ex:
+            f_ac = ex.submit(_ac)
+            f_vp = ex.submit(_vp)
+            f_se = ex.submit(_se)
+            acoustic, voiceprint, semantic = f_ac.result(), f_vp.result(), f_se.result()
+        return acoustic, voiceprint, semantic
+
     def analyze(self, audio_path: str, scenario: str | None = None,
                 caller_number: str | None = None) -> "FusionResult":
         """对一段来电音频跑完整三通道融合，返回最终裁决。
@@ -163,6 +203,9 @@ class VeriCallPipeline:
         直接走缓存通道 + 实时规则话术，跳过 Ollama/SenseVoice/torch。
         caller_number: 来电号码（可选）——先走 ⓪ 号码先验，命中即短路拦截，
         跳过三通道推理（省算力）；未命中照常三通道。
+        并行调度（5.1，2026-09-07）：默认串行；设 VERICALL_PARALLEL=1 时
+        三通道并发（语义含云端 LLM 调用，可与 GPU 通道重叠；GPU 争用风险
+        见 gate——声学/声纹同卡仍由 torch 排队，云端段净省时）。
         """
         # 通道⓪ 号码先验（本地查表 0ms，命中即短路，最省算力）
         number = self._number_verdict(caller_number)
@@ -176,20 +219,11 @@ class VeriCallPipeline:
             return self._offline_result(scenario)
         print(f"\n=== 分析音频: {audio_path} ===")
 
-        # 通道① 声学伪造：真实 AASIST 推理（load→infer→释放 GPU）
-        acoustic = self._acoustic_verdict(audio_path)
-        print(f"[通道① 声学] score={acoustic.score} label={acoustic.label} "
-              f"({acoustic.confidence}) {acoustic.detail}")
-
-        # 通道② 声纹：真实
-        voiceprint = self._voiceprint_verdict(audio_path)
-        print(f"[通道② 声纹] score={voiceprint.score} label={voiceprint.label} "
-              f"({voiceprint.confidence}) {voiceprint.detail}")
-
-        # 通道③ 话术：真实 ASR + LLM
-        semantic = self._semantic_verdict(audio_path)
-        print(f"[通道③ 话术] score={semantic.score} label={semantic.label} "
-              f"({semantic.confidence}) {semantic.detail}")
+        parallel = os.environ.get("VERICALL_PARALLEL", "0") == "1"
+        if parallel:
+            acoustic, voiceprint, semantic = self._three_channels_parallel(audio_path)
+        else:
+            acoustic, voiceprint, semantic = self._three_channels_sequential(audio_path)
 
         # 融合裁决
         result = self.orch.decide(acoustic, voiceprint, semantic)

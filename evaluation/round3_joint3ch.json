@@ -1,0 +1,62 @@
+[
+ {
+  "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000534.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 16.3
+ },
+ {
+  "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000586.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 3.0
+ },
+ {
+  "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000729.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 2.8
+ },
+ {
+  "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunxiNeural_SC-000923.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 2.9
+ },
+ {
+  "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunxiNeural_SC-002349.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 2.7
+ },
+ {
+  "path": "data/redteam/factory/round3_setd/amr/edgetts_mandarin_zh-CN-YunyangNeural_SC-000534.amr.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 2.9
+ },
+ {
+  "path": "data/redteam/factory/round3_setd/amr/edgetts_mandarin_zh-CN-YunyangNeural_SC-000586.amr.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 2.7
+ },
+ {
+  "path": "data/redteam/factory/round3_setd/amr/edgetts_mandarin_zh-CN-YunyangNeural_SC-000729.amr.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 2.6
+ },
+ {
+  "path": "data/redteam/factory/round3_setd/amr/edgetts_mandarin_zh-CN-YunxiNeural_SC-000923.amr.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 2.7
+ },
+ {
+  "path": "data/redteam/factory/round3_setd/amr/edgetts_mandarin_zh-CN-YunxiNeural_SC-002349.amr.wav",
+  "final": "block",
+  "score": 1.0,
+  "lat_s": 2.8
+ }
+]

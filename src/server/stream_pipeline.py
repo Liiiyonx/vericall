@@ -29,6 +29,7 @@ class StreamProcessor:
         self.fusion = IncrementalFusion(orchestrator, family_name=family_name)
         self.backends = backends or self._default_offline_backends()
         self.transcript = ""
+        self.transcript_max = 1500  # 转写上下文上限（滚动截断，防长流内存泄漏 09-07）
 
     def _default_offline_backends(self) -> dict:
         """无任何后端时：全 stub（不误拦），保证导入即可跑通空流。"""
@@ -67,6 +68,9 @@ class StreamProcessor:
         sem, txt = self.backends["semantic"](w, self.transcript)
         if txt:
             self.transcript = (self.transcript + " " + txt).strip()
+            if len(self.transcript) > self.transcript_max:
+                # 滚动保留最近 transcript_max 字（语义只需近期上下文）
+                self.transcript = self.transcript[-self.transcript_max:].lstrip()
         return self.fusion.update(ac, vp, sem, w.t_rel, idx=w.idx)
 
     # ------------------------------------------------------------------ #

@@ -126,6 +126,31 @@ class VoiceprintChannel:
         print(f"[声纹] 已登记家人「{name}」（当前共 {len(self.profiles)} 位）")
 
     # ------------------------------------------------------------------ #
+    def enroll_dual_channel(self, name: str, quiet_path: str, speaker_path: str) -> None:
+        """双信道注册协议（B4-③，2026-09-07）：安静座机 + 免提双样本。
+
+        流程：两样本各自嵌入 → 平均成模板 → 两样本对模板余弦须均 ≥ MATCH(0.520)
+        才落盘；任一低质（录坏/噪声/读错人）即抛错拒绝，防单条低质样本污染声纹库。
+        """
+        v1 = self._embed(quiet_path)
+        v2 = self._embed(speaker_path)
+        both = (v1 + v2) / 2.0
+        n = float(np.linalg.norm(both))
+        if n < 1e-8:
+            raise ValueError("双信道注册失败：合成模板为零向量")
+        both = both / n
+        s1, s2 = float(v1 @ both), float(v2 @ both)
+        s_pair = float(v1 @ v2)  # 两样本互验：同一人两信道须足够接近
+        if s_pair < MATCH_THRESHOLD or s1 < MATCH_THRESHOLD or s2 < MATCH_THRESHOLD:
+            raise ValueError(
+                f"双信道注册质量不足，拒绝落盘：样本互验={s_pair:.3f} "
+                f"quiet={s1:.3f} speaker={s2:.3f}，要求均 ≥ MATCH "
+                f"{MATCH_THRESHOLD:.3f}（阈值出处 voiceprint_calibration.md）")
+        self._save_profile(name, both, source_file="dual_channel")
+        self.profiles[name] = both
+        print(f"[声纹] 双信道注册「{name}」完成（互验={s_pair:.3f} 均达标）")
+
+    # ------------------------------------------------------------------ #
     # 落盘 / 加载（P0-6：声纹库持久化，重启不丢）
     def _profile_dir(self, name: str) -> Path:
         return VOICEPRINT_DIR / name

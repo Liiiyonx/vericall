@@ -62,6 +62,30 @@ romance_pig 杀猪盘/婚恋诱导投资 | benign 正常日常通话（含家人
 输出 JSON：{"label":"<上列英文键>","risk":<0到1>}
 """
 
+# v3：在 v2 基础上修正 authority↔refund 边界（v2 把"客服+施压"误并入 authority，refund R 96.7→90.5；
+# v3 authority 仅限执法/政府机关口吻，机构客服类一律 refund_cs）。2026-09-08。
+PROMPT_V3 = """你是电信诈骗话术分类器。把下面这条中文通话话术归到 9 类之一，只输出 JSON。
+类别：elder_healthcare 养老健康/保健品诈骗 | fake_investment 虚假投资/荐股 |
+impersonate_authority 冒充公检法/政府执法 | impersonate_family 冒充亲友/子女/孙辈 |
+lottery_prize 中奖/兑奖缴费 | online_loan 网贷/贷款 | refund_cs 退款/客服（含冒充平台、商家、银行、
+物流、航空等客服，以退款理赔/取消业务/扣款威胁为由）| romance_pig 杀猪盘/婚恋诱导投资 | benign 正常
+日常通话（含家人借钱、缴费提醒、客服回访等）。
+规则：
+1. 话术可能只是完整诈骗链的一段（开场/铺垫/索要/施压），凭内容语气判其归属类别即可；正常生活场景
+   即使提到转账（亲属借钱、正常还款、缴费提醒）也判 benign。
+2. romance_pig 与 fake_investment 的界定：fake_investment = 陌生人/社群/直播间荐股带单，无情感关系
+   经营；若话术含婚恋语境（婚恋平台/相亲、情感称谓如亲爱的/老婆/老公/宝贝、嘘寒问暖建立信任、
+   异地恋/见面铺垫后再引到投资赚钱、礼物/转账测试真心等），即使主体在讲"带你投资/一起赚钱/内幕消息"，
+   也判 romance_pig（杀猪盘=婚恋诱导投资）。
+3. impersonate_authority / impersonate_family / refund_cs 三向界定：
+   - impersonate_authority = 自称**公检法/政府执法机关/通管局/纪委**等国家执法机构，以涉案、拘捕、
+     通缉、安全账户、配合调查、洗钱为由施压（即使自称"领导/主任"也按机构语境判断）；
+   - 自称亲人急事求助（出车祸/生病住院/手机丢失借号/要医药费保释金）→ impersonate_family；
+   - **自称平台/商家/银行/物流/航空公司等客服机构，以退款理赔、误开会员扣款、取消业务、屏幕共享、
+     征信受损、订单异常为由（即使语带威胁催迫、限时转账）→ refund_cs，不判 authority**。
+输出 JSON：{"label":"<上列英文键>","risk":<0到1>}
+"""
+
 CURRENT_PROMPT = PROMPT_V1
 
 
@@ -117,11 +141,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--threads", type=int, default=8)
-    ap.add_argument("--variant", type=int, default=1, choices=[1, 2],
+    ap.add_argument("--variant", type=int, default=1, choices=[1, 2, 3],
                     help="提示词版本：1=基线(默认) 2=romance/authority 界定增强")
     args = ap.parse_args()
     global CURRENT_PROMPT
-    CURRENT_PROMPT = PROMPT_V1 if args.variant == 1 else PROMPT_V2
+    CURRENT_PROMPT = {1: PROMPT_V1, 2: PROMPT_V2, 3: PROMPT_V3}[args.variant]
     tag = f"_v{args.variant}"
 
     base = os.environ["SCAM_LLM_BASE"].rstrip("/")

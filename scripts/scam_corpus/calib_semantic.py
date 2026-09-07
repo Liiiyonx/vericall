@@ -77,7 +77,7 @@ def main():
                  f"{t['precision']*100:.1f}% | {t['recall']*100:.1f}% |")
     L += ["", "## 结论建议", "- LLM 输出 risk 非严格概率 → 不用温度缩放；用**阈值-经验校准**：",
           "- 语义 block 建议阈值 risk ≥0.60（看上表 P/R 平衡；与融合器 hard 口径对齐并在代码注明出处）；",
-          "- risk 桶越往高，真实诈骗率越高则校准可用；若 ECE 高，提示词加"给出概率感"约束或改两段式。"]
+          "- risk 桶越往高真实诈骗率越高则校准可用；若 ECE 高，提示词加「给出概率感」约束或改两段式。"]
     OUT_M.write_text("\n".join(L), encoding="utf-8")
     print(f"ECE={ece*100:.1f}%  产物 {OUT_M.name}")
 

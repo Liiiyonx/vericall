@@ -1,0 +1,454 @@
+{
+ "set_c": [
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000534.wav",
+   "prob": 0.1922
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000586.wav",
+   "prob": 0.2184
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000729.wav",
+   "prob": 0.2304
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunxiNeural_SC-000923.wav",
+   "prob": 0.2358
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunxiNeural_SC-002349.wav",
+   "prob": 0.2413
+  },
+  {
+   "path": "data/redteam/factory/edgetts/sichuan/edgetts_sichuan_zh-CN-YunxiNeural_SC-001233.wav",
+   "prob": 0.2466
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunjianNeural_SC-000133.wav",
+   "prob": 0.2542
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-001406.wav",
+   "prob": 0.2593
+  },
+  {
+   "path": "data/redteam/factory/edgetts/sichuan/edgetts_sichuan_zh-CN-YunxiNeural_SC-005696.wav",
+   "prob": 0.2608
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000158.wav",
+   "prob": 0.2757
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunxiNeural_SC-000453.wav",
+   "prob": 0.2847
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-002156.wav",
+   "prob": 0.2855
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-001053.wav",
+   "prob": 0.2855
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000085.wav",
+   "prob": 0.2877
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-001987.wav",
+   "prob": 0.2913
+  },
+  {
+   "path": "data/redteam/factory/edgetts/sichuan/edgetts_sichuan_zh-CN-YunxiNeural_SC-000354.wav",
+   "prob": 0.2917
+  },
+  {
+   "path": "data/redteam/factory/edgetts/sichuan/edgetts_sichuan_zh-CN-YunxiNeural_SC-005366.wav",
+   "prob": 0.2922
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-001132.wav",
+   "prob": 0.2922
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000977.wav",
+   "prob": 0.2967
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-000585.wav",
+   "prob": 0.2975
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunyangNeural_SC-001733.wav",
+   "prob": 0.2984
+  },
+  {
+   "path": "data/redteam/factory/edgetts/mandarin/edgetts_mandarin_zh-CN-YunxiNeural_SC-001608.wav",
+   "prob": 0.2995
+  }
+ ],
+ "set_d": {
+  "phone8k": [
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunjianNeural_SC-000133.phone8k.wav",
+    "prob": 0.5879
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunxiNeural_SC-000453.phone8k.wav",
+    "prob": 0.7394
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunxiNeural_SC-000923.phone8k.wav",
+    "prob": 0.5949
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunxiNeural_SC-001608.phone8k.wav",
+    "prob": 0.7845
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunxiNeural_SC-002349.phone8k.wav",
+    "prob": 0.5124
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000085.phone8k.wav",
+    "prob": 0.281
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000158.phone8k.wav",
+    "prob": 0.3385
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000534.phone8k.wav",
+    "prob": 0.3176
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000585.phone8k.wav",
+    "prob": 0.5911
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000586.phone8k.wav",
+    "prob": 0.5421
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000729.phone8k.wav",
+    "prob": 0.5313
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000977.phone8k.wav",
+    "prob": 0.4034
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001053.phone8k.wav",
+    "prob": 0.4573
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001132.phone8k.wav",
+    "prob": 0.6185
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001406.phone8k.wav",
+    "prob": 0.4513
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001733.phone8k.wav",
+    "prob": 0.501
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001987.phone8k.wav",
+    "prob": 0.4077
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-002156.phone8k.wav",
+    "prob": 0.6605
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_sichuan_zh-CN-YunxiNeural_SC-000354.phone8k.wav",
+    "prob": 0.6714
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_sichuan_zh-CN-YunxiNeural_SC-001233.phone8k.wav",
+    "prob": 0.4719
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_sichuan_zh-CN-YunxiNeural_SC-005366.phone8k.wav",
+    "prob": 0.568
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/phone8k\\edgetts_sichuan_zh-CN-YunxiNeural_SC-005696.phone8k.wav",
+    "prob": 0.502
+   }
+  ],
+  "mp3_16k": [
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunjianNeural_SC-000133.mp3_16k.wav",
+    "prob": 0.6618
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunxiNeural_SC-000453.mp3_16k.wav",
+    "prob": 0.684
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunxiNeural_SC-000923.mp3_16k.wav",
+    "prob": 0.4498
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunxiNeural_SC-001608.mp3_16k.wav",
+    "prob": 0.5087
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunxiNeural_SC-002349.mp3_16k.wav",
+    "prob": 0.5682
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000085.mp3_16k.wav",
+    "prob": 0.6661
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000158.mp3_16k.wav",
+    "prob": 0.5255
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000534.mp3_16k.wav",
+    "prob": 0.7673
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000585.mp3_16k.wav",
+    "prob": 0.6839
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000586.mp3_16k.wav",
+    "prob": 0.4337
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000729.mp3_16k.wav",
+    "prob": 0.5884
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000977.mp3_16k.wav",
+    "prob": 0.9197
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001053.mp3_16k.wav",
+    "prob": 0.7171
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001132.mp3_16k.wav",
+    "prob": 0.7334
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001406.mp3_16k.wav",
+    "prob": 0.6366
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001733.mp3_16k.wav",
+    "prob": 0.7837
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001987.mp3_16k.wav",
+    "prob": 0.5539
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_mandarin_zh-CN-YunyangNeural_SC-002156.mp3_16k.wav",
+    "prob": 0.5856
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_sichuan_zh-CN-YunxiNeural_SC-000354.mp3_16k.wav",
+    "prob": 0.629
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_sichuan_zh-CN-YunxiNeural_SC-001233.mp3_16k.wav",
+    "prob": 0.1512
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_sichuan_zh-CN-YunxiNeural_SC-005366.mp3_16k.wav",
+    "prob": 0.2593
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/mp3_16k\\edgetts_sichuan_zh-CN-YunxiNeural_SC-005696.mp3_16k.wav",
+    "prob": 0.6511
+   }
+  ],
+  "amr": [
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunjianNeural_SC-000133.amr.wav",
+    "prob": 0.3685
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunxiNeural_SC-000453.amr.wav",
+    "prob": 0.5185
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunxiNeural_SC-000923.amr.wav",
+    "prob": 0.4821
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunxiNeural_SC-001608.amr.wav",
+    "prob": 0.7273
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunxiNeural_SC-002349.amr.wav",
+    "prob": 0.3833
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000085.amr.wav",
+    "prob": 0.312
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000158.amr.wav",
+    "prob": 0.4387
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000534.amr.wav",
+    "prob": 0.2778
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000585.amr.wav",
+    "prob": 0.6346
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000586.amr.wav",
+    "prob": 0.2288
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000729.amr.wav",
+    "prob": 0.3593
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000977.amr.wav",
+    "prob": 0.4782
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001053.amr.wav",
+    "prob": 0.2105
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001132.amr.wav",
+    "prob": 0.4361
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001406.amr.wav",
+    "prob": 0.5207
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001733.amr.wav",
+    "prob": 0.2448
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001987.amr.wav",
+    "prob": 0.4192
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_mandarin_zh-CN-YunyangNeural_SC-002156.amr.wav",
+    "prob": 0.4014
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_sichuan_zh-CN-YunxiNeural_SC-000354.amr.wav",
+    "prob": 0.4215
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_sichuan_zh-CN-YunxiNeural_SC-001233.amr.wav",
+    "prob": 0.4652
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_sichuan_zh-CN-YunxiNeural_SC-005366.amr.wav",
+    "prob": 0.4167
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/amr\\edgetts_sichuan_zh-CN-YunxiNeural_SC-005696.amr.wav",
+    "prob": 0.2983
+   }
+  ],
+  "noise": [
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunjianNeural_SC-000133.noise.wav",
+    "prob": 0.9793
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunxiNeural_SC-000453.noise.wav",
+    "prob": 0.9936
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunxiNeural_SC-000923.noise.wav",
+    "prob": 0.9879
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunxiNeural_SC-001608.noise.wav",
+    "prob": 0.9937
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunxiNeural_SC-002349.noise.wav",
+    "prob": 0.9793
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000085.noise.wav",
+    "prob": 0.9678
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000158.noise.wav",
+    "prob": 0.9813
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000534.noise.wav",
+    "prob": 0.99
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000585.noise.wav",
+    "prob": 0.9874
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000586.noise.wav",
+    "prob": 0.9771
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000729.noise.wav",
+    "prob": 0.9793
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-000977.noise.wav",
+    "prob": 0.9751
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001053.noise.wav",
+    "prob": 0.9879
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001132.noise.wav",
+    "prob": 0.9912
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001406.noise.wav",
+    "prob": 0.979
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001733.noise.wav",
+    "prob": 0.9657
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-001987.noise.wav",
+    "prob": 0.9863
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_mandarin_zh-CN-YunyangNeural_SC-002156.noise.wav",
+    "prob": 0.9837
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_sichuan_zh-CN-YunxiNeural_SC-000354.noise.wav",
+    "prob": 0.9764
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_sichuan_zh-CN-YunxiNeural_SC-001233.noise.wav",
+    "prob": 0.9924
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_sichuan_zh-CN-YunxiNeural_SC-005366.noise.wav",
+    "prob": 0.9918
+   },
+   {
+    "path": "data/redteam/factory/round3_setd/noise\\edgetts_sichuan_zh-CN-YunxiNeural_SC-005696.noise.wav",
+    "prob": 0.9838
+   }
+  ]
+ }
+}

@@ -24,7 +24,15 @@ OUT_M = ROOT / "evaluation" / "semantic_calibration.md"
 
 
 def main():
-    rows = list(csv.DictReader(open(ROWS, encoding="utf-8-sig")))
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tag", default="",
+                    help="行级 csv 后缀（如 --tag _v2 读 semantic_f1_rows_v2.csv，输出带 _v2）")
+    args = ap.parse_args()
+    rows_path = ROOT / "evaluation" / f"semantic_f1_rows{args.tag}.csv"
+    out_j = ROOT / "evaluation" / f"semantic_calibration{args.tag}.json"
+    out_m = ROOT / "evaluation" / f"semantic_calibration{args.tag}.md"
+    rows = list(csv.DictReader(open(rows_path, encoding="utf-8-sig")))
     rows = [r for r in rows if r["pred"] != "error"]
     scam = [r for r in rows if r["expected"] != "benign"]
     n = len(rows)
@@ -63,7 +71,7 @@ def main():
 
     payload = {"date": "2026-09-07", "n": n, "ece": round(ece, 4),
                "reliability": table, "threshold_ops": thr_rows}
-    OUT_J.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_j.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     L = ["# 语义风险分置信度校准（A5，2026-09-07）", "",
          f"- 样本：{n} 条（A1 冻结集，含 risk 字段；诈骗=正类）",
          f"- **ECE = {ece*100:.1f}%**（0 完美校准；<10% 可用）", "",
@@ -78,8 +86,8 @@ def main():
     L += ["", "## 结论建议", "- LLM 输出 risk 非严格概率 → 不用温度缩放；用**阈值-经验校准**：",
           "- 语义 block 建议阈值 risk ≥0.60（看上表 P/R 平衡；与融合器 hard 口径对齐并在代码注明出处）；",
           "- risk 桶越往高真实诈骗率越高则校准可用；若 ECE 高，提示词加「给出概率感」约束或改两段式。"]
-    OUT_M.write_text("\n".join(L), encoding="utf-8")
-    print(f"ECE={ece*100:.1f}%  产物 {OUT_M.name}")
+    out_m.write_text("\n".join(L), encoding="utf-8")
+    print(f"ECE={ece*100:.1f}%  产物 {out_m.name}")
 
 
 if __name__ == "__main__":

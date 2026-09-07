@@ -97,7 +97,18 @@ class TestChannel:
         assert not v.matched and v.source == "not_hit"
 
 
-class TestOrchestratorShortCircuit:
+class TestPipelineShortCircuit:
+    def test_pipeline_number_hit_skips_3ch(self, tmp_path, monkeypatch):
+        bl = tmp_path / "b.txt"
+        bl.write_text("17012345678\t测试条目\n", encoding="utf-8")
+        monkeypatch.setenv("VERICALL_NUMBER_BLOCKLIST", str(bl))
+        from fusion.pipeline import VeriCallPipeline as Pipeline
+        # 假通道：若三通道被执行会因缺方法而失败 → 短路成功即证明跳过
+        p = Pipeline(voiceprint=object(), semantic=object(), acoustic=object())
+        r = p.analyze("unused.wav", caller_number="17012345678")
+        assert r.final == "block"
+        assert len(r.channels) == 1 and r.channels[0]["name"] == "number"
+        assert "跳过" in r.rationale
     def test_number_hit_blocks_without_3ch(self):
         nc = _nc_with(["17000000001"])
         orch = FusionOrchestrator()

@@ -86,6 +86,7 @@ class VeriCallPipeline:
         self.sem = semantic or SemanticChannel()
         self.ac = acoustic or AcousticChannel(device=device)
         self.orch = orchestrator or FusionOrchestrator()
+        self._number_ch = None  # 通道⓪ 号码先验（懒加载）
 
     # ------------------------------------------------------------------ #
     def enroll(self, name: str, audio_path: str) -> None:
@@ -141,12 +142,36 @@ class VeriCallPipeline:
             confidence=conf,
         )
 
-    def analyze(self, audio_path: str, scenario: str | None = None) -> "FusionResult":
+    # ------------------------------------------------------------------ #
+    def _number_verdict(self, caller_number: str | None):
+        """⓪ 号码先验（懒加载 NumberChannel；无号码返回 None 走三通道）。"""
+        if caller_number is None or not str(caller_number).strip():
+            return None
+        if self._number_ch is None:
+            from fusion.number_channel import NumberChannel
+            self._number_ch = NumberChannel()
+        v = self._number_ch.check(str(caller_number))
+        print(f"[通道⓪ 号码] {caller_number} -> {v.source} (score={v.score} "
+              f"conf={v.confidence}) {v.detail}")
+        return v
+
+    def analyze(self, audio_path: str, scenario: str | None = None,
+                caller_number: str | None = None) -> "FusionResult":
         """对一段来电音频跑完整三通道融合，返回最终裁决。
 
         scenario: 演示场景编号（A/B/C）。离线模式（VERICALL_OFFLINE=1）下
         直接走缓存通道 + 实时规则话术，跳过 Ollama/SenseVoice/torch。
+        caller_number: 来电号码（可选）——先走 ⓪ 号码先验，命中即短路拦截，
+        跳过三通道推理（省算力）；未命中照常三通道。
         """
+        # 通道⓪ 号码先验（本地查表 0ms，命中即短路，最省算力）
+        number = self._number_verdict(caller_number)
+        if number is not None and number.matched:
+            return self.orch.decide(
+                self.orch.safe_stub("acoustic", "跳过(号码先验命中)"),
+                self.orch.safe_stub("voiceprint", "跳过(号码先验命中)"),
+                self.orch.safe_stub("semantic", "跳过(号码先验命中)"),
+                number=number)
         if OFFLINE:
             return self._offline_result(scenario)
         print(f"\n=== 分析音频: {audio_path} ===")

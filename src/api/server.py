@@ -158,7 +158,8 @@ def status():
 
 @app.post("/api/analyze")
 async def analyze(file: UploadFile | None = File(default=None),
-                  demo: str | None = Form(default=None)):
+                  demo: str | None = Form(default=None),
+                  caller_number: str | None = Form(default=None)):
     if not _lock.acquire(blocking=False):
         return JSONResponse({"error": "busy", "message": "上一次分析尚未结束，请稍候"},
                             status_code=503)
@@ -203,7 +204,8 @@ async def analyze(file: UploadFile | None = File(default=None),
             name = file.filename
 
         t0 = time.time()
-        result = pipe.analyze(audio_path, scenario=demo if demo else None)
+        result = pipe.analyze(audio_path, scenario=demo if demo else None,
+                              caller_number=caller_number)
         elapsed = round(time.time() - t0, 1)
 
         rec = {

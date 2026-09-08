@@ -16,7 +16,7 @@
 |---|---|---|
 | ① 声学伪造检测 | AASIST（clovaai/aasist，RTX 5060 8GB 实训） | dev EER 0.745%（best 0.316%）/ eval EER 3.494% |
 | ② 家庭声纹 | CAMPPlus（modelscope） | 真实推理，同人≈1.0 / 异人≈0.03 |
-| ③ 话术语义 | SenseVoice ASR + Ollama deepseek-r1 风险评分 | 真实推理（依赖本地 Ollama） |
+| ③ 话术语义 | SenseVoice ASR + 云端 DeepSeek（deepseek-chat）风险评分 | 真实推理（默认云端，禁本地 Ollama） |
 | 融合决策 | 三通道加权 + 纵深防御 + 单通道中危升级 | 可解释，绿/黄/红三级 |
 | 适老交互 | 大字模式 + 红黄绿整屏色块 + 语音播报（`web/copy.js` 非指控式文案库） | 纯前端，localStorage 记忆偏好 |
 | 子女端联动 | 拦截分享卡片（canvas 生成：来电时间/三通道证据/建议话术） | 实时告警与检测页均可生成，可保存转发 |
@@ -82,7 +82,7 @@ python scripts/launch_training.py --config configs/AASIST_5060.conf
 bash start.sh
 ```
 
-启动器会自动：① 检查并安装缺失依赖（清华镜像）；② 检查 AASIST 权重（缺失仅提示，声学通道以 stub 运行）；③ 探测 Ollama，不通则自动开启**离线降级模式**；④ 拉起服务并打开 `http://localhost:8000`。
+启动器会自动：① 检查并安装缺失依赖（清华镜像）；② 检查 AASIST 权重（缺失仅提示，声学通道以 stub 运行）；③ 检查云端 LLM 密钥（`SCAM_LLM_*`），缺失/不可达则自动开启**离线降级模式**；④ 拉起服务并打开 `http://localhost:8000`。
 
 > 干净虚拟机双击 `start.bat`，≤5 分钟见到演示页面；断网 / 无 GPU 也能进降级演示（见下）。
 
@@ -95,7 +95,7 @@ bash start.sh
 | 通道① AASIST | GPU 推理 | 无权重 → stub（conf=0）；有权重则 CPU 推理 |
 | 通道② CAMPPlus | GPU | CPU 推理（30MB，毫秒级） |
 | 通道③ ASR | SenseVoice | 转写缓存 `data/cache/transcripts.json`（md5 keyed）复用历史转写 |
-| 通道③ LLM | deepseek-r1 | 规则评分器 `rule_scorer.py` 兜底 |
+| 通道③ LLM | 云端 deepseek-chat | 规则评分器 `rule_scorer.py` 兜底 |
 
 离线下三 demo 场景结论保持：**A=放行 / B=拦截 / C=警惕**，演示数据见 `data/demo_cache.json`。
 
@@ -150,7 +150,7 @@ python scripts/degrade_audio.py <音频或目录> --preset phone8k --out data/de
 
 ```bash
 pip install pytest numpy
-pytest tests/ -q       # 47 个单测：融合决策 + EER 指标 + 流式状态机 + 规则评分器 + 红队扰动/语料（纯逻辑，无 GPU/Ollama）
+pytest tests/ -q       # 90 个单测：融合决策 + EER 指标 + 流式状态机 + 规则评分器 + 红队扰动/语料 + 号码通道 + 声纹标定（纯逻辑，无 GPU/Ollama）
 ```
 
 ## 里程碑

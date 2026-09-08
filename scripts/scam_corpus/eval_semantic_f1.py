@@ -86,6 +86,32 @@ lottery_prize 中奖/兑奖缴费 | online_loan 网贷/贷款 | refund_cs 退款
 输出 JSON：{"label":"<上列英文键>","risk":<0到1>}
 """
 
+# v4：在 v2 基础上增强 romance 召回——把 romance 判定从"强婚恋语境"扩展到"关系经营 + 私密性"弱信号，
+# 针对杀猪盘"收网投资段"（骗子建立情感后单独发的纯投资话术，单段无婚恋称谓）。
+# 依据 semantic_f1_ab.md：romance FN 63% 含弱信号（咱俩/咱们/导师/内部项目/别声张/别跟家里）。
+PROMPT_V4 = """你是电信诈骗话术分类器。把下面这条中文通话话术归到 9 类之一，只输出 JSON。
+类别：elder_healthcare 养老健康/保健品诈骗 | fake_investment 虚假投资/荐股 |
+impersonate_authority 冒充公检法/领导 | impersonate_family 冒充亲友/子女/孙辈 |
+lottery_prize 中奖/兑奖缴费 | online_loan 网贷/贷款 | refund_cs 退款/客服 |
+romance_pig 杀猪盘/婚恋诱导投资 | benign 正常日常通话（含家人借钱、缴费提醒、客服回访等）。
+规则：
+1. 话术可能只是完整诈骗链的一段（开场/铺垫/索要/施压），凭内容语气判其归属类别即可；正常生活场景
+   即使提到转账（亲属借钱、正常还款、缴费提醒）也判 benign。
+2. romance_pig 与 fake_investment 的界定（重点，宁可多召回 romance）：
+   - fake_investment = 陌生人/社群/直播间公开荐股带单，无任何情感/关系经营；
+   - 只要话术在"讲投资/赚钱/内幕/行情"的同时，出现下列**任一**关系经营或私密性信号，即判 romance_pig
+     （杀猪盘=先经营关系再诱导投资，其"投资段"常带这些痕迹）：
+     * 关系经营：咱俩/咱们/一块儿/一起/以后还/想到你/为你/带你一起/见面/聚聚/处对象/恋爱/相亲/网恋；
+     * 身份包装：跟导师/朋友/同学/亲戚做内部项目、内部名额/名额紧俏、只带你一个人、我的账户给你看；
+     * 私密性：先别跟家里人说/别声张/就咱俩知道/偷偷/瞒着/别让家人知道；
+     * 情感称谓：哥/姐/宝贝/亲爱的/老公/老婆/想你/在乎你/关心你（用于拉近关系而非陌生推销口吻）。
+   - 若通篇是"陌生人公开推销、限时抢购、加群跟单、老师带单"且无上述关系信号，才判 fake_investment。
+3. impersonate_authority 与 impersonate_family 的界定：自称公检法/客服/机构并以法律威慑、涉案、
+   安全账户、索要验证码施压 → impersonate_authority；以亲人身份急事求助（出车祸/被抓/生病住院/
+   手机丢失借号/要医药费保释金）→ impersonate_family，即使带恐吓语气。
+输出 JSON：{"label":"<上列英文键>","risk":<0到1>}
+"""
+
 CURRENT_PROMPT = PROMPT_V1
 
 
@@ -141,11 +167,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--threads", type=int, default=8)
-    ap.add_argument("--variant", type=int, default=1, choices=[1, 2, 3],
-                    help="提示词版本：1=基线(默认) 2=romance/authority 界定增强")
+    ap.add_argument("--variant", type=int, default=1, choices=[1, 2, 3, 4],
+                    help="提示词版本：1=基线(默认) 2=romance/authority 界定增强 3=权威专属档 4=romance弱信号增强")
     args = ap.parse_args()
     global CURRENT_PROMPT
-    CURRENT_PROMPT = {1: PROMPT_V1, 2: PROMPT_V2, 3: PROMPT_V3}[args.variant]
+    CURRENT_PROMPT = {1: PROMPT_V1, 2: PROMPT_V2, 3: PROMPT_V3, 4: PROMPT_V4}[args.variant]
     tag = f"_v{args.variant}"
 
     base = os.environ["SCAM_LLM_BASE"].rstrip("/")

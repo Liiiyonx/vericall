@@ -154,10 +154,10 @@ bash start.sh
 
 ```bash
 pip install pytest numpy
-pytest tests/ -q
+pytest tests/ -q     # 176 项：无需 GPU、无需外部服务
 ```
 
-覆盖融合决策、EER 指标、流式管线、家庭隔离与安全加固，无 GPU / 无外部服务也能全绿。
+26 个测试模块，176 项用例，覆盖融合决策、EER 指标、流式管线、家庭隔离与安全加固。
 
 ## 许可
 

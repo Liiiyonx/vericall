@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="谛听 VeriCall 面向 AIGC 语音诈骗场景，提供录音与文件鉴真、实时流式监测、声纹登记和检测记录管理。">
+<meta name="theme-color" content="#000000">
+<script src="theme.js?v=22"></script>
+<title>谛听 VeriCall · AIGC 语音鉴真</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#060607; --ink:#ece7dc; --mut:#8f8a7d; --dim:#57544c;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --line:rgba(236,231,220,.09); --line2:rgba(236,231,220,.18);
+  --ok:#8fb996; --warn:#d4a04a; --bad:#c96a5e;
+  --serif:var(--font-serif);
+  --sans:var(--font-sans);
+  --mono:var(--font-mono);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+::selection{background:rgba(212,180,131,.25)}
+html{scrollbar-width:thin; scrollbar-color:#2a2a28 transparent}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans);
+  min-height:100vh; min-height:100dvh; -webkit-font-smoothing:antialiased; overflow-x:hidden}
+body::before{content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:radial-gradient(1100px 600px at 50% -20%, rgba(212,180,131,.06), transparent 65%)}
+
+/* ============ 顶栏 ============ */
+header{max-width:1180px; margin:0 auto; padding:18px 32px 0;
+  display:flex; align-items:center; gap:34px}
+.logo{display:flex; align-items:center; gap:12px; cursor:default}
+.logo svg{width:34px; height:34px}
+.logo .cn{font-family:var(--serif); font-size:20px; letter-spacing:6px; font-weight:600}
+.logo .en{font-family:var(--sans); font-size:10px; letter-spacing:3.5px; color:var(--mut); margin-top:3px}
+.tabs{display:flex; gap:26px; margin-left:18px}
+.tab{font-size:13px; letter-spacing:2px; color:var(--mut); cursor:pointer;
+  padding:4px 2px; border-bottom:1px solid transparent; transition:all .25s; user-select:none}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--ink); border-bottom-color:var(--gold)}
+.sys{margin-left:auto; display:flex; gap:18px; align-items:center;
+  font-family:var(--sans); font-size:11px; color:var(--dim)}
+.sys .it{display:flex; align-items:center; gap:6px}
+.sys .it b{color:var(--mut); font-weight:500}
+.pip{width:5px; height:5px; border-radius:50%; background:var(--dim)}
+.pip.ok{background:var(--ok); box-shadow:0 0 6px rgba(143,185,150,.8)}
+.pip.warn{background:var(--warn)}
+
+/* ============ 页面通用 ============ */
+main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
+.page{display:none}
+.page.on{display:block}
+@keyframes rise{from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:none}}
+.rise{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+.hairline{height:1px; background:var(--line); margin:0}
+
+/* ============ 检测页 · 舞台 ============ */
+.hero{text-align:center; padding:38px 0 0}
+.hero h1{font-family:var(--sans); font-size:78px; font-weight:600; letter-spacing:28px;
+  text-indent:28px; line-height:1; color:var(--ink)}
+.hero .en{font-family:var(--mono); font-size:12px; letter-spacing:11px; text-indent:11px;
+  color:var(--gold); margin-top:14px}
+.hero .tag{font-size:13.5px; letter-spacing:3px; color:var(--mut); margin-top:12px}
+.waveline{display:block; margin:22px auto 0; width:min(560px,80%); height:36px; overflow:visible}
+.waveline path{fill:none; stroke-width:1.2}
+.w1{stroke:rgba(212,180,131,.5); animation:drift 7s linear infinite}
+.w2{stroke:rgba(236,231,220,.12); animation:drift 11s linear infinite reverse}
+@keyframes drift{to{transform:translateX(-200px)}}
+
+/* 输入舞台 */
+.stage{display:flex; flex-direction:column; align-items:center; padding:26px 0 8px}
+.orb{width:96px; height:96px; border-radius:50%; cursor:pointer; position:relative;
+  border:1px solid var(--line2); background:transparent; display:grid; place-items:center;
+  transition:border-color .3s, transform .3s}
+.orb:hover{border-color:var(--gold); transform:scale(1.03)}
+.orb svg{width:30px; height:30px}
+.orb.live{border-color:var(--bad)}
+.orb.live::before,.orb.live::after{content:''; position:absolute; inset:-1px; border-radius:50%;
+  border:1px solid rgba(201,106,94,.55); animation:ripple 1.8s ease-out infinite}
+.orb.live::after{animation-delay:.9s}
+@keyframes ripple{from{transform:scale(1); opacity:.9} to{transform:scale(1.75); opacity:0}}
+.orb-hint{margin-top:16px; font-size:12px; letter-spacing:2px; color:var(--dim)}
+.orb-hint b{color:var(--bad); font-family:var(--mono); font-weight:500}
+.or-line{display:flex; align-items:center; gap:14px; margin-top:26px;
+  font-size:12px; color:var(--dim); letter-spacing:1.5px}
+.or-line label{color:var(--mut); border-bottom:1px solid var(--line2); padding-bottom:1px;
+  cursor:pointer; transition:color .2s}
+.or-line label:hover{color:var(--gold2)}
+.or-line input{display:none}
+.demos{display:flex; gap:44px; margin-top:26px}
+.demo{background:none; border:none; cursor:pointer; text-align:left; padding:0;
+  color:var(--mut); font-family:var(--sans); transition:color .25s}
+.demo i{font-family:var(--mono); font-style:normal; font-size:10px; color:var(--gold);
+  letter-spacing:2px; display:block; margin-bottom:5px}
+.demo span{font-size:13px; letter-spacing:2px}
+.demo:hover{color:var(--ink)}
+.demo:hover span{border-bottom:1px solid var(--gold)}
+
+/* 分析中状态行 */
+.stage-status{margin-top:22px; font-family:var(--sans); font-size:11.5px; letter-spacing:2px;
+  color:var(--gold); min-height:18px; opacity:0; transition:opacity .4s}
+.stage-status.show{opacity:1}
+.stage-status .blink{animation:blink 1.1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ============ 三通道 ============ */
+.channels{display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin-top:34px;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+@media(max-width:880px){.channels{grid-template-columns:1fr}}
+.ch{padding:24px 26px 22px; position:relative; opacity:.4; transition:opacity .6s; overflow:hidden}
+.ch+.ch{border-left:1px solid var(--line)}
+@media(max-width:880px){.ch+.ch{border-left:none; border-top:1px solid var(--line)}}
+.ch.done{opacity:1; animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.ch.pending{opacity:.7}
+.ch.pending::after{content:''; position:absolute; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  animation:scan 1.6s ease-in-out infinite}
+@keyframes scan{0%{top:0; opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{top:100%; opacity:0}}
+.ch .idx{font-family:var(--mono); font-size:10px; letter-spacing:3px; color:var(--gold)}
+.ch h3{font-family:var(--sans); font-size:19px; font-weight:600; letter-spacing:3px; margin-top:10px}
+.ch .model{font-size:11px; color:var(--dim); letter-spacing:1px; margin-top:6px; font-family:var(--sans)}
+.ch .score{font-family:var(--mono); font-size:38px; font-weight:300; margin-top:16px; line-height:1;
+  color:var(--ink); font-variant-numeric:tabular-nums}
+.ch .score em{font-style:normal; font-size:14px; color:var(--dim); margin-left:4px}
+.ch .track{height:1px; background:var(--line); margin-top:16px; position:relative}
+.ch .track i{position:absolute; left:0; top:-0.5px; height:2px; width:0; background:var(--gold);
+  transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.ch .foot{display:flex; justify-content:space-between; align-items:baseline; margin-top:14px;
+  font-size:11px; letter-spacing:1.5px}
+.ch .lab{font-family:var(--sans); color:var(--mut)}
+.ch .lab.bad{color:var(--bad)} .ch .lab.good{color:var(--ok)} .ch .lab.mid{color:var(--warn)}
+.ch .conf{color:var(--dim); font-family:var(--mono)}
+.ch .detail{font-size:12px; color:var(--mut); line-height:1.9; margin-top:12px;
+  max-height:0; overflow:hidden; transition:max-height .8s ease}
+.ch.done .detail{max-height:150px}
+
+/* ============ 裁决 ============ */
+.verdict{display:none; text-align:center; padding:46px 0 16px}
+.verdict.show{display:block; animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+.gauge{width:170px; height:170px; margin:0 auto; position:relative}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .bgc{fill:none; stroke:var(--line); stroke-width:1.5}
+.gauge .fgc{fill:none; stroke-width:1.5; stroke-linecap:round;
+  transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1)}
+.gauge .gtxt{position:absolute; inset:0; display:grid; place-items:center}
+.gauge .gtxt b{font-family:var(--mono); font-size:30px; font-weight:300; font-variant-numeric:tabular-nums}
+.gauge .gtxt span{display:block; font-size:10px; letter-spacing:3px; color:var(--dim); margin-top:6px}
+.vword{font-family:var(--sans); font-size:54px; font-weight:600; letter-spacing:18px;
+  text-indent:18px; margin-top:30px}
+.verdict.allow .vword{color:var(--ok)} .verdict.allow .fgc{stroke:var(--ok)}
+.verdict.caution .vword{color:var(--warn)} .verdict.caution .fgc{stroke:var(--warn)}
+.verdict.block .vword{color:var(--bad)} .verdict.block .fgc{stroke:var(--bad)}
+.vreason{max-width:620px; margin:20px auto 0; font-size:13px; line-height:2; color:var(--mut)}
+.vmeta{display:flex; justify-content:center; gap:40px; margin-top:26px;
+  font-family:var(--sans); font-size:11px; color:var(--dim); letter-spacing:1px}
+.vmeta b{color:var(--mut); font-weight:500; margin-left:6px}
+
+/* ============ 登记页 ============ */
+.enroll{display:grid; grid-template-columns:1.2fr 1fr; gap:70px; padding-top:60px}
+@media(max-width:880px){.enroll{grid-template-columns:1fr; gap:40px}}
+.ptitle{font-family:var(--sans); font-size:30px; font-weight:600; letter-spacing:8px}
+.psub{font-size:12.5px; color:var(--mut); letter-spacing:1.5px; margin-top:12px; line-height:2}
+.field{margin-top:30px}
+.field label{display:block; font-size:11px; letter-spacing:3px; color:var(--dim); margin-bottom:10px}
+.field input[type=text]{width:100%; background:transparent; border:none;
+  border-bottom:1px solid var(--line2); padding:10px 2px; color:var(--ink); font-size:16px;
+  letter-spacing:2px; outline:none; transition:border-color .3s; font-family:var(--sans)}
+.field input[type=text]:focus{border-bottom-color:var(--gold)}
+.sess{display:flex; gap:0; border:1px solid var(--line); border-radius:2px; overflow:hidden}
+.sess button{flex:1; background:none; border:none; padding:12px; color:var(--mut);
+  font-size:12.5px; letter-spacing:2px; cursor:pointer; transition:all .25s; font-family:var(--sans)}
+.sess button+button{border-left:1px solid var(--line)}
+.sess button.on{color:var(--gold2); background:rgba(212,180,131,.06)}
+.prompt{font-size:12.5px; color:var(--mut); line-height:2.1; margin-top:18px;
+  padding:16px 18px; border-left:1px solid var(--gold); background:rgba(212,180,131,.04)}
+.enroll .stage{padding:30px 0 6px}
+.orb.sm{width:84px; height:84px}
+.orb.sm svg{width:26px; height:26px}
+.consent{display:flex; gap:10px; margin-top:28px; font-size:12px; color:var(--mut); line-height:1.9}
+.consent input{margin-top:4px; accent-color:var(--gold)}
+.btn{margin-top:26px; width:100%; padding:15px; background:transparent; cursor:pointer;
+  border:1px solid var(--gold); color:var(--gold2); font-size:13px; letter-spacing:5px;
+  font-family:var(--sans); transition:all .3s}
+.btn:hover{background:rgba(212,180,131,.08); letter-spacing:6px}
+.btn:disabled{opacity:.3; cursor:not-allowed; letter-spacing:5px}
+.vlib{margin-top:26px}
+.vrow{display:flex; align-items:baseline; gap:16px; padding:16px 2px;
+  border-bottom:1px solid var(--line)}
+.vrow .nm{font-family:var(--sans); font-size:17px; letter-spacing:3px}
+.vrow .ct{font-family:var(--mono); font-size:11px; color:var(--dim)}
+.vrow .st{margin-left:auto; font-size:10px; letter-spacing:2px; color:var(--ok)}
+.vempty{color:var(--dim); font-size:12.5px; letter-spacing:2px; padding:40px 0; text-align:center}
+
+/* ============ 记录页 ============ */
+.hist{padding-top:60px}
+.hrow{display:grid; grid-template-columns:150px 1fr 90px 220px 70px; gap:18px;
+  align-items:baseline; padding:18px 2px; border-bottom:1px solid var(--line);
+  font-size:13px; animation:rise .5s both}
+.hrow.head{color:var(--dim); font-size:10.5px; letter-spacing:2.5px; font-family:var(--sans);
+  border-bottom-color:var(--line2); animation:none}
+.hrow .t{font-family:var(--mono); font-size:11.5px; color:var(--dim)}
+.hrow .n{letter-spacing:1px}
+.hrow .v{font-size:12px; letter-spacing:3px}
+.hrow .v.allow{color:var(--ok)} .hrow .v.caution{color:var(--warn)} .hrow .v.block{color:var(--bad)}
+.hrow .s{font-family:var(--mono); font-size:11px; color:var(--mut)}
+.hrow .e{font-family:var(--mono); font-size:11px; color:var(--dim); text-align:right}
+.hfilters{display:flex; gap:10px; margin-top:24px; flex-wrap:wrap}
+.hchip{font-size:12px; letter-spacing:2px; color:var(--mut); border:1px solid var(--line2);
+  padding:6px 18px; border-radius:16px; cursor:pointer; transition:all .25s; user-select:none}
+.hchip:hover{color:var(--ink)}
+.hchip.on{color:var(--gold2); border-color:var(--gold); background:rgba(212,180,131,.06)}
+
+.toast{position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(16px);
+  background:#111110; border:1px solid var(--line2); color:var(--ink); font-size:13px;
+  letter-spacing:1.5px; padding:13px 26px; opacity:0; transition:all .35s; z-index:99;
+  pointer-events:none}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:rgba(201,106,94,.6); color:var(--bad)}
+
+/* ============ 实时监测页（P1-2） ============ */
+.live-stage{display:flex; flex-direction:column; align-items:center; padding:54px 0 8px}
+.orb.green{border-color:var(--ok)}
+.orb.yellow{border-color:var(--warn)}
+.orb.red{border-color:var(--bad)}
+.orb.yellow::before,.orb.yellow::after,.orb.red::before,.orb.red::after{
+  content:''; position:absolute; inset:-1px; border-radius:50%; animation:ripple 1.8s ease-out infinite}
+.orb.red::before,.orb.red::after{border-color:rgba(201,106,94,.55)}
+.orb.yellow::before,.orb.yellow::after{border-color:rgba(212,160,74,.5)}
+.live-state{margin-top:18px; font-size:14px; letter-spacing:3px; font-family:var(--sans)}
+.live-state.green{color:var(--ok)} .live-state.yellow{color:var(--warn)} .live-state.red{color:var(--bad)}
+.live-trans{margin-top:14px; font-size:12px; letter-spacing:1px; color:var(--mut);
+  max-width:560px; text-align:center; min-height:18px; line-height:1.8}
+.live-tip{margin-top:22px; font-size:11.5px; color:var(--dim); letter-spacing:1px}
+.live-tip b{color:var(--gold2); font-family:var(--mono); font-weight:500}
+.tl{display:flex; gap:3px; flex-wrap:wrap; margin-top:22px; max-width:680px; justify-content:center}
+.tl .b{width:13px; height:32px; border-radius:2px; background:var(--dim); opacity:.45; transition:opacity .3s}
+.tl .b.green{background:var(--ok); opacity:1} .tl .b.yellow{background:var(--warn); opacity:1}
+.tl .b.red{background:var(--bad); opacity:1}
+.tl .b:hover{outline:1px solid var(--gold)}
+.alert-card{position:fixed; inset:0; display:none; place-items:center;
+  background:rgba(6,6,7,.84); z-index:120}
+.alert-card.show{display:grid; animation:rise .5s both}
+.alert-box{max-width:440px; text-align:center; padding:42px 36px; border:1px solid rgba(201,106,94,.5);
+  background:#0d0c0c}
+.alert-box .t{font-family:var(--sans); font-size:30px; letter-spacing:8px; color:var(--bad)}
+.alert-box .a{font-size:14px; line-height:2.1; color:var(--ink); margin-top:20px}
+.alert-box .r{font-size:12px; color:var(--mut); line-height:1.9; margin-top:16px;
+  border-left:1px solid var(--gold); padding-left:14px; text-align:left}
+.alert-box .btn{width:auto; padding:13px 40px; margin-top:26px}
+
+/* ============ 适老模式（P2-3 · elder-mode） ============ */
+.elder-btn{cursor:pointer; border:1px solid var(--line2); background:none; color:var(--mut);
+  font-size:12px; letter-spacing:2px; padding:5px 14px; border-radius:2px; transition:all .25s;
+  font-family:var(--sans)}
+.elder-btn:hover{color:var(--gold2); border-color:var(--gold)}
+body.elder .elder-btn{color:var(--gold2); border-color:var(--gold)}
+body.elder .tab{font-size:19px; letter-spacing:3px}
+body.elder .hero h1{font-size:64px; letter-spacing:22px}
+body.elder .hero .tag{font-size:18px}
+body.elder .orb{width:150px; height:150px}
+body.elder .orb svg{width:60px; height:60px}
+body.elder .orb.sm{width:130px; height:130px}
+body.elder .orb-hint{font-size:20px}
+body.elder .ch .score{font-size:56px}
+body.elder .ch h3{font-size:26px}
+body.elder .ch .model{font-size:15px}
+body.elder .ch .foot{font-size:17px}
+body.elder .ch .detail{font-size:18px; line-height:2}
+body.elder .ch.done .detail{max-height:240px}
+body.elder .vword{font-size:72px}
+body.elder .vreason{font-size:22px; line-height:2.1}
+body.elder .vmeta{font-size:17px}
+body.elder .gauge{width:220px; height:220px}
+body.elder .gauge svg{width:220px; height:220px}
+body.elder .gauge .gtxt b{font-size:42px}
+body.elder .btn{font-size:20px; padding:20px; letter-spacing:6px}
+body.elder .ptitle{font-size:40px}
+body.elder .psub{font-size:19px; line-height:2.2}
+body.elder .field label{font-size:16px}
+body.elder .field input[type=text]{font-size:24px}
+body.elder .prompt{font-size:20px; line-height:2.2}
+body.elder .sess button{font-size:18px; padding:16px}
+body.elder .vrow .nm{font-size:24px}
+body.elder .hrow{font-size:18px}
+body.elder .toast{font-size:20px}
+/* 实时页 · 红黄绿整屏色块（仅适老模式显示） */
+.elder-banner{display:none}
+body.elder .elder-banner{display:block; margin-top:34px; padding:58px 24px; text-align:center;
+  font-family:var(--sans); font-size:56px; font-weight:600; letter-spacing:14px; text-indent:14px;
+  border-radius:10px; color:#101010; transition:background .5s, color .5s}
+body.elder .elder-banner .sub{display:block; font-size:24px; letter-spacing:4px; text-indent:4px;
+  margin-top:16px; font-family:var(--sans); font-weight:400}
+body.elder .elder-banner.green{background:#8fb996}
+body.elder .elder-banner.yellow{background:#d4a04a}
+body.elder .elder-banner.red{background:#c96a5e; color:#fff}
+body.elder .tl{display:none}
+body.elder .live-trans{font-size:22px}
+body.elder .live-state{display:none}
+body.elder .live-tip{display:none}
+/* 告警卡（适老放大） */
+body.elder .alert-box{max-width:680px; padding:56px 48px}
+body.elder .alert-box .t{font-size:56px; letter-spacing:12px}
+body.elder .alert-box .a{font-size:32px; line-height:2}
+body.elder .alert-box .r{font-size:22px; line-height:2}
+body.elder .alert-box .btn{font-size:24px; padding:18px 44px}
+body.elder #liveAlertReplay{font-size:18px}
+
+/* ============ 子女分享卡片（P2-4） ============ */
+.share-modal{position:fixed; inset:0; display:none; place-items:center;
+  background:rgba(6,6,7,.92); z-index:130; padding:20px; overflow:auto}
+.share-modal.show{display:grid; animation:rise .4s both}
+.share-box{max-width:420px; text-align:center}
+.share-box img{width:100%; max-height:70vh; object-fit:contain;
+  border:1px solid var(--line2); border-radius:4px; background:#0c0b0b}
+.share-box .hint{font-size:12px; color:var(--mut); margin-top:14px; letter-spacing:1.5px; line-height:1.9}
+.share-box .row{display:flex; gap:14px; justify-content:center; margin-top:16px}
+.share-box .btn{width:auto; padding:13px 30px; margin-top:0}
+body.elder .share-box{max-width:520px}
+body.elder .share-box .btn{font-size:22px; padding:16px 36px}
+
+/* ============ 叙事首页（关于 / 指标墙 / 红队自证 / 守护总览） ============ */
+.m-wall{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:40px}
+@media(max-width:880px){.m-wall{grid-template-columns:repeat(2,1fr)}}
+.m-card{background:rgba(236,231,220,.03); border:1px solid var(--line); border-radius:10px;
+  padding:18px 12px; text-align:center}
+.m-card .n{font-family:var(--mono); font-size:26px; color:var(--gold2); font-weight:300}
+.m-card .l{font-size:11.5px; color:var(--mut); margin-top:6px; letter-spacing:1px; line-height:1.8}
+.m-card .s{display:block; font-size:10px; color:var(--dim); font-family:var(--sans)}
+.p-chan{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:34px}
+@media(max-width:880px){.p-chan{grid-template-columns:1fr}}
+.pc{border-top:1px solid var(--line2); border-bottom:1px solid var(--line); padding:20px 18px; position:relative}
+.pc i{font-family:var(--mono); font-size:10px; letter-spacing:3px; color:var(--gold); font-style:normal}
+.pc h3{font-family:var(--sans); font-size:20px; letter-spacing:3px; margin-top:10px; font-weight:600}
+.pc p{font-size:12.5px; color:var(--mut); line-height:2; margin-top:10px}
+.red-team{margin-top:34px; border:1px solid rgba(201,106,94,.35); border-radius:10px; padding:22px 24px}
+.rt-t{font-size:13px; letter-spacing:3px; color:var(--bad)}
+.rt-row{display:flex; gap:36px; margin-top:16px; flex-wrap:wrap}
+.rt-row div{font-size:12px; color:var(--mut); letter-spacing:1px; line-height:1.9}
+.rt-row b{font-family:var(--mono); font-size:20px; color:var(--ink); font-weight:300; margin-right:6px}
+.rt-note{margin-top:12px; font-size:11.5px; color:var(--dim); letter-spacing:1px}
+.dash{margin-top:34px}
+.dash .dt{font-family:var(--sans); font-size:22px; letter-spacing:4px; color:var(--gold2); font-weight:600}
+.dash .ds{font-size:12px; color:var(--dim); letter-spacing:1px; margin-top:6px}
+.dash .dc{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:14px}
+@media(max-width:880px){.dash .dc{grid-template-columns:repeat(2,1fr)}}
+.dash .dk{background:rgba(236,231,220,.03); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center}
+.dash .dk .n{font-family:var(--mono); font-size:30px; color:var(--gold2); font-weight:600}
+.dash .dk .l{font-size:11px; color:var(--mut); margin-top:4px; letter-spacing:1.5px}
+.dash .bars{margin-top:14px; display:flex; gap:6px; align-items:flex-end; height:72px}
+.dash .bars .b{flex:1; background:rgba(212,180,131,.28); border-radius:2px 2px 0 0; min-height:2px; position:relative}
+.dash .bars .b span{position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--dim); font-family:var(--mono)}
+.dash .bars .bx{position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--dim); font-family:var(--mono); white-space:nowrap}
+.cta{display:flex; gap:16px; justify-content:center; margin-top:40px; flex-wrap:wrap}
+.cta .btn{width:auto; padding:14px 44px; margin-top:0}
+
+/* ============ 一键演示（放映字幕条） ============ */
+.demo-cap{position:fixed; left:50%; bottom:34px; transform:translateX(-50%) translateY(16px);
+  background:#111110; border:1px solid var(--line2); border-left:2px solid var(--gold);
+  color:var(--ink); font-size:13px; letter-spacing:1px; padding:12px 24px; max-width:720px;
+  opacity:0; transition:all .4s; z-index:98; pointer-events:none; line-height:1.9}
+.demo-cap.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.demo-cap b{color:var(--gold2); font-family:var(--sans); font-size:16px; letter-spacing:3px; margin-right:12px}
+body.elder .demo-cap{font-size:20px}
+body.elder .demo-cap b{font-size:26px}
+
+/* ============ 现场挑战卡（实时监测页） ============ */
+.chal-live{margin-top:26px; max-width:720px; width:100%; text-align:left}
+.chal-live .t{font-family:var(--sans); font-size:20px; letter-spacing:5px; color:var(--gold2); text-align:center}
+.chal-live .sub{font-size:12px; color:var(--mut); text-align:center; margin-top:8px; letter-spacing:1px}
+.cl-scripts{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px}
+@media(max-width:880px){.cl-scripts{grid-template-columns:1fr}}
+.cl-card{background:rgba(236,231,220,.03); border:1px solid var(--line); border-radius:10px; padding:14px}
+.cl-card.bad{border-color:rgba(201,106,94,.4)}
+.cl-card.good{border-color:rgba(143,185,150,.4)}
+.cl-card i{font-family:var(--sans); font-size:10px; letter-spacing:2px; color:var(--gold); font-style:normal}
+.cl-card p{font-size:13px; color:var(--ink); line-height:2; margin-top:8px}
+
+/* ============ 波形画布 ============ */
+.wav-can{display:block; margin:14px auto 0; background:rgba(0,0,0,.25);
+  border:1px solid var(--line); border-radius:6px}
+
+/* ============ 历史详情弹窗 ============ */
+.detail-modal{position:fixed; inset:0; display:none; place-items:center;
+  background:rgba(6,6,7,.92); z-index:132; padding:20px; overflow:auto}
+.detail-modal.show{display:grid; animation:rise .3s both}
+.detail-box{width:min(640px,100%); text-align:left; padding:30px 30px 26px;
+  border:1px solid var(--line2); background:#0d0c0c; border-radius:6px; max-height:86vh; overflow:auto}
+.detail-box .t{font-family:var(--sans); font-size:20px; letter-spacing:4px; color:var(--gold2); text-align:center}
+.detail-box .meta{display:flex; flex-wrap:wrap; gap:8px 20px; justify-content:center; margin-top:14px;
+  font-size:11.5px; color:var(--mut); font-family:var(--sans)}
+.detail-box .meta b{color:var(--dim); font-weight:400; margin-right:5px}
+.detail-box .chs{margin-top:18px}
+.detail-box .ch2{background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:8px;
+  padding:12px 14px; margin-bottom:10px}
+.detail-box .ch2 .top{display:flex; justify-content:space-between; font-size:11px; color:var(--gold); letter-spacing:2px; font-family:var(--sans)}
+.detail-box .ch2 .sc{font-family:var(--mono); font-size:22px; margin-top:8px; font-weight:300}
+.detail-box .ch2 .de{font-size:12px; color:var(--mut); line-height:1.9; margin-top:6px}
+.detail-box .raz{margin-top:14px; border-left:1px solid var(--gold); padding-left:14px;
+  font-size:13px; color:var(--ink); line-height:2}
+.detail-box .btn{width:auto; padding:11px 36px; margin:18px auto 0; display:block}
+
+/* ============ 数字复核（B4-① 挑战应答闭环） ============ */
+.challenge-modal{position:fixed; inset:0; display:none; place-items:center;
+  background:rgba(6,6,7,.92); z-index:135; padding:20px; overflow:auto}
+.challenge-modal.show{display:grid; animation:rise .4s both}
+.chal-box{width:min(430px,100%); text-align:center; padding:34px 28px 30px;
+  border:1px solid var(--line2); background:#0d0c0c; border-radius:6px}
+.chal-box .t{font-family:var(--sans); font-size:24px; letter-spacing:6px; color:var(--gold2)}
+.chal-box .d{font-family:var(--mono); font-size:58px; letter-spacing:16px; text-indent:16px;
+  color:var(--ink); margin-top:20px}
+.chal-box .h{font-size:13px; color:var(--mut); line-height:2; margin:16px auto 6px; max-width:340px}
+.chal-box .r{font-size:14px; line-height:2; margin-top:16px; min-height:40px}
+.chal-box .btn{width:auto; padding:12px 36px; margin-top:14px}
+body.elder .chal-box{max-width:620px; padding:44px 36px}
+body.elder .chal-box .t{font-size:36px}
+body.elder .chal-box .d{font-size:84px}
+body.elder .chal-box .h{font-size:21px}
+body.elder .chal-box .r{font-size:22px}
+body.elder .chal-box .btn{font-size:22px; padding:16px 44px}
+
+/* ============ 拉子女进通话（P3-1 · 三方守护通话） ============ */
+.call-modal{position:fixed; inset:0; display:none; place-items:center;
+  background:rgba(6,6,7,.94); z-index:140; padding:20px}
+.call-modal.show{display:grid; animation:rise .4s both}
+.call-box{width:min(520px,100%); display:flex; flex-direction:column; align-items:center;
+  gap:18px; padding:26px 18px; text-align:center}
+.call-orb{width:110px; height:110px; border-radius:50%; display:grid; place-items:center;
+  position:relative; border:2px solid var(--gold)}
+.call-orb.waiting{border-color:var(--warn)}
+.call-orb.waiting::before,.call-orb.waiting::after{content:''; position:absolute; inset:-2px;
+  border-radius:50%; border:1px solid rgba(212,160,74,.5); animation:ripple 1.8s ease-out infinite}
+.call-orb.waiting::after{animation-delay:.9s}
+.call-orb.talking{border-color:var(--ok)}
+.call-orb svg{width:40px; height:40px}
+.call-state{font-size:17px; letter-spacing:3px; color:var(--gold2)}
+.call-sub{font-size:12.5px; color:var(--mut); letter-spacing:1px; line-height:1.9}
+.call-hangup{background:var(--bad); border-color:var(--bad); color:#fff;
+  padding:13px 44px; border-radius:40px; font-size:15px; letter-spacing:4px; cursor:pointer}
+.call-hangup:active{transform:scale(.97)}
+body.elder .call-state{font-size:26px}
+body.elder .call-sub{font-size:19px}
+body.elder .call-hangup{font-size:22px; padding:18px 56px}
+.child-link{cursor:pointer; border:1px solid var(--line2); background:none; color:var(--mut);
+  font-size:12px; letter-spacing:2px; padding:5px 14px; border-radius:2px; transition:all .25s;
+  font-family:var(--sans); text-decoration:none}
+.child-link:hover{color:var(--gold2); border-color:var(--gold)}
+
+/* ============ 移动端适配 ============ */
+@media(max-width:880px){
+  header{flex-wrap:wrap; gap:14px 20px; padding:16px 20px 0}
+  .tabs{order:3; width:100%; margin-left:0; justify-content:space-between; gap:0}
+  .sys{margin-left:auto}
+  main{padding:0 20px 70px}
+  .hero{padding-top:26px}
+  .hero h1{font-size:52px; letter-spacing:18px; text-indent:18px}
+  .hero .en{font-size:10px; letter-spacing:7px; text-indent:7px}
+  .hero .tag{font-size:12px; letter-spacing:2px}
+  .demos{gap:24px; flex-wrap:wrap; justify-content:center}
+  .vword{font-size:38px; letter-spacing:12px; text-indent:12px}
+  .vmeta{gap:20px; flex-wrap:wrap}
+  .hrow{grid-template-columns:96px 1fr 64px; gap:10px; padding:15px 2px}
+  .hrow .s,.hrow .e{display:none}
+  .hrow.head span:nth-child(4),.hrow.head span:nth-child(5){display:none}
+  .alert-box{max-width:92vw; padding:34px 24px}
+  .alert-box .t{font-size:24px; letter-spacing:5px}
+}
+@media(max-width:560px){
+  .sys{display:none}
+  .hero h1{font-size:42px; letter-spacing:14px; text-indent:14px}
+  .tab{font-size:12px; letter-spacing:1px}
+}
+
+/* ============ 减弱动效（系统设置） ============ */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;
+    animation-iteration-count:1!important; transition-duration:.01ms!important}
+}
+</style>
+<link rel="stylesheet" href="ui.css?v=22">
+<script src="ui.js?v=22" defer></script>
+</head>
+<body data-app="index">
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="21.5" stroke="#d4b483" stroke-width="1" opacity=".55"/>
+      <path d="M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5"
+            stroke="#d4b483" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M24.5 17.8c3 0 5.2 2.3 5.2 5.1 0 2-1.2 3.1-2.4 4"
+            stroke="#d4b483" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>
+      <circle cx="23.8" cy="25.8" r="1.7" fill="#d4b483"/>
+      <path d="M13.5 20.5a11 11 0 0 0 0 7" stroke="#d4b483" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+    </svg>
+    <div>
+      <div class="cn">谛听</div>
+      <div class="en">VERICALL</div>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="主导航">
+    <button type="button" class="tab on" data-p="detect" data-label="检测">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3v18M8 7v10M4 10v4M16 6v12M20 9v6"/></svg>检测
+    </button>
+    <button type="button" class="tab" data-p="live" data-label="实时监测">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>实时监测
+    </button>
+    <button type="button" class="tab" data-p="enroll" data-label="声纹登记">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-4 3-6 7-6s6.2 2 7 6"/></svg>声纹登记
+    </button>
+    <button type="button" class="tab" data-p="history" data-label="记录">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg>记录
+    </button>
+    <button type="button" class="tab" data-p="about" data-label="关于">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>关于
+    </button>
+  </nav>
+  <button type="button" class="command-trigger" data-command-open aria-label="打开快速操作">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m8 9-4 3 4 3M16 9l4 3-4 3M14 5l-4 14"/></svg>
+    <span>快速操作</span><kbd>Ctrl K</kbd>
+  </button>
+  <div class="header-tools">
+    <a class="entry-link" id="entryFromIndex" href="login.html#index" title="返回统一入口" aria-label="返回统一入口">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 18-6-6 6-6"></path>
+        <path d="M9 12h10"></path>
+      </svg>
+      <span>入口</span>
+    </a>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换到浅色模式" title="切换到浅色模式" aria-pressed="false">
+      <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+    <div class="sys" id="sys"></div>
+    <button class="elder-btn" id="elderBtn" title="适老模式：大字 · 红黄绿整屏色块 · 语音播报">适老</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= 关于（叙事首页） ================= -->
+<section class="page" id="p-about">
+  <div class="hero rise" style="padding-top:6px">
+    <h1>AI 拟声电话诈骗</h1>
+    <div class="en rise" style="animation-delay:.15s">CALL GUARDIAN · 通话守卫</div>
+    <p class="tag rise" style="animation-delay:.3s;line-height:2.2;max-width:760px;margin:18px auto 0">
+      骗子用 AI 伪造家人的声音向老人要钱。谛听在通话中实时给出三重证据判定——<br>
+      <b style="color:var(--gold2);font-weight:600">这是合成声吗 · 这是家人本人吗 · 这是诈骗话术吗</b>——挡住老人的最后一笔转账。
+    </p>
+  </div>
+
+  <div class="m-wall rise" style="animation-delay:.45s">
+    <div class="m-card"><div class="n">0.745%</div><div class="l">AASIST dev EER<span class="s">best 0.316%</span></div></div>
+    <div class="m-card"><div class="n">0.51%</div><div class="l">声纹合库 EER<span class="s">200 人标定</span></div></div>
+    <div class="m-card"><div class="n">98.6%</div><div class="l">话术语义 F1<span class="s">二分类诈骗/正常</span></div></div>
+    <div class="m-card"><div class="n">0.00%</div><div class="l">红队误拦率<span class="s">适老零误伤</span></div></div>
+<div class="m-card"><div class="n">194ms</div><div class="l">流式单窗 P90<span class="s">本机 HTTP P95 0.71s</span></div></div>
+    <div class="m-card"><div class="n">3.49%</div><div class="l">AASIST eval EER<span class="s">英文基准 · 如实标注</span></div></div>
+    <div class="m-card"><div class="n">81.3%</div><div class="l">语义 8 类加权 F1<span class="s">v4 推荐口径</span></div></div>
+<div class="m-card"><div class="n">166</div><div class="l">回归测试用例<span class="s">Windows 165 passed + 1 POSIX-only</span></div></div>
+  </div>
+
+  <div class="p-chan rise" style="animation-delay:.6s">
+    <div class="pc"><i>CHANNEL · 01</i><h3>声学伪造检测</h3><p>听"这是不是 AI 合成的声音"。AASIST 模型，端侧 ONNX 化，一窗只需毫秒级。</p></div>
+    <div class="pc"><i>CHANNEL · 02</i><h3>家庭声纹核验</h3><p>辨"这是不是家人本人"。CAMPPlus 声纹，本地落盘、双信道注册、科学标定阈值。</p></div>
+    <div class="pc"><i>CHANNEL · 03</i><h3>话术语义理解</h3><p>懂"说的话是不是诈骗"。SenseVoice 转写 + 大模型风险评分，覆盖四类高发话术。</p></div>
+  </div>
+
+  <div class="red-team rise" style="animation-delay:.75s">
+    <div class="rt-t">我们攻击过自己 · 红队对抗评测</div>
+    <div class="rt-row">
+      <div><b>0.00%</b>误拦率（36 样本 6 方言，零误伤家人）</div>
+      <div><b>100%</b>粤语/闽南漏拦（方言绕过，已诚实暴露）</div>
+      <div><b>100% / 66.7%</b>对抗逃避率（空格改写 / 同音替换）</div>
+      <div><b>13.89%</b>红队方言评测 EER</div>
+    </div>
+    <div class="rt-note">不藏短板：方言泛化与对抗逃逸正是下一阶段路线——完整的攻击面框架见 evaluation/ 红队报告。</div>
+  </div>
+
+  <div class="dash rise" style="animation-delay:.9s">
+    <div class="dt">守护总览</div>
+    <div class="ds">本机实时统计 · 数据来自检测历史（自动刷新） · 子女端同步可见</div>
+    <div class="dc" id="dashCards">
+      <div class="dk"><div class="n">--</div><div class="l">今日通话</div></div>
+      <div class="dk"><div class="n">--</div><div class="l">拦截</div></div>
+      <div class="dk"><div class="n">--</div><div class="l">警惕</div></div>
+      <div class="dk"><div class="n">--</div><div class="l">放行</div></div>
+    </div>
+    <div class="bars" id="dashBars"></div>
+  </div>
+
+  <div class="cta rise" style="animation-delay:1.05s">
+    <button class="btn" id="goDetect">开始体验 · 三通道检测</button>
+    <a class="child-link" href="elder.html" target="_blank" style="align-self:center">适老端全屏</a>
+    <a class="child-link" href="child.html" target="_blank" style="align-self:center">子女守护端</a>
+  </div>
+</section>
+
+<!-- ================= 检测 ================= -->
+<section class="page on" id="p-detect">
+  <div class="workspace-head">
+    <div>
+      <div class="eyebrow">CALL VERIFICATION WORKBENCH</div>
+      <h1>通话检测工作台</h1>
+      <p>采集或导入一段通话音频，三路模型并行核验声学特征、家庭声纹与诈骗话术，再给出可解释的统一裁决。</p>
+    </div>
+    <div class="workspace-meta" aria-label="系统能力状态">
+      <span class="status-chip"><i></i>本地推理</span>
+      <span class="status-chip">AASIST · EER 0.745%</span>
+      <span class="status-chip">3 CHANNELS</span>
+    </div>
+  </div>
+
+  <div class="detect-layout">
+    <aside class="panel source-panel rise">
+      <div class="panel-head">
+        <div>
+          <div class="eyebrow">INPUT</div>
+          <h2 style="margin-top:5px">输入音频</h2>
+        </div>
+        <span class="meta">WAV · FLAC · MP3</span>
+      </div>
+      <div class="source-stage">
+        <button class="orb" id="recBtn" title="点击开始录音" aria-label="开始或停止录音">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#d4b483" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+            <rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"/>
+          </svg>
+        </button>
+        <div>
+          <div class="orb-hint" id="recHint">点击开始录音</div>
+          <canvas class="wav-can" id="recWave" width="264" height="56"></canvas>
+        </div>
+      </div>
+
+      <label class="drop-zone" id="dropZone" for="fileIn">
+        <input type="file" id="fileIn" accept=".wav,.flac,.mp3" aria-label="上传音频文件">
+        <span>
+          <strong>拖放音频到这里，或点击浏览</strong>
+          <span>文件只在本次检测中读取</span>
+          <span id="fileName"></span>
+        </span>
+      </label>
+
+      <div class="caller-field">
+        <label for="callerNum">来电号码（选填 · 用于号码先验与举报）</label>
+        <input type="text" id="callerNum" placeholder="如 17012345678" maxlength="16" inputmode="tel">
+      </div>
+
+      <div class="demos">
+        <div class="demos-title">
+          <span>DEMO SCENARIOS</span>
+          <span>无需准备音频</span>
+        </div>
+        <div class="demos-grid">
+          <button class="demo" data-demo="A"><i>SCENE 01</i><span>家人真声</span></button>
+          <button class="demo" data-demo="B"><i>SCENE 02</i><span>AIGC 冒充家人</span></button>
+          <button class="demo" data-demo="C"><i>SCENE 03</i><span>陌生人来电</span></button>
+          <button class="demo" id="demoPlay"><i>AUTO</i><span>一键演示 A → B → C</span></button>
+        </div>
+      </div>
+      <div class="stage-status" id="stageStatus" aria-live="polite"><span id="stageTxt"></span><span class="blink">▌</span></div>
+    </aside>
+
+    <div class="panel result-panel rise" style="animation-delay:.08s">
+      <div class="panel-head">
+        <div>
+          <div class="eyebrow">EVIDENCE</div>
+          <h2 style="margin-top:5px">证据与裁决</h2>
+        </div>
+        <span class="meta">A · V · S FUSION</span>
+      </div>
+      <div class="channels">
+        <div class="ch" id="ch-acoustic">
+          <div class="idx">CHANNEL · 01</div>
+          <h3>声学伪造</h3>
+          <div class="model">AASIST · devEER 0.74%</div>
+          <div class="score" id="sc-acoustic">--</div>
+          <div class="track"><i id="bar-acoustic"></i></div>
+          <div class="foot"><span class="lab" id="la-acoustic">待分析</span><span class="conf" id="cf-acoustic"></span></div>
+          <div class="detail" id="de-acoustic"></div>
+        </div>
+        <div class="ch" id="ch-voiceprint">
+          <div class="idx">CHANNEL · 02</div>
+          <h3>声纹核验</h3>
+          <div class="model">CAMPPlus · 192 维嵌入</div>
+          <div class="score" id="sc-voiceprint">--</div>
+          <div class="track"><i id="bar-voiceprint"></i></div>
+          <div class="foot"><span class="lab" id="la-voiceprint">待分析</span><span class="conf" id="cf-voiceprint"></span></div>
+          <div class="detail" id="de-voiceprint"></div>
+        </div>
+        <div class="ch" id="ch-semantic">
+          <div class="idx">CHANNEL · 03</div>
+          <h3>话术理解</h3>
+          <div class="model">SenseVoice + LLM 风险评分</div>
+          <div class="score" id="sc-semantic">--</div>
+          <div class="track"><i id="bar-semantic"></i></div>
+          <div class="foot"><span class="lab" id="la-semantic">待分析</span><span class="conf" id="cf-semantic"></span></div>
+          <div class="detail" id="de-semantic"></div>
+        </div>
+      </div>
+
+      <div class="result-empty" id="resultEmpty">
+        <span class="empty-k" aria-hidden="true">READY</span>
+        <div>
+          <strong>等待检测</strong>
+          <span>从左侧录音、上传文件或选择一个演示场景，三通道结果会在这里展开。</span>
+        </div>
+      </div>
+
+      <div class="verdict" id="verdict">
+        <div class="gauge">
+          <svg width="170" height="170" viewBox="0 0 170 170" aria-hidden="true">
+            <circle class="bgc" cx="85" cy="85" r="70"/>
+            <circle class="fgc" id="gaugeFg" cx="85" cy="85" r="70"
+                    stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+          </svg>
+          <div class="gtxt"><div><b id="gScore">--</b><span>可疑度</span></div></div>
+        </div>
+        <div>
+          <div class="vword" id="vWord">--</div>
+          <div class="vreason" id="vReason"></div>
+          <div class="vmeta">
+            <span>整体置信度<b id="vConf">--</b></span>
+            <span>分析耗时<b id="vTime">--</b></span>
+          </div>
+          <div class="result-actions">
+            <button class="btn secondary" id="copyFromVerdict" type="button" style="display:none">复制检测摘要</button>
+            <button class="btn" id="shareFromVerdict" type="button" style="display:none">生成子女提醒卡</button>
+            <button class="btn" id="callFromVerdict" type="button" style="display:none;border-color:var(--bad);color:var(--bad)">拉子女进通话</button>
+            <button class="btn" id="challengeFromVerdict" type="button" style="display:none">数字复核</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 登记 ================= -->
+<section class="page" id="p-enroll">
+  <div class="enroll">
+    <div class="rise">
+      <div class="ptitle">声纹登记</div>
+      <p class="psub">登记家人声纹后，通道②即可核验来电者是否为本人。<br>建议三种场景各录一段，每段 30 秒以上。</p>
+      <div class="field"><label>家人称谓</label>
+        <input type="text" id="enName" placeholder="妈妈 / 爸爸 / 女儿 …"></div>
+      <div class="field"><label>采集场景</label>
+        <div class="sess" id="sessRow">
+          <button class="on" data-s="putonghua">普通话朗读</button>
+          <button data-s="fangyan">方言自由说</button>
+          <button data-s="readback">数字复述</button>
+        </div></div>
+      <div class="prompt" id="promptBox"></div>
+      <div class="stage">
+        <button class="orb sm" id="enRecBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#d4b483" stroke-width="1.4" stroke-linecap="round">
+            <rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"/>
+          </svg>
+        </button>
+        <div class="orb-hint" id="enRecHint">点击录音</div>
+        <div class="or-line">或
+          <label>上传录音<input type="file" id="enFileIn" accept=".wav,.flac"></label>
+          <span id="enFileName"></span>
+        </div>
+      </div>
+      <div class="consent">
+        <input type="checkbox" id="consent">
+        <span>本人（或已获家人授权）同意将录音用于谛听 VeriCall 项目的声纹特征提取与竞赛演示，数据仅保存在本机，不用于其他用途。</span>
+      </div>
+      <button class="btn" id="enSubmit" disabled>登记声纹</button>
+    </div>
+    <div class="rise" style="animation-delay:.2s">
+      <div class="ptitle">声纹库</div>
+      <p class="psub" id="voiceSub">已登记 0 位</p>
+      <div class="vlib" id="voiceList"><div class="vempty">暂无登记</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 记录 ================= -->
+<section class="page" id="p-history">
+  <div class="hist rise">
+    <div class="hist-head">
+      <div>
+        <div class="ptitle">检测记录</div>
+        <p class="psub">每次分析自动留档 · 数据保存在本机</p>
+      </div>
+      <button class="mini-btn" id="histExport" type="button" title="把当前筛选结果导出为 CSV 表格">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <path d="M12 3v12M8 11l4 4 4-4M5 19h14"/>
+        </svg>导出 CSV
+      </button>
+    </div>
+    <div class="hist-toolbar">
+      <label class="hist-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/>
+        </svg>
+        <input type="search" id="histQuery" placeholder="搜索场景 / 号码 / 转写 / 结论" aria-label="搜索检测记录" autocomplete="off">
+      </label>
+      <div class="hfilters" id="histFilters" role="group" aria-label="按裁决筛选">
+        <button class="hchip on" type="button" data-f="">全部</button>
+        <button class="hchip" type="button" data-f="block">拦截</button>
+        <button class="hchip" type="button" data-f="caution">警惕</button>
+        <button class="hchip" type="button" data-f="allow">放行</button>
+      </div>
+      <span class="spacer"></span>
+      <span class="hist-summary" id="histSummary" aria-live="polite">共 <b>0</b> 条</span>
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </div>
+</section>
+
+<!-- ================= 实时监测 ================= -->
+<section class="page" id="p-live">
+  <div class="live-stage rise">
+    <button class="orb green" id="liveOrb" title="点击开始或停止实时监测" aria-label="点击开始或停止实时监测">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#d4b483" stroke-width="1.4" stroke-linecap="round">
+        <rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"/>
+      </svg>
+    </button>
+    <div class="live-state green" id="liveState">监听未开始</div>
+    <div class="elder-banner green" id="elderBanner">通话正常<span class="sub">放心聊</span></div>
+    <div class="live-metrics" aria-live="polite">
+      <div class="lm"><span>已分析窗口</span><b id="liveWinN">0</b></div>
+      <div class="lm"><span>最新状态</span><b id="liveStateNow">待机</b></div>
+      <div class="lm"><span>融合可疑度</span><b id="liveFused">--</b></div>
+      <div class="lm"><span>最近更新</span><b id="liveUpdated">--</b></div>
+    </div>
+    <button class="btn" id="liveBtn" style="width:auto;padding:13px 46px;margin-top:24px">开始监听</button>
+    <div class="live-trans" id="liveTrans"></div>
+    <canvas class="wav-can" id="liveWave" width="264" height="56"></canvas>
+    <div class="tl" id="liveTimeline"></div>
+    <div class="live-tip">边说边判 · 单窗处理 P90 194ms · 断线自动回退「上传检测」模式</div>
+
+    <!-- 现场挑战卡（评委/观众互动） -->
+    <div class="chal-live rise">
+      <div class="t">现场挑战 · 请你来念</div>
+      <div class="sub">点击上方「开始监听」，照着下面任一段念出来，看谛听实时怎么判</div>
+      <div class="cl-scripts">
+        <div class="cl-card bad"><i>话术 A · 冒充子女要钱</i><p>"妈，是我啊，我手机摔了这是同学的号，学校急用五万块，先别告诉我爸，快点转！"</p></div>
+        <div class="cl-card bad"><i>话术 B · 冒充公检法</i><p>"这里是市公安局，你名下银行卡涉嫌洗钱，立刻把钱转入安全账户配合清查，否则下午冻结逮捕！"</p></div>
+        <div class="cl-card good"><i>对照 · 正常家人</i><p>"妈，我周末回来吃饭，你别买菜了我在路上买。对了爸的降压药吃完没？"</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<div class="demo-cap" id="demoCap"></div>
+<div class="toast" id="toast"></div>
+
+<div class="alert-card" id="liveAlert" role="dialog" aria-modal="true" aria-labelledby="liveAlertTitle" aria-hidden="true">
+  <div class="alert-box">
+    <div class="t" id="liveAlertTitle">请先核实</div>
+    <div class="a" id="liveAlertA">这个电话的声音有些不对劲，建议先挂断，拨打家人平时的号码确认一下。</div>
+    <div class="r" id="liveAlertR"></div>
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:26px;flex-wrap:wrap">
+      <button class="btn" id="liveAlertClose" style="margin-top:0">我知道了</button>
+      <button class="btn" id="liveAlertShare" style="margin-top:0">发给子女</button>
+      <button class="btn" id="liveAlertCall" style="margin-top:0;border-color:var(--bad);color:var(--bad)">拉子女进通话</button>
+      <button class="btn" id="liveAlertChallenge" style="margin-top:0">数字复核</button>
+    </div>
+    <button type="button" id="liveAlertReplay" class="text-action" style="margin-top:16px;font-size:12px;color:var(--dim)">重播提醒</button>
+  </div>
+</div>
+
+<div class="share-modal" id="shareModal" role="dialog" aria-modal="true" aria-label="子女提醒卡预览" aria-hidden="true">
+  <div class="share-box">
+    <img id="shareImg" alt="谛听拦截提醒卡">
+    <div class="hint">长按图片保存转发给子女 · 或点击下方按钮保存</div>
+    <div class="row">
+      <button class="btn" id="shareDownload">保存图片</button>
+      <button class="btn" id="shareClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 数字复核（B4-① 挑战应答：防录音回放/换人） ============ -->
+<div class="challenge-modal" id="challengeModal" role="dialog" aria-modal="true" aria-labelledby="challengeTitle" aria-hidden="true">
+  <div class="chal-box">
+    <div class="t" id="challengeTitle">数字复核</div>
+    <div class="d" id="chalDigits">----</div>
+    <div class="h" id="chalHint">把上面数字给对方看，录下对方跟读的声音</div>
+    <button class="orb sm" id="chalRecBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#d4b483" stroke-width="1.4" stroke-linecap="round">
+        <rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"/>
+      </svg>
+    </button>
+    <div class="orb-hint" id="chalRecHint">点击录音（让对方跟读数字）</div>
+    <div class="r" id="chalResult"></div>
+    <button class="btn" id="chalClose">关闭</button>
+  </div>
+</div>
+
+<!-- ============ 历史详情弹窗（⑤ 记录详情） ============ -->
+<div class="detail-modal" id="histModal" role="dialog" aria-modal="true" aria-labelledby="hmTitle" aria-hidden="true">
+  <div class="detail-box">
+    <div class="t" id="hmTitle">检测详情</div>
+    <div class="meta" id="hmMeta"></div>
+    <div class="chs" id="hmChs"></div>
+    <div class="raz" id="hmRaz"></div>
+    <button class="btn" id="hmClose">关闭</button>
+  </div>
+</div>
+
+<!-- ============ 拉子女进通话（P3-1） ============ -->
+<div class="call-modal" id="callModal" role="dialog" aria-modal="true" aria-label="呼叫子女加入通话" aria-hidden="true">
+  <div class="call-box">
+    <div class="call-orb waiting" id="callOrb">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#d4a04a" stroke-width="1.4" stroke-linecap="round" id="callOrbSvg">
+        <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/>
+      </svg>
+    </div>
+    <div class="call-state" id="callState">正在呼叫子女 …</div>
+    <div class="call-sub" id="callSub">谛听已把这次可疑来电推送给子女端<br>子女接听后，你们的声音会实时互通</div>
+    <button class="call-hangup" id="callHangup">取消呼叫</button>
+  </div>
+</div>
+
+<script src="copy.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function openModal(id,options){
+  const el=$(id);
+  if(window.VeriCallDialog) return window.VeriCallDialog.open(el,options||{});
+  el.classList.add("show"); el.setAttribute("aria-hidden","false"); return true;
+}
+function closeModal(id){
+  const el=$(id);
+  if(window.VeriCallDialog&&window.VeriCallDialog.isOpen(el)) return window.VeriCallDialog.close(el);
+  el.classList.remove("show"); el.setAttribute("aria-hidden","true"); return false;
+}
+/* XSS 防护：所有进入 innerHTML 的用户可控文本先经 esc() 转义 */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const PROMPTS={
+  putonghua:"请朗读：妈，是我。我在外面出了点事，急需五万块钱周转，先别告诉我爸。银行卡号是 6222 开头。妈你听出来是我了吧？——覆盖称谓 / 金额 / 紧迫话术的诈骗高频模式。",
+  fangyan:"请用方言自然聊天 1 分钟以上（讲讲今天做了什么即可，无需朗读）。",
+  readback:"请复述屏幕上的随机数字：58 302 1174 90（用于声纹确认测试）。"
+};
+const VTXT={allow:"放行",caution:"警惕",block:"拦截"};
+let curSess="putonghua", enRec=null;
+
+/* ---------- 适老模式 + 语音播报（P2-3） ---------- */
+/* copy.js 兜底（file:// 直开或静态服务缺失时仍可用） */
+const COPY=window.VERICALL_COPY||{
+  states:{green:{word:"通话正常",short:"放心聊",advise:"通话正常，放心聊。"},
+    yellow:{word:"话术可疑",short:"多留个心眼",advise:"这通电话提到转账，请多留个心眼，和家里人商量一下再决定。"},
+    red:{word:"请先核实",short:"先挂断，回拨确认",advise:"这个电话的声音有些不对劲，建议先挂断，拨打家人平时的号码确认一下。"}},
+  card:{title:"谛听拦截提醒",subtitle:"AI 拟声电话诈骗 · 三通道联合判定",action:"建议这样做",
+    footer:"谛听 VeriCall",hint:"长按保存图片，转发给子女"},
+  advise:function(s,f){return (this.states[s]||this.states.green).advise.replace("{family}",f||"家人")},
+  speak:function(s,f){return this.advise(s,f)}
+};
+let elderOn=localStorage.getItem("vericall_elder")==="1";
+let voiceOn=localStorage.getItem("vericall_voice")!=="0";
+let voiceNames=[], lastLiveWin=null, lastRec=null, lastYSpk=0;
+function speak(text){
+  if(!voiceOn||!window.speechSynthesis||!text) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="zh-CN"; u.rate=elderOn?0.85:0.95; u.pitch=1; u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(_){}
+}
+function applyElder(){
+  document.body.classList.toggle("elder",elderOn);
+  $("elderBtn").textContent=elderOn?"适老 · 开":"适老";
+}
+$("elderBtn").onclick=()=>{
+  elderOn=!elderOn; localStorage.setItem("vericall_elder",elderOn?"1":"0");
+  applyElder();
+  if(elderOn) speak("适老模式已开启。字体会变大，遇到可疑电话我会念给您听。");
+};
+applyElder();
+
+/* ---------- 状态栏 ---------- */
+async function loadStatus(){
+  try{
+    const s=await(await fetch("/api/status")).json();
+    const eer=s.aasist_dev_eer!=null?s.aasist_dev_eer.toFixed(2)+"%":"--";
+    const ac=s.acoustic||"aasist";
+    const acLabel=ac==="aasist"?"AASIST":(ac==="xlsr_cn"?"XLS-R 中文域":(ac.startsWith("xlsr_cn")?"XLS-R 中文域·宽谱":ac));
+    const acPip=ac==="aasist"?"ok":"ok";
+    $("sys").innerHTML=
+      `<span class="it"><span class="pip ${acPip}"></span>${acLabel} <b>${eer}</b></span>
+       <span class="it"><span class="pip ${s.voices.length?"ok":"warn"}"></span>声纹 <b>${s.voices.length}</b></span>
+       <span class="it"><span class="pip ${s.ollama?"ok":"warn"}"></span>OLLAMA <b>${s.ollama?"ON":"OFF"}</b></span>`;
+    renderVoices(s.voices);
+  }catch(e){}
+}
+function renderVoices(vs){
+  voiceNames=vs.map(v=>v.name);
+  $("voiceSub").textContent=`已登记 ${vs.length} 位`;
+  $("voiceList").innerHTML=vs.length?vs.map(v=>
+    `<div class="vrow"><span class="nm">${esc(v.name)}</span>
+     <span class="ct">${+v.samples||0} SAMPLES</span><span class="st">已登记</span></div>`).join("")
+    :'<div class="vempty">暂无登记</div>';
+}
+
+/* ---------- 页签 ---------- */
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on"); $("p-"+t.dataset.p).classList.add("on");
+  if(t.dataset.p==="history") loadHistory();
+  if(t.dataset.p==="about") loadDashboard();
+});
+
+/* ---------- 音频采集公共工具 ---------- */
+function create16kAudioContext(){
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  let ac;
+  try{ac=new Ctx({sampleRate:16000});}catch(_){ac=new Ctx();}
+  if(ac.sampleRate!==16000)console.warn("AudioContext 实际采样率为",ac.sampleRate,"，已在前端重采样到 16kHz");
+  return ac;
+}
+function createStreamResampler(inputRate,outputRate){
+  if(inputRate===outputRate)return x=>x;
+  const step=inputRate/outputRate;
+  let tail=new Float32Array(0),pos=0;
+  return input=>{
+    const data=new Float32Array(tail.length+input.length);
+    data.set(tail); data.set(input,tail.length);
+    const out=[];
+    while(pos<data.length-1){
+      const i=Math.floor(pos),f=pos-i;
+      out.push(data[i]+(data[i+1]-data[i])*f);
+      pos+=step;
+    }
+    const consumed=Math.min(Math.floor(pos),data.length);
+    tail=data.slice(consumed); pos-=consumed;
+    return Float32Array.from(out);
+  };
+}
+
+/* ---------- WAV 录音器 ---------- */
+function makeRecorder(btnId,hintId,onDone,opts){
+  opts=opts||{};
+  const btn=$(btnId),hint=$(hintId);
+  let ac,proc,src,silent,resample,chunks=[],recording=false,t0;
+  function encodeWav(samples,sr){
+    const len=samples.length, buf=new ArrayBuffer(44+len*2), v=new DataView(buf);
+    const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+    ws(0,"RIFF");v.setUint32(4,36+len*2,true);ws(8,"WAVEfmt ");v.setUint32(16,16,true);
+    v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);
+    v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+    ws(36,"data");v.setUint32(40,len*2,true);
+    for(let i=0;i<len;i++){let s=Math.max(-1,Math.min(1,samples[i]));
+      v.setInt16(44+i*2,s<0?s*0x8000:s*0x7FFF,true)}
+    return new Blob([buf],{type:"audio/wav"});
+  }
+  btn.onclick=async()=>{
+    if(recording){
+      recording=false; proc.disconnect(); src.disconnect(); silent.disconnect(); btn.classList.remove("live");
+      const dur=(Date.now()-t0)/1000;
+      const total=chunks.reduce((a,c)=>a+c.length,0), all=new Float32Array(total);
+      let off=0; chunks.forEach(c=>{all.set(c,off);off+=c.length}); chunks=[];
+      const blob=encodeWav(all,16000);
+      hint.textContent=`已录 ${dur.toFixed(1)} 秒 · 点击重新录制`;
+      onDone(blob,dur); ac.close(); return;
+    }
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1}});
+      ac=create16kAudioContext();
+      resample=createStreamResampler(ac.sampleRate,16000);
+      src=ac.createMediaStreamSource(stream);
+      proc=ac.createScriptProcessor(4096,1,1);
+      silent=ac.createGain(); silent.gain.value=0;
+      src.connect(proc); proc.connect(silent); silent.connect(ac.destination);
+      proc.onaudioprocess=e=>{if(recording){const raw=e.inputBuffer.getChannelData(0),ch=resample(raw);
+        chunks.push(new Float32Array(ch)); if(opts.canvas) drawWave($(opts.canvas),raw)}};
+      recording=true; t0=Date.now(); btn.classList.add("live");
+      hint.innerHTML="录音中 <b id='"+btnId+"T'></b> · 再次点击停止";
+      const tick=()=>{const el=$(btnId+"T"); if(el&&recording){el.textContent=((Date.now()-t0)/1000).toFixed(1)+"s"; setTimeout(tick,200)}};
+      tick();
+    }catch(e){toast("无法访问麦克风："+e.message,true)}
+  };
+}
+makeRecorder("recBtn","recHint",(b)=>{analyzeFile(b,"record_"+Date.now()+".wav")},{canvas:"recWave"});
+makeRecorder("enRecBtn","enRecHint",(b)=>{enRec={blob:b,name:"enroll_"+Date.now()+".wav"};checkEnroll()});
+
+/* ---------- 上传 ---------- */
+$("fileIn").onchange=()=>{const f=$("fileIn").files[0]; if(f){$("fileName").textContent=f.name; analyzeFile(f,f.name)}};
+$("enFileIn").onchange=()=>{const f=$("enFileIn").files[0]; if(f){$("enFileName").textContent=f.name; enRec={blob:f,name:f.name}; checkEnroll()}};
+
+/* ---------- demo ---------- */
+document.querySelectorAll(".demo").forEach(c=>c.onclick=()=>{
+  const fd=new FormData(); fd.append("demo",c.dataset.demo);
+  fd.append("caller_number",$("callerNum").value.trim()); runAnalyze(fd);
+});
+
+/* ---------- 分析 ---------- */
+const STAGES=["CH.01 ACOUSTIC · 声学伪造检测","CH.02 VOICEPRINT · 声纹比对","CH.03 SEMANTIC · 话术理解","FUSION · 融合裁决"];
+let progTimer=null;
+function analyzeFile(blob,name){
+  const fd=new FormData(); fd.append("file",blob,name);
+  fd.append("caller_number",$("callerNum").value.trim()); runAnalyze(fd);
+}
+async function runAnalyze(fd){
+  resetChannels(); $("verdict").className="verdict";
+  const ss=$("stageStatus"); ss.classList.add("show");
+  let si=0; $("stageTxt").textContent=STAGES[0];
+  progTimer=setInterval(()=>{si=Math.min(si+1,STAGES.length-1); $("stageTxt").textContent=STAGES[si]},6500);
+  const chans=["acoustic","voiceprint","semantic"];
+  chans.forEach((k,i)=>setTimeout(()=>$("ch-"+k).classList.add("pending"), i*300));
+  try{
+    const r=await fetch("/api/analyze",{method:"POST",body:fd});
+    const data=await r.json();
+    clearInterval(progTimer); ss.classList.remove("show");
+    chans.forEach(k=>$("ch-"+k).classList.remove("pending"));
+    if(data.error){toast(data.message||("分析失败: "+data.error),true);return null}
+    revealResult(data);
+    return data;
+  }catch(e){
+    clearInterval(progTimer); ss.classList.remove("show");
+    chans.forEach(k=>$("ch-"+k).classList.remove("pending"));
+    toast("请求失败: "+e.message,true);
+    return null;
+  }
+}
+function resetChannels(){
+  $("copyFromVerdict").style.display="none";
+  $("shareFromVerdict").style.display="none";
+  $("challengeFromVerdict").style.display="none";
+  ["acoustic","voiceprint","semantic"].forEach(k=>{
+    $("ch-"+k).classList.remove("done");
+    $("la-"+k).className="lab"; $("la-"+k).textContent="分析中";
+    $("bar-"+k).style.width="0"; $("sc-"+k).innerHTML="--";
+    $("de-"+k).textContent=""; $("cf-"+k).textContent="";
+  });
+}
+function revealResult(rec){
+  lastRec=rec;
+  rec.channels.forEach((c,i)=>{
+    setTimeout(()=>{
+      const k=c.name, card=$("ch-"+k);
+      card.classList.add("done");
+      const bad=c.score>=0.6, mid=c.score>=0.35&&!bad;
+      const lab=$("la-"+k); lab.textContent=c.label;
+      lab.className="lab "+(bad?"bad":mid?"mid":"good");
+      $("bar-"+k).style.width=Math.round(c.score*100)+"%";
+      $("bar-"+k).style.background=bad?"var(--bad)":mid?"var(--warn)":"var(--gold)";
+      const sc=$("sc-"+k);
+      sc.innerHTML=c.score.toFixed(2)+"<em>/1.0</em>";
+      sc.style.color=bad?"var(--bad)":mid?"var(--warn)":"var(--ink)";
+      $("cf-"+k).textContent="CONF "+c.confidence;
+      $("de-"+k).textContent=c.detail;
+    }, i*500);
+  });
+  setTimeout(()=>{
+    const v=$("verdict");
+    v.className="verdict show "+rec.final;
+    $("vWord").textContent=VTXT[rec.final]||rec.final;
+    $("vReason").textContent=rec.rationale;
+    $("gScore").textContent=rec.score.toFixed(2);
+    $("vConf").textContent=rec.confidence.toFixed(2);
+    $("vTime").textContent=(rec.elapsed_s??"--")+"s";
+    $("copyFromVerdict").style.display="inline-block";
+    requestAnimationFrame(()=>{
+      $("gaugeFg").style.strokeDashoffset=439.8*(1-rec.score);
+    });
+    const risky=rec.final!=="allow";
+    $("shareFromVerdict").style.display=risky?"inline-block":"none";
+    $("callFromVerdict").style.display=risky?"inline-block":"none";
+    $("challengeFromVerdict").style.display=risky?"inline-block":"none";
+    if(elderOn) speak(COPY.speak(rec.final==="block"?"red":rec.final==="caution"?"yellow":"green",voiceNames[0]));
+    v.scrollIntoView({behavior:"smooth",block:"center"});
+  }, rec.channels.length*500+300);
+}
+
+/* ---------- 登记 ---------- */
+document.querySelectorAll("#sessRow button").forEach(b=>b.onclick=e=>{
+  e.preventDefault();
+  document.querySelectorAll("#sessRow button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); curSess=b.dataset.s; $("promptBox").textContent=PROMPTS[curSess];
+});
+$("promptBox").textContent=PROMPTS.putonghua;
+$("consent").onchange=checkEnroll; $("enName").oninput=checkEnroll;
+function checkEnroll(){
+  $("enSubmit").disabled=!($("consent").checked&&$("enName").value.trim()&&enRec);
+}
+$("enSubmit").onclick=async()=>{
+  const fd=new FormData();
+  fd.append("name",$("enName").value.trim());
+  fd.append("session",curSess);
+  fd.append("file",enRec.blob,enRec.name);
+  $("enSubmit").disabled=true; $("enSubmit").textContent="声纹特征提取中 …";
+  try{
+    const r=await fetch("/api/enroll",{method:"POST",body:fd});
+    const d=await r.json();
+    if(d.error) toast(d.message||"登记失败",true);
+    else{toast(`「${d.name}」声纹登记成功`); enRec=null; $("enName").value=""; $("consent").checked=false; loadStatus()}
+  }catch(e){toast("请求失败: "+e.message,true)}
+  $("enSubmit").textContent="登记声纹"; checkEnroll();
+};
+
+/* ---------- 历史 ---------- */
+let histCache=[], histFilter="", histQuery="";
+let histLoadState="loading";
+function isAiDemo(r){
+  return Boolean(r&&(r.demo===true||String(r.source||"").toLowerCase()==="ai-demo"));
+}
+function recordSource(r){
+  const src=String((r&&r.source)||"").trim();
+  if(isAiDemo(r)) return "AI 模拟检测";
+  if(/^demo:[abc]$/i.test(src)) return "内置演示 "+src.slice(-1).toUpperCase();
+  if(src==="upload") return "本机上传";
+  return src||"本机记录";
+}
+function recordTranscript(r){
+  const top=String((r&&r.transcript)||"").trim();
+  if(top) return top;
+  const semantic=(r&&r.channels||[]).find(c=>(c.name||c.channel)==="semantic");
+  return String((semantic&&semantic.transcript)||"").trim();
+}
+function aiDemoBadge(r){
+  return isAiDemo(r)?'<span class="ai-demo-badge" title="用于答辩演示的模拟检测数据">AI 演示</span>':"";
+}
+async function loadHistory(){
+  histLoadState="loading";
+  if(!histCache.length) renderHistory();
+  try{
+    const r=await fetch("/api/history");
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const d=await r.json();
+    histCache=d.records||[]; renderHistory();
+    histLoadState="ready";
+    renderHistory();
+  }catch(e){
+    histLoadState="error";
+    renderHistory();
+  }
+}
+function histMatch(r){
+  if(histFilter&&r.final!==histFilter) return false;
+  if(!histQuery) return true;
+  const hay=[r.name,recordSource(r),r.caller_number,r.final,VTXT[r.final],
+    r.rationale,recordTranscript(r),...(r.channels||[]).map(c=>c.detail)]
+    .filter(Boolean).join(" ").toLowerCase();
+  return hay.includes(histQuery);
+}
+function histVisible(){ return histCache.filter(histMatch); }
+function renderHistory(){
+  const rs=histVisible();
+  const sm=$("histSummary");
+  if(sm) sm.innerHTML=rs.length===histCache.length
+    ?`共 <b>${histCache.length}</b> 条`
+    :`显示 <b>${rs.length}</b> / ${histCache.length} 条`;
+  if(histLoadState==="loading"&&!histCache.length){
+    $("histList").innerHTML='<div class="ui-state" role="status"><span class="ui-spinner" aria-hidden="true"></span><span>正在读取本机检测记录…</span></div>';
+    return;
+  }
+  if(histLoadState==="error"&&!histCache.length){
+    $("histList").innerHTML='<div class="ui-state error" role="alert"><strong>记录加载失败</strong><span>请确认谛听服务正在运行，然后重试。</span><button class="mini-btn" id="histRetry" type="button">重新加载</button></div>';
+    $("histRetry").onclick=loadHistory;
+    return;
+  }
+  $("histList").innerHTML=
+    `<div class="hrow head"><span>时间</span><span>音频 / 场景</span><span>裁决</span><span>通道分数 A·V·S</span><span style="text-align:right">耗时</span></div>`+
+    (rs.length?rs.map((r,i)=>{
+      const ch=(r.channels||[]).map(c=>c.score).join(" · ");
+      const idx=histCache.indexOf(r);
+      const transcript=recordTranscript(r);
+      const label=`查看 ${r.name||"未知场景"} ${VTXT[r.final]||r.final||""} 检测详情`;
+      return `<div class="hrow" role="button" tabindex="0" aria-label="${esc(label)}" style="animation-delay:${Math.min(i,12)*0.04}s" onclick="openHist(${idx},this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHist(${idx},this)}">
+        <span class="t">${esc((r.time||"").slice(5))}</span>
+        <span class="n">
+          <span class="n-top"><span class="n-name">${esc(r.name||"--")}</span>${aiDemoBadge(r)}</span>
+          ${transcript?`<span class="n-note">转写 · ${esc(transcript)}</span>`:""}
+        </span>
+        <span class="v ${esc(r.final)}">${VTXT[r.final]||esc(r.final)}</span>
+        <span class="s">${esc(ch)} ｜ Σ ${esc(r.score)}</span>
+        <span class="e">${esc(r.elapsed_s)}s</span></div>`;
+    }).join(""):`<div class="vempty">${histFilter||histQuery?"没有符合条件的记录":"暂无记录 · 完成一次检测后自动留档"}</div>`);
+}
+function csvCell(v){
+  let s=String(v==null?"":v);
+  if(typeof v==="string"&&/^[=+\-@\t\r]/.test(s)) s="'"+s;
+  s=s.replace(/"/g,'""');
+  return /[",\n]/.test(s)?`"${s}"`:s;
+}
+function downloadCsv(filename,rows){
+  const csv="\ufeff"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
+  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  const a=document.createElement("a");
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function stamp(){
+  const d=new Date(),p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes());
+}
+$("histExport").onclick=()=>{
+  const rs=histVisible();
+  if(!rs.length){ toast("当前没有可导出的记录",true); return; }
+  downloadCsv(`谛听检测记录-${stamp()}.csv`,
+    [["时间","音频/场景","数据来源","裁决","声学","声纹","话术","综合分","置信度","耗时(s)","来电号码","对话转写","说明"]].concat(
+      rs.map(r=>{
+        const c=k=>{const hit=(r.channels||[]).find(x=>x.name===k); return hit?hit.score:"";};
+        return [r.time,r.name||"",recordSource(r),VTXT[r.final]||r.final||"",c("acoustic"),c("voiceprint"),c("semantic"),
+          r.score,r.confidence,r.elapsed_s,r.caller_number||"",recordTranscript(r),r.rationale||""];
+      })));
+  toast(`已导出 ${rs.length} 条记录`);
+};
+document.querySelectorAll(".hchip").forEach(c=>c.onclick=()=>{
+  document.querySelectorAll(".hchip").forEach(x=>x.classList.remove("on"));
+  c.classList.add("on"); histFilter=c.dataset.f; renderHistory();
+});
+$("histQuery").addEventListener("input",e=>{
+  histQuery=e.target.value.trim().toLowerCase(); renderHistory();
+});
+
+/* ---------- toast ---------- */
+let toastT=null;
+function toast(msg,err){
+  const t=$("toast"); t.textContent=msg; t.className="toast show"+(err?" err":"");
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),3200);
+}
+
+/* ---------- 实时监测（P1-2 · /ws/stream） ---------- */
+const LIVE_STATE={GREEN:"green",YELLOW:"yellow",RED:"red"};
+const LIVE_TXT={GREEN:"通话正常",YELLOW:"话术可疑 · 留意",RED:"疑似诈骗 · 建议核实"};
+function liveClass(s){return LIVE_STATE[s]||"green"}
+function setLive(s){
+  const c=liveClass(s);
+  $("liveOrb").className="orb live "+c;
+  $("liveState").className="live-state "+c;
+  $("liveState").textContent=LIVE_TXT[s]||"监听中";
+  const bn=$("elderBanner");
+  if(bn){
+    const st=COPY.states[c]||COPY.states.green;
+    bn.className="elder-banner "+c;
+    bn.innerHTML=st.word+"<span class='sub'>"+(st.short||"")+"</span>";
+  }
+}
+let liveWs=null, liveConnecting=false, liveAC=null, liveProc=null, liveSrc=null, liveSilent=null, liveResample=null, liveWinCount=0;
+$("liveOrb").onclick=()=>$("liveBtn").click();
+$("liveBtn").onclick=async()=>{
+  if(liveWs){ liveWs.close(); return; }
+  if(liveConnecting) return;
+  liveConnecting=true;
+  try{
+    const streamUrl=window.VeriCallStream?await window.VeriCallStream.websocketUrl():
+      `${location.protocol==="https:"?"wss:":"ws:"}//${location.host}/ws/stream`;
+    liveWs=new WebSocket(streamUrl);
+    liveWs.onopen=()=>{ liveWs.send(JSON.stringify({type:"config",sr:16000})); $("liveBtn").textContent="停止监听"; startLiveMic(); toast("已连接流式接口"); setLive("GREEN"); $("liveTimeline").innerHTML="";
+      liveWinCount=0; $("liveWinN").textContent="0"; $("liveFused").textContent="--";
+      $("liveStateNow").textContent="监听中"; $("liveUpdated").textContent="--"; };
+    liveWs.onmessage=e=>{ try{ handleLive(JSON.parse(e.data)) }catch(_){} };
+    liveWs.onclose=()=>{ liveWs=null; stopLiveMic(); $("liveBtn").textContent="开始监听";
+      $("liveState").textContent="已断开（可回退上传检测）"; $("liveStateNow").textContent="已断开"; };
+    liveWs.onerror=()=>{ toast("流式接口不可用，请回退到上传检测模式",true) };
+  }catch(e){ toast("无法建立连接: "+e.message,true) }
+  finally{ liveConnecting=false; }
+};
+function handleLive(ev){
+  if(ev.type==="window"){
+    lastLiveWin=ev;
+    liveWinCount++;
+    $("liveWinN").textContent=liveWinCount;
+    $("liveStateNow").textContent=LIVE_TXT[ev.state]||ev.state||"--";
+    $("liveFused").textContent=ev.fused!=null?Number(ev.fused).toFixed(2):"--";
+    $("liveUpdated").textContent=new Date().toLocaleTimeString("zh-CN",{hour12:false});
+    const b=document.createElement("div");
+    b.className="b "+liveClass(ev.state);
+    b.title=`t=${ev.t_rel}s 融合=${ev.fused} ${ev.state}`;
+    $("liveTimeline").appendChild(b);
+    if(ev.channels&&ev.channels.semantic&&ev.channels.semantic.transcript){
+      $("liveTrans").textContent=ev.channels.semantic.transcript;
+      /* 通话中：把实时转写同步给子女端 */
+      if(callWs&&callWs.readyState===1){
+        try{callWs.send(JSON.stringify({type:"transcript",text:ev.channels.semantic.transcript}))}catch(_){}
+      }
+    }
+    setLive(ev.state);
+    if(elderOn&&ev.state==="YELLOW"&&Date.now()-lastYSpk>20000){
+      lastYSpk=Date.now(); speak(COPY.speak("yellow",voiceNames[0]));
+    }
+  }else if(ev.type==="alert"){
+    $("liveAlertR").textContent=ev.rationale||"";
+    const adv=ev.advice||COPY.speak("red",voiceNames[0]);
+    $("liveAlertA").textContent=adv;
+    openModal("liveAlert");
+    if(elderOn) speak(adv);
+  }
+}
+$("liveAlertClose").onclick=()=>closeModal("liveAlert");
+$("liveAlertReplay").onclick=()=>speak($("liveAlertA").textContent);
+$("liveAlertShare").onclick=()=>{
+  const w=lastLiveWin||{};
+  const chans=w.channels?Object.entries(w.channels).map(([k,v])=>({name:k,score:v.score,label:v.label})):[];
+  openShare(makeShareCard({final:"red",fused:w.fused,channels:chans,
+    advice:$("liveAlertA").textContent,rationale:$("liveAlertR").textContent,source:"实时通话"}));
+};
+
+/* ---------- 子女分享卡片（P2-4 · canvas 生成） ---------- */
+const CHAN_CN={acoustic:"声学伪造",voiceprint:"声纹核验",semantic:"话术理解"};
+function wrapText(ctx,text,x,y,maxW,lineH){
+  const chars=String(text||"").split(""); let line="",yy=y;
+  for(const ch of chars){
+    if(ctx.measureText(line+ch).width>maxW){ctx.fillText(line,x,yy);line=ch;yy+=lineH}
+    else line+=ch;
+  }
+  if(line)ctx.fillText(line,x,yy);
+  return yy+lineH;
+}
+function makeShareCard(o){
+  const W=800,H=1140,cv=document.createElement("canvas");
+  cv.width=W; cv.height=H; const x=cv.getContext("2d");
+  x.fillStyle="#0c0b0b"; x.fillRect(0,0,W,H);
+  x.strokeStyle="#d4b483"; x.lineWidth=2; x.strokeRect(26,26,W-52,H-52);
+  const cx=W/2, sans="'PingFang SC','Microsoft YaHei',sans-serif";
+  /* 谛听 logo（圆 + 耳形弧线 + 听珠） */
+  x.strokeStyle="#d4b483"; x.lineWidth=3;
+  x.beginPath(); x.arc(cx,112,44,0,Math.PI*2); x.stroke();
+  x.lineWidth=4; x.beginPath(); x.arc(cx+4,112,22,Math.PI*0.25,Math.PI*1.55); x.stroke();
+  x.fillStyle="#d4b483"; x.beginPath(); x.arc(cx,112,6,0,Math.PI*2); x.fill();
+  /* 标题区 */
+  x.textAlign="center";
+  x.font="600 46px "+sans; x.fillStyle="#d4b483";
+  x.fillText(COPY.card.title||"谛听拦截提醒",cx,206);
+  x.font="20px "+sans; x.fillStyle="#8f8a7d";
+  x.fillText(COPY.card.subtitle||"",cx,246);
+  const t=new Date(), pad=n=>String(n).padStart(2,"0");
+  x.font="20px monospace"; x.fillStyle="#57544c";
+  x.fillText("来电时间 "+t.getFullYear()+"-"+pad(t.getMonth()+1)+"-"+pad(t.getDate())
+    +" "+pad(t.getHours())+":"+pad(t.getMinutes())+(o.source?" · "+o.source:""),cx,288);
+  /* 裁决大字 */
+  const vmap={block:["请先核实","#c96a5e"],red:["请先核实","#c96a5e"],
+    caution:["话术可疑","#d4a04a"],yellow:["话术可疑","#d4a04a"],
+    allow:["通话正常","#8fb996"],green:["通话正常","#8fb996"]};
+  const [vw,vc]=vmap[o.final]||vmap.red;
+  x.font="600 88px "+sans; x.fillStyle=vc; x.fillText(vw,cx,402);
+  x.font="24px monospace"; x.fillStyle="#8f8a7d";
+  x.fillText("融合可疑度 "+(typeof o.fused==="number"?o.fused.toFixed(2):"--"),cx,446);
+  /* 三通道证据 */
+  x.textAlign="left"; let y=508;
+  (o.channels||[]).forEach(c=>{
+    const sc=typeof c.score==="number"?c.score:0;
+    const cc=sc>=0.6?"#c96a5e":sc>=0.35?"#d4a04a":"#8fb996";
+    x.font="22px "+sans; x.fillStyle="#8f8a7d";
+    x.fillText(CHAN_CN[c.name]||c.name,90,y);
+    x.font="24px monospace"; x.fillStyle=cc; x.fillText(sc.toFixed(2),300,y);
+    x.font="20px "+sans; x.fillStyle="#57544c"; x.fillText(c.label||"",392,y);
+    x.fillStyle="rgba(236,231,220,.1)"; x.fillRect(90,y+14,560,4);
+    x.fillStyle=cc; x.fillRect(90,y+14,560*Math.min(1,Math.max(0,sc)),4);
+    y+=74;
+  });
+  /* 建议话术框 */
+  y+=8;
+  x.strokeStyle="rgba(212,180,131,.5)"; x.lineWidth=1.5;
+  x.strokeRect(80,y,640,192);
+  x.font="600 24px "+sans; x.fillStyle="#d4b483";
+  x.fillText(COPY.card.action||"建议这样做",108,y+44);
+  x.font="26px "+sans; x.fillStyle="#ece7dc";
+  let ey=wrapText(x,o.advice||"",108,y+86,584,40);
+  if(o.rationale){
+    x.font="18px "+sans; x.fillStyle="#57544c";
+    wrapText(x,"判定依据："+o.rationale,108,Math.max(ey+8,y+150),584,26);
+  }
+  /* 页脚 */
+  x.textAlign="center"; x.font="19px "+sans; x.fillStyle="#57544c";
+  x.fillText(COPY.card.footer||"谛听 VeriCall",cx,H-70);
+  x.fillText(COPY.card.hint||"",cx,H-38);
+  return cv.toDataURL("image/png");
+}
+function openShare(dataUrl){
+  $("shareImg").src=dataUrl;
+  openModal("shareModal",{trigger:document.activeElement});
+}
+$("shareClose").onclick=()=>closeModal("shareModal");
+$("shareModal").onclick=e=>{if(e.target===$("shareModal"))closeModal("shareModal")};
+$("shareDownload").onclick=()=>{
+  const a=document.createElement("a"), t=new Date(), pad=n=>String(n).padStart(2,"0");
+  a.href=$("shareImg").src;
+  a.download="谛听拦截提醒_"+t.getFullYear()+pad(t.getMonth()+1)+pad(t.getDate())+"_"+pad(t.getHours())+pad(t.getMinutes())+".png";
+  a.click();
+};
+$("shareFromVerdict").onclick=()=>{
+  const r=lastRec||{};
+  const st=r.final==="caution"?"yellow":"red";
+  openShare(makeShareCard({final:r.final||"block",fused:r.score,
+    channels:(r.channels||[]).map(c=>({name:c.name,score:c.score,label:c.label})),
+    advice:COPY.advise(st,voiceNames[0]),rationale:r.rationale,source:"上传检测"}));
+};
+
+/* 把当前裁决整理成一段可转发的纯文本摘要 */
+function verdictSummaryText(){
+  const r=lastRec||{};
+  const lines=[
+    "【谛听 VeriCall · 通话检测摘要】",
+    "裁决："+(VTXT[r.final]||r.final||"--")+"（综合可疑度 "+r.score+"）",
+    "置信度："+r.confidence+" ｜ 耗时："+r.elapsed_s+"s",
+    "判定依据："+(r.rationale||"--"),
+    "",
+    "三通道证据："
+  ];
+  (r.channels||[]).forEach(c=>{
+    lines.push(`· ${c.label}：${c.score}（置信 ${c.confidence}）${c.detail?" — "+c.detail:""}`);
+  });
+  const num=$("callerNum").value.trim();
+  if(num) lines.push("", "来电号码："+num);
+  lines.push("", "请先挂断并回拨家人平时的号码确认。本结果由模型判定，仅供参考。");
+  return lines.join("\n");
+}
+async function copyText(text){
+  try{
+    if(navigator.clipboard&&window.isSecureContext){ await navigator.clipboard.writeText(text); return true; }
+  }catch(_){}
+  try{
+    const ta=document.createElement("textarea");
+    ta.value=text; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    const ok=document.execCommand("copy");
+    document.body.removeChild(ta); return ok;
+  }catch(_){ return false; }
+}
+$("copyFromVerdict").onclick=async()=>{
+  if(!lastRec){ toast("还没有可复制的检测结果",true); return; }
+  const ok=await copyText(verdictSummaryText());
+  toast(ok?"检测摘要已复制，可直接发给家人":"复制失败，请手动选中文本复制",!ok);
+};
+
+/* ---------- 数字复核（B4-① 挑战应答闭环 · /api/challenge） ---------- */
+let chalCode=null;
+async function startChallenge(){
+  try{
+    const r=await fetch("/api/challenge/begin",{method:"POST"});
+    const d=await r.json();
+    if(!r.ok||!d.ok){toast(d.message||"数字复核发起失败",true);return;}
+    chalCode=d.code;
+    $("chalDigits").textContent=String(d.digits).split("").join(" ");
+    $("chalHint").textContent="把上面数字给对方看，录下对方跟读的声音";
+    $("chalResult").textContent="";
+    openModal("challengeModal");
+    if(elderOn) speak("数字复核。请让对方读出屏幕上的数字："+String(d.digits).split("").join("，"));
+  }catch(e){toast("发起失败: "+e.message,true)}
+}
+makeRecorder("chalRecBtn","chalRecHint",(b)=>{
+  if(!chalCode){toast("请先重新发起数字复核",true);return;}
+  const fd=new FormData(); fd.append("code",chalCode); fd.append("file",b,"challenge_rec.wav");
+  $("chalHint").textContent="比对中 …";
+  fetch("/api/challenge/verify",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
+    if(!d.ok||d.error){$("chalResult").textContent=d.message||d.error;return;}
+    const okV=!!(d.verdict&&d.verdict.pass_ok);
+    $("chalResult").innerHTML=okV
+      ?'<span style="color:var(--ok)">复核通过：跟读一致 · 音色匹配「'+esc(d.best_name||"家人")+'」（相似度 '+esc(d.similarity)+'）</span>'
+      :'<span style="color:var(--bad)">复核未通过：'+esc((d.verdict&&d.verdict.reasons||[]).join("；"))+'<br>疑似录音回放或换人代读，请先挂断回拨家人确认</span>';
+    if(elderOn) speak(okV?"复核通过，数字和声音都对上了，你们继续说吧。":"复核没通过，这个声音不太对，请先挂断，回拨家人平时的号码确认。");
+  }).catch(e=>{$("chalResult").textContent="网络异常: "+e.message});
+});
+$("chalClose").onclick=()=>closeModal("challengeModal");
+$("liveAlertChallenge").onclick=()=>{closeModal("liveAlert"); startChallenge();};
+$("challengeFromVerdict").onclick=()=>startChallenge();
+
+/* ---------- 展厅功能：波形 / 一键演示 / 历史详情 / 守护总览 ---------- */
+function drawWave(el,samples){
+  if(!el) return;
+  const x=el.getContext("2d"), W=el.width, H=el.height;
+  x.fillStyle="rgba(10,10,11,1)"; x.fillRect(0,0,W,H);
+  x.strokeStyle="rgba(212,180,131,.85)"; x.lineWidth=1; x.beginPath();
+  const samples2=(samples&&samples.length)?samples:new Float32Array(0);
+  const step=Math.max(1,Math.floor(samples2.length/W));
+  for(let i=0;i<W;i++){
+    let mn=1,mx=-1;
+    for(let j=0;j<step;j++){const v=samples2[i*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v;}
+    x.moveTo(i+0.5,(0.5-mn/2)*H); x.lineTo(i+0.5,(0.5-mx/2)*H);
+  }
+  x.stroke();
+}
+const DEMO_SCRIPT={
+  A:{t:"场景 A · 家人本人来电",c:"真声 + 音色匹配 + 正常闲聊 → 应该放行，不打扰老人。"},
+  B:{t:"场景 B · AIGC 冒充家人",c:"同音色合成声 + 要钱话术 → 三通道亮红，拦截并提醒回拨确认。"},
+  C:{t:"场景 C · 陌生人来电",c:"真人但内容可疑 → 黄色警惕，建议先商量再决定。"}
+};
+let demoPlaying=false;
+function showCap(k){
+  const s=DEMO_SCRIPT[k];
+  $("demoCap").innerHTML="<b>"+s.t+"</b><span>"+s.c+"</span>";
+  $("demoCap").classList.add("show");
+}
+$("demoPlay").onclick=async()=>{
+  if(demoPlaying){ demoPlaying=false; return; }
+  demoPlaying=true;
+  $("demoPlay").innerHTML="<i>AUTO</i><span>停止放映</span>";
+  for(const k of ["A","B","C"]){
+    showCap(k);
+    const fd=new FormData(); fd.append("demo",k);
+    fd.append("caller_number",$("callerNum").value.trim());
+    await runAnalyze(fd);
+    for(let i=0;i<70&&demoPlaying;i++){ await new Promise(r=>setTimeout(r,100)); }
+  }
+  demoPlaying=false;
+  $("demoCap").classList.remove("show");
+  $("demoPlay").innerHTML="<i>AUTO</i><span>一键演示 A→B→C</span>";
+};
+function openHist(i,trigger){
+  const r=(histCache||[])[i]; if(!r) return;
+  $("hmTitle").textContent=(VTXT[r.final]||"检测记录")+" · "+(r.name||"");
+  $("hmMeta").innerHTML=[
+    ["时间",esc(r.time||"--")],["来源",esc(recordSource(r))],
+    ["号码",esc(r.caller_number||"--")],["耗时",esc(r.elapsed_s!=null?r.elapsed_s+"s":"--")],
+    ["可疑度",esc(r.score!=null?r.score:"--")],["置信度",esc(r.confidence!=null?r.confidence:"--")]
+  ].map(p=>`<span><b>${p[0]}</b>${p[1]}</span>`).join("");
+  $("hmChs").innerHTML=(r.channels||[]).map(c=>{
+    const bad=c.score>=0.6, mid=!bad&&c.score>=0.35;
+    const col=bad?"var(--bad)":mid?"var(--warn)":"var(--ok)";
+    return `<div class="ch2"><div class="top"><span>${esc(CHAN_CN[c.name]||c.name)}</span><span>CONF ${esc(c.confidence)}</span></div>
+      <div class="sc" style="color:${col}">${esc(c.score)}</div>
+      <div class="de">${esc(c.detail||"")}</div></div>`;
+  }).join("")||"<div style='color:var(--dim)'>无通道明细</div>";
+  const transcript=recordTranscript(r);
+  $("hmRaz").innerHTML=(transcript?`<div class="record-transcript"><b>对话转写</b>${esc(transcript)}</div>`:"")
+    +`<div class="record-rationale"><b>综合判断</b>${esc(r.rationale||"暂无说明")}</div>`;
+  openModal("histModal",{trigger:trigger||document.activeElement});
+}
+$("hmClose").onclick=()=>closeModal("histModal");
+$("histModal").onclick=e=>{if(e.target===$("histModal"))closeModal("histModal")};
+async function loadDashboard(){
+  try{
+    const d=await(await fetch("/api/history?limit=200")).json();
+    const rs=d.records||[];
+    const today=new Date().toISOString().slice(0,10);
+    const td=rs.filter(r=>(r.time||"").slice(0,10)===today);
+    const tb={block:0,caution:0,allow:0};
+    td.forEach(r=>{const f=r.final; if(f==="block"||f==="caution"||f==="allow")tb[f]++;});
+    const vals=[td.length,tb.block,tb.caution,tb.allow];
+    const el=$("dashCards"); if(el){const ks=el.querySelectorAll(".dk .n");
+      vals.forEach((v,i)=>{if(ks[i])ks[i].textContent=v;});}
+    const days=[];
+    for(let i=6;i>=0;i--){const dt=new Date();dt.setDate(dt.getDate()-i);days.push(dt.toISOString().slice(0,10));}
+    const by=Object.fromEntries(days.map(dd=>[dd,0]));
+    rs.forEach(r=>{const dd=(r.time||"").slice(0,10); if(dd in by)by[dd]++;});
+    const max=Math.max(1,...days.map(dd=>by[dd]));
+    $("dashBars").innerHTML=days.map(dd=>
+      `<div class="b" style="height:${Math.max(2,Math.round(by[dd]/max*56))}px" title="${dd} · ${by[dd]} 次判定"><span>${by[dd]||''}</span><span class="bx">${dd.slice(5)}</span></div>`
+    ).join("");
+  }catch(e){}
+}
+$("goDetect").onclick=()=>{document.querySelector('.tab[data-p="detect"]').click();};
+
+/* ---------- 拉子女进通话（P3-1 · /ws/call/{room} 双向 PCM） ---------- */
+let callWs=null, callAC=null, callPlayAC=null, callPlayNext=0, callMicNodes=null, inCall=false;
+async function inviteChild(reason, level, transcript){
+  try{
+    const r=await fetch("/api/call/invite",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({reason:reason||"谛听检测到可疑来电",level:level||"red",
+        transcript:transcript||""})});
+    const d=await r.json();
+    if(!r.ok||!d.ok){toast("呼叫发起失败",true);return;}
+    openElderCall(d.room_id);
+  }catch(e){toast("呼叫失败: "+e.message,true)}
+}
+function openElderCall(roomId){
+  openModal("callModal",{
+    trigger:document.activeElement,
+    onEscape:()=>{if(!inCall) closeCall();}
+  });
+  $("callOrb").className="call-orb waiting";
+  $("callState").textContent="正在呼叫子女 …";
+  $("callSub").innerHTML="谛听已把这次可疑来电推送给子女端<br>子女接听后，你们的声音会实时互通";
+  $("callHangup").textContent="取消呼叫";
+  const wsProto=location.protocol==="https:"?"wss:":"ws:";
+  callWs=new WebSocket(`${wsProto}//${location.host}/ws/call/${roomId}?role=elder`);
+  callWs.binaryType="arraybuffer";
+  callWs.onmessage=e=>{
+    if(typeof e.data==="string"){
+      let m; try{m=JSON.parse(e.data)}catch(_){return}
+      if(m.type==="peer_joined"&&m.role==="child"){
+        $("callOrb").className="call-orb talking";
+        $("callState").textContent="守护通话中 · 子女已加入";
+        $("callSub").innerHTML="请直接对着手机/电脑说话<br>提醒父母先挂断可疑来电，回拨家人号码核实";
+        $("callHangup").textContent="结束通话";
+        inCall=true; startCallMic();
+        if(elderOn) speak("子女已加入通话。");
+      }else if(m.type==="peer_left"&&m.role==="child"){
+        $("callState").textContent="子女已离开通话";
+        stopCallMedia(); inCall=false;
+      }else if(m.type==="hangup"){ toast("子女端已挂断"); closeCall(true); }
+    }else{ playCallPcm(e.data); }
+  };
+  callWs.onclose=()=>{ if($("callModal").classList.contains("show")){
+    $("callState").textContent="连接已断开"; stopCallMedia(); inCall=false; } };
+  callWs.onerror=()=>toast("通话连接失败",true);
+}
+function startCallMic(){
+  navigator.mediaDevices.getUserMedia({audio:{channelCount:1}}).then(stream=>{
+    callAC=create16kAudioContext();
+    const resample=createStreamResampler(callAC.sampleRate,16000);
+    const src=callAC.createMediaStreamSource(stream);
+    const proc=callAC.createScriptProcessor(4096,1,1);
+    const silent=callAC.createGain(); silent.gain.value=0;
+    src.connect(proc); proc.connect(silent); silent.connect(callAC.destination);
+    proc.onaudioprocess=e=>{
+      if(!callWs||callWs.readyState!==1) return;
+      const ch=resample(e.inputBuffer.getChannelData(0)), buf=new ArrayBuffer(ch.length*2), v=new DataView(buf);
+      for(let i=0;i<ch.length;i++){let s=Math.max(-1,Math.min(1,ch[i]));v.setInt16(i*2,s<0?s*0x8000:s*0x7FFF,true)}
+      callWs.send(buf);
+    };
+    callMicNodes={stream,src,proc,silent};
+  }).catch(e=>toast("麦克风不可用: "+e.message,true));
+}
+function playCallPcm(ab){
+  try{
+    if(!callPlayAC){callPlayAC=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});callPlayNext=0}
+    const ac=callPlayAC, n=ab.byteLength/2, iv=new Int16Array(ab), fv=new Float32Array(n);
+    for(let i=0;i<n;i++)fv[i]=iv[i]/0x8000;
+    const buf=ac.createBuffer(1,n,16000); buf.getChannelData(0).set(fv);
+    const src=ac.createBufferSource(); src.buffer=buf; src.connect(ac.destination);
+    const t=Math.max(ac.currentTime,callPlayNext); src.start(t); callPlayNext=t+buf.duration;
+  }catch(_){}
+}
+function stopCallMedia(){
+  try{
+    if(callMicNodes){callMicNodes.proc.disconnect();callMicNodes.src.disconnect();callMicNodes.silent.disconnect();
+      callMicNodes.stream.getTracks().forEach(t=>t.stop()); callMicNodes=null}
+    if(callAC){callAC.close(); callAC=null}
+    if(callPlayAC){callPlayAC.close(); callPlayAC=null}
+  }catch(_){}
+}
+function closeCall(silent){
+  if(callWs){try{callWs.send(JSON.stringify({type:"hangup"}));callWs.close()}catch(_){} callWs=null}
+  inCall=false; stopCallMedia();
+  closeModal("callModal");
+  if(!silent) toast("已结束呼叫");
+}
+$("callHangup").onclick=()=>closeCall();
+$("liveAlertCall").onclick=()=>{
+  closeModal("liveAlert");
+  const w=lastLiveWin||{};
+  inviteChild($("liveAlertR").textContent||"谛听实时监测到疑似诈骗来电","red",
+    (w.channels&&w.channels.semantic&&w.channels.semantic.transcript)||"");
+};
+$("callFromVerdict").onclick=()=>{
+  const r=lastRec||{};
+  inviteChild(r.rationale||"谛听检测到可疑来电",
+    r.final==="caution"?"yellow":"red");
+};
+
+
+function startLiveMic(){
+  navigator.mediaDevices.getUserMedia({audio:{channelCount:1}}).then(stream=>{
+    liveAC=create16kAudioContext();
+    liveResample=createStreamResampler(liveAC.sampleRate,16000);
+    liveSrc=liveAC.createMediaStreamSource(stream);
+    liveProc=liveAC.createScriptProcessor(4096,1,1);
+    liveSilent=liveAC.createGain(); liveSilent.gain.value=0;
+    liveSrc.connect(liveProc); liveProc.connect(liveSilent); liveSilent.connect(liveAC.destination);
+    liveProc.onaudioprocess=e=>{
+      const raw=e.inputBuffer.getChannelData(0),ch=liveResample(raw);
+      drawWave($("liveWave"),raw);
+      if(!liveWs||liveWs.readyState!==1) return;
+      const buf=new ArrayBuffer(ch.length*2), v=new DataView(buf);
+      for(let i=0;i<ch.length;i++){let s=Math.max(-1,Math.min(1,ch[i]));v.setInt16(i*2,s<0?s*0x8000:s*0x7FFF,true)}
+      liveWs.send(buf);
+    };
+  }).catch(e=>toast("麦克风不可用: "+e.message,true));
+}
+function stopLiveMic(){ try{ if(liveProc)liveProc.disconnect(); if(liveSrc)liveSrc.disconnect(); if(liveSilent)liveSilent.disconnect(); if(liveAC)liveAC.close() }catch(_){} }
+
+loadStatus(); setInterval(loadStatus,15000);
+loadDashboard(); setInterval(loadDashboard,30000);
+</script>
+</body>
+</html>

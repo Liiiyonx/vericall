@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # 不装 torch/AASIST；重模型测试使用延迟导入或资产缺失 skip。
+      - name: Install test deps
+        run: pip install numpy pytest soundfile fastapi python-multipart httpx
+
+      - name: Run tests
+        run: python -m pytest tests/ -q

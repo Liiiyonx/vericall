@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Arena Live · 大屏攻防记分牌</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
+<script src="/theme.js?v=16"></script>
+<style>
+:root{
+  --bg:#060607; --ink:#f2ede0; --mut:#9a948a;
+  --brand:#993C1D; --brand-lt:#D85A30; --brand-lt2:#F0997B;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
+  --line:rgba(242,237,224,.1);
+  --sans:"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans); min-height:100vh;
+  min-height:100dvh; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased}
+body,
+body *{
+  font-variant-numeric:tabular-nums lining-nums;
+  font-feature-settings:"tnum" 1,"lnum" 1;
+}
+header{padding:18px 36px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--line)}
+.logo{font-family:var(--sans); font-size:24px; letter-spacing:6px; color:var(--brand-lt2)}
+.logo .en{font-size:11px; letter-spacing:3px; color:var(--mut); font-family:var(--sans)}
+.stage-tag{font-size:14px; color:var(--gold2); letter-spacing:2px}
+.theme-toggle{
+  width:44px; height:44px; display:grid; place-items:center; flex:0 0 auto;
+  border:1px solid var(--line); border-radius:8px; background:rgba(0,0,0,.35);
+  color:var(--ink); cursor:pointer; transition:background .2s,border-color .2s,color .2s;
+}
+.theme-toggle:hover{border-color:var(--brand-lt); color:var(--brand-lt2)}
+.theme-toggle .theme-icon{width:19px;height:19px;grid-area:1/1}
+.theme-toggle .theme-icon-sun{opacity:0;transform:rotate(-28deg) scale(.72);transition:all .2s}
+.theme-toggle .theme-icon-moon{opacity:1;transform:none;transition:all .2s}
+html[data-theme="light"] .theme-toggle .theme-icon-sun{opacity:1;transform:none}
+html[data-theme="light"] .theme-toggle .theme-icon-moon{opacity:0;transform:rotate(28deg) scale(.72)}
+html[data-theme="light"] .theme-toggle{background:rgba(255,255,255,.72)}
+
+main{flex:1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px;
+  padding:26px 36px calc(88px + env(safe-area-inset-bottom)); overflow:auto}
+/* 左：克隆进度与相似度 */
+.panel{background:rgba(242,237,224,.03); border:1px solid var(--line); border-radius:16px; padding:24px; display:flex; flex-direction:column}
+.panel h2{font-family:var(--sans); font-size:20px; letter-spacing:4px; color:var(--gold2); margin-bottom:18px}
+.sim-big{text-align:center; padding:20px 0}
+.sim-big .n{font-family:var(--mono); font-size:clamp(62px,10vw,88px); color:var(--brand-lt2); line-height:1}
+.sim-big .l{font-size:14px; color:var(--mut); letter-spacing:2px; margin-top:8px}
+.eng{display:flex; justify-content:space-between; align-items:center; padding:12px 14px;
+  background:rgba(0,0,0,.25); border-radius:10px; margin-bottom:10px}
+.eng .en{font-size:15px; letter-spacing:1px}
+.eng .st{font-size:12px; color:var(--mut)}
+.eng #e1p,.eng #e2p{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.eng.run .st{color:var(--warn)} .eng.done .st{color:var(--ok)}
+.prog-bar{height:8px; background:rgba(0,0,0,.3); border-radius:4px; overflow:hidden; margin-top:8px}
+.prog-bar i{display:block; height:100%; background:var(--brand-lt); width:0; transition:width .3s}
+
+/* 右：攻防记分牌 */
+.scoreboard{display:flex; flex-direction:column}
+.score{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px}
+.score .side{background:rgba(0,0,0,.3); border-radius:14px; padding:20px; text-align:center}
+.score .side .t{font-size:14px; color:var(--mut); letter-spacing:2px}
+.score .side .n{font-family:var(--mono); font-size:clamp(46px,8vw,64px); color:var(--gold2); line-height:1.1}
+.score .atk .n{color:var(--brand-lt2)} .score .def .n{color:var(--ok)}
+.round{background:rgba(0,0,0,.25); border-radius:12px; padding:18px; margin-bottom:12px}
+.round .h{display:flex; justify-content:space-between; align-items:center; gap:8px;
+  flex-wrap:wrap; margin-bottom:12px}
+.round .rt{font-size:16px; letter-spacing:1px; font-weight:600}
+.round .verdict{font-size:13px; padding:4px 14px; border-radius:12px}
+.round .verdict.def{background:rgba(127,191,142,.15); color:var(--ok)}
+.round .verdict.atk{background:rgba(216,90,48,.15); color:var(--brand-lt2)}
+.chrow{display:flex; gap:10px; margin-top:10px}
+.chpill{flex:1; background:rgba(0,0,0,.3); border-radius:8px; padding:10px; text-align:center}
+.chpill .c{font-size:11px; color:var(--mut); letter-spacing:1px; margin-bottom:4px}
+.chpill .v{font-size:20px; font-family:var(--mono); color:var(--gold2)}
+.round .note{font-size:13px; color:var(--ink); margin-top:12px; line-height:1.8; padding-top:10px; border-top:1px solid var(--line)}
+
+/* 大屏结局 */
+.finale{grid-column:1/-1; text-align:center; padding:26px; background:rgba(153,60,29,.08);
+  border:1px solid rgba(216,90,48,.3); border-radius:16px; display:none}
+.finale.show{display:block}
+.finale .big{font-family:var(--sans); font-size:44px; letter-spacing:8px; color:var(--brand-lt2)}
+.finale .sub{font-size:15px; color:var(--ink); margin-top:14px; line-height:2}
+.finale .hash{font-family:var(--sans); font-size:11px; color:var(--mut); margin-top:16px;
+  background:rgba(0,0,0,.3); border-radius:8px; padding:12px}
+.finale .hash code{font-family:var(--mono); word-break:break-all}
+
+.ctl{position:fixed; right:max(20px,env(safe-area-inset-right));
+  bottom:max(20px,calc(env(safe-area-inset-bottom) + 12px)); display:flex; gap:10px}
+.ctl button{font-size:13px; padding:10px 16px; border-radius:8px; border:1px solid var(--line);
+  background:rgba(0,0,0,.5); color:var(--ink); cursor:pointer}
+.ctl button.primary{border-color:var(--brand-lt); color:var(--brand-lt2)}
+
+html[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f4f2eb; --ink:#18201f; --mut:#5b6663;
+  --brand:#b94828; --brand-lt:#a33d1e; --brand-lt2:#8d3319;
+  --gold:#8b621f; --gold2:#573b0f;
+  --ok:#2f7d4b; --warn:#a26008; --bad:#b6473b;
+  --line:rgba(30,39,37,.12);
+}
+html[data-theme="light"] body{background:#f4f2eb}
+html[data-theme="light"] .panel,
+html[data-theme="light"] .eng,
+html[data-theme="light"] .score .side,
+html[data-theme="light"] .round,
+html[data-theme="light"] .chpill,
+html[data-theme="light"] .finale .hash{
+  background:rgba(255,255,255,.72);
+}
+html[data-theme="light"] .prog-bar{background:rgba(30,39,37,.1)}
+html[data-theme="light"] .ctl button{background:rgba(255,255,255,.9)}
+
+@media(max-width:900px){
+  header{
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:8px 18px;
+    padding:16px max(18px,env(safe-area-inset-right)) 14px max(18px,env(safe-area-inset-left));
+  }
+  .logo{font-size:20px}
+  .stage-tag{font-size:12px;line-height:1.6}
+  main{
+    grid-template-columns:minmax(0,1fr);
+    padding:18px max(18px,env(safe-area-inset-right))
+      calc(104px + env(safe-area-inset-bottom))
+      max(18px,env(safe-area-inset-left));
+  }
+  .panel{border-radius:12px;padding:18px}
+  .panel h2{margin-bottom:14px;font-size:17px}
+  .sim-big{padding:10px 0 16px}
+  .score{margin-bottom:16px}
+  .score .side{padding:16px 10px}
+  .ctl{
+    left:max(12px,env(safe-area-inset-left));
+    right:max(12px,env(safe-area-inset-right));
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .ctl button{min-height:48px}
+  .theme-toggle{width:44px;height:44px}
+}
+
+@media(max-width:430px){
+  .logo .en{display:block;margin-top:4px}
+  .score{gap:10px}
+  .score .side .t{font-size:12px}
+  .chrow{gap:6px}
+  .chpill{padding:8px 5px}
+  .chpill .c{font-size:10px}
+  .finale .big{font-size:30px;letter-spacing:0}
+}
+
+/* iOS visual pass */
+:root{
+  --bg:#000000; --ink:#ffffff; --mut:#aeaeb2;
+  --surface:#1c1c1e; --surface2:#2c2c2e;
+  --brand:#0a84ff; --brand-lt:#0a84ff; --brand-lt2:#64d2ff;
+  --gold:#d4b483; --gold2:#ecd7ae;
+  --ok:#30d158; --warn:#ff9f0a; --bad:#ff453a;
+  --line:rgba(84,84,88,.62);
+}
+html[data-theme="light"]{
+  --bg:#f2f2f7; --ink:#1c1c1e; --mut:#636366;
+  --surface:#ffffff; --surface2:#e5e5ea;
+  --brand:#007aff; --brand-lt:#007aff; --brand-lt2:#0066cc;
+  --gold:#8a641f; --gold2:#6f4e16;
+  --ok:#248a3d; --warn:#b35c00; --bad:#d70015;
+  --line:rgba(60,60,67,.18);
+}
+body,
+html[data-theme="light"] body{background:var(--bg)!important}
+header{
+  border-bottom:1px solid var(--line)!important;
+  background:rgba(0,0,0,.74)!important;
+  backdrop-filter:blur(22px) saturate(180%);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);
+}
+html[data-theme="light"] header{background:rgba(242,242,247,.82)!important}
+.logo{color:var(--brand-lt2)!important}
+.theme-toggle{
+  border:0!important;
+  border-radius:50%!important;
+  background:var(--surface2)!important;
+}
+.theme-toggle:hover{color:var(--brand-lt);border:0!important}
+.panel{
+  border:0!important;
+  border-radius:16px!important;
+  background:var(--surface)!important;
+  box-shadow:none!important;
+}
+.panel h2{color:var(--ink)!important}
+.eng,
+.score .side,
+.round,
+.chpill{
+  border-radius:12px!important;
+  background:var(--surface2)!important;
+}
+.sim-big .n{color:var(--brand-lt2)!important}
+.prog-bar{background:rgba(118,118,128,.28)!important}
+.prog-bar i{background:var(--brand-lt)!important}
+.round .note{border-top-color:var(--line)!important}
+.finale{
+  border:0!important;
+  border-radius:16px!important;
+  background:linear-gradient(90deg,rgba(10,132,255,.16),var(--surface))!important;
+}
+.finale .big{color:var(--brand-lt2)!important}
+.finale .hash{background:var(--surface2)!important;border-radius:12px!important}
+.ctl button{
+  border:0!important;
+  border-radius:12px!important;
+  background:var(--surface2)!important;
+  color:var(--ink)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+.ctl button.primary{
+  background:var(--brand)!important;
+  color:#fff!important;
+}
+html[data-theme="light"] .eng,
+html[data-theme="light"] .score .side,
+html[data-theme="light"] .round,
+html[data-theme="light"] .chpill{
+  background:#e5e5ea!important;
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ARENA LIVE<span class="en">大屏攻防记分牌</span></div>
+  <div class="stage-tag" id="stageTag">准备就绪 · 等待录入</div>
+  <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换到浅色模式" title="切换到浅色模式" aria-pressed="false">
+    <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+  </button>
+</header>
+
+<main>
+  <!-- 左：克隆 -->
+  <div class="panel">
+    <h2>克隆进度 · 相似度自评</h2>
+    <div class="sim-big">
+      <div class="n" id="simN">--</div>
+      <div class="l" id="simL">等待现场录入…</div>
+    </div>
+    <div class="eng run" id="e1"><div><div class="en">CosyVoice2（主力）</div><div class="st">流式合成中…</div></div><div class="st" id="e1p">0%</div></div>
+    <div class="prog-bar"><i id="e1b"></i></div>
+    <div class="eng" id="e2" style="margin-top:10px"><div><div class="en">GPT-SoVITS（备份）</div><div class="st">等待调度</div></div><div class="st" id="e2p">--</div></div>
+    <div class="prog-bar"><i id="e2b"></i></div>
+    <div style="font-size:12px;color:var(--mut);margin-top:auto;padding-top:16px;line-height:1.9">
+      双引擎并行 · 相似度自动选最优 · 首段完成即送谛听检测
+    </div>
+  </div>
+
+  <!-- 右：攻防记分 -->
+  <div class="panel scoreboard">
+    <h2>攻防记分牌</h2>
+    <div class="score">
+      <div class="side atk"><div class="t">评委攻击（红队）</div><div class="n" id="atkN">0</div></div>
+      <div class="side def"><div class="t">系统拦截（蓝队）</div><div class="n" id="defN">0</div></div>
+    </div>
+    <div id="rounds"></div>
+  </div>
+
+  <div class="finale" id="finale">
+    <div class="big" id="finaleBig">拦截成功</div>
+    <div class="sub" id="finaleSub"></div>
+    <div class="hash">哈希链审计：<code id="finaleHashValue">--</code>（粉碎动作留痕可验）</div>
+  </div>
+</main>
+
+<div class="ctl">
+  <button onclick="resetAll()">重置</button>
+  <button class="primary" onclick="demoFlow()">演示全流程</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let atk=0, def=0;
+const demoTimers=new Set();
+const ATTACKS=["话术规避（暗示代替'转账'）","谐音/拆字（转帐→转张）","方言切换（用方言说话术）","变速变调（±20% 变速）","背景噪声（SNR 5-20dB）","真假混放（真声+克隆交替）"];
+
+function later(fn,delay){
+  const id=setTimeout(()=>{ demoTimers.delete(id); fn(); },delay);
+  demoTimers.add(id);
+  return id;
+}
+function every(fn,delay){
+  const id=setInterval(fn,delay);
+  demoTimers.add(id);
+  return id;
+}
+function cancelTimer(id){
+  clearInterval(id);
+  clearTimeout(id);
+  demoTimers.delete(id);
+}
+function clearDemoTimers(){
+  demoTimers.forEach(cancelTimer);
+  demoTimers.clear();
+}
+
+function tick(engine){
+  let p=0;
+  const el=$("e"+engine+"p"), bar=$("e"+engine+"b"), row=$("e"+engine);
+  const t=every(()=>{
+    p+=Math.random()*14+6; if(p>=100){ p=100; cancelTimer(t); row.classList.remove("run"); row.classList.add("done"); el.textContent="完成"; if(engine===1){ startEng2(); } return; }
+    el.textContent=Math.floor(p)+"%"; bar.style.width=p+"%";
+  }, 320);
+}
+function startEng2(){
+  $("e2").classList.add("run"); $("e2").querySelector(".st").textContent="合成中…";
+  let p=0;
+  const t=every(()=>{ p+=Math.random()*10+5; if(p>=100){ p=100; cancelTimer(t); $("e2").classList.add("done"); $("e2").querySelector(".st").textContent="完成"; $("e2p").textContent="完成"; $("e2b").style.width="100%"; simScore(); return; }
+    $("e2p").textContent=Math.floor(p)+"%"; $("e2b").style.width=p+"%";
+  }, 400);
+}
+function simScore(){
+  let v=0; const target=0.85+Math.random()*0.1;
+  const t=every(()=>{ v+=0.03; if(v>=target){ v=target; cancelTimer(t); $("simL").textContent="相似度 "+v.toFixed(2)+" · 选择最优版本"; $("stageTag").textContent="克隆完成 · 注入检测"; later(startRounds,800); return; }
+    $("simN").textContent=v.toFixed(2); }, 120);
+}
+function addRound(i){
+  const attackName=ATTACKS[i];
+  const r=document.createElement("div"); r.className="round";
+  r.innerHTML='<div class="h"><span class="rt">第 '+(i+1)+' 轮 · '+attackName+'</span><span class="verdict" id="v'+i+'">判定中…</span></div>'
+    +'<div class="chrow">'
+    +'<div class="chpill"><div class="c">声学伪造</div><div class="v" id="c'+i+'a">--</div></div>'
+    +'<div class="chpill"><div class="c">家庭声纹</div><div class="v" id="c'+i+'v">--</div></div>'
+    +'<div class="chpill"><div class="c">话术语义</div><div class="v" id="c'+i+'s">--</div></div>'
+    +'</div><div class="note" id="n'+i+'"></div>';
+  $("rounds").appendChild(r);
+  later(()=>{
+    const a=(Math.random()*.15+.8).toFixed(2), v=(Math.random()*.1).toFixed(2), s=(Math.random()*.2+.75).toFixed(2);
+    $("c"+i+"a").textContent=a; $("c"+i+"v").textContent=v; $("c"+i+"s").textContent=s;
+    const caught=Math.random()<0.75; // 演示：多数拦截
+    const vv=$("v"+i); vv.className="verdict "+(caught?"def":"atk");
+    vv.textContent=caught?"拦截":"绕过";
+    if(caught){ def++; $("defN").textContent=def; $("n"+i).textContent="三通道同步攀升，系统判定疑似合成——已拦截并推送子女端。"; }
+    else{ atk++; $("atkN").textContent=atk; $("n"+i).textContent="该样本成功绕过当前防线——已自动回流难例库，48h 内进入模型迭代。"; }
+    if(i<ATTACKS.length-1){ later(()=>addRound(i+1), 1800); } else { later(showFinale, 1200); }
+  }, 600);
+}
+function startRounds(){
+  $("stageTag").textContent="攻防环节 · 评委现场攻击";
+  addRound(0);
+}
+function showFinale(){
+  $("finaleBig").textContent="攻防总结 · 拦截 "+def+" / 绕过 "+atk;
+  $("finaleSub").textContent="每一个被攻破的样本都已回流难例库——擂台与产线闭环。";
+  $("finaleHashValue").textContent="3f8a"+Math.random().toString(16).slice(2,10)+"…";
+  $("finale").classList.add("show");
+  $("stageTag").textContent="演示收束 · 一键粉碎";
+}
+function resetAll(){
+  clearDemoTimers();
+  atk=0; def=0; $("atkN").textContent="0"; $("defN").textContent="0";
+  $("rounds").innerHTML=""; $("finale").classList.remove("show");
+  $("simN").textContent="--"; $("simL").textContent="等待现场录入…";
+  ["e1","e2"].forEach(e=>{ const r=$(e); r.classList.remove("run","done"); r.querySelector(".st").textContent=(e==="e1"?"流式合成中…":"等待调度"); $(e+"p").textContent=(e==="e1"?"0%":"--"); $(e+"b").style.width="0"; });
+  $("stageTag").textContent="准备就绪 · 等待录入";
+}
+function demoFlow(){
+  resetAll();
+  $("stageTag").textContent="录入完成 · 双引擎合成";
+  $("e1").classList.add("run");
+  later(()=>tick(1), 400);
+}
+
+const themeButton=document.querySelector("[data-theme-toggle]");
+if(themeButton && window.VeriCallTheme){
+  themeButton.addEventListener("click",()=>window.VeriCallTheme.toggle());
+  window.VeriCallTheme.subscribe(theme=>{
+    const light=theme==="light";
+    const label=light?"切换到深色模式":"切换到浅色模式";
+    themeButton.setAttribute("aria-label",label);
+    themeButton.setAttribute("title",label);
+    themeButton.setAttribute("aria-pressed",String(light));
+  });
+}
+</script>
+</body>
+</html>

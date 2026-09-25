@@ -1,0 +1,15 @@
+{
+  "name": "谛听子女守护端",
+  "short_name": "谛听守护",
+  "description": "谛听 VeriCall 子女守护端：父母来电风险告警、拦截事件、周报与三方守护通话",
+  "start_url": "./child.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

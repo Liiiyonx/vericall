@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="谛听适老守护端提供大字录音检测、常开守护和风险时一键呼叫子女功能。">
+<meta name="theme-color" content="#000000">
+<script src="theme.js?v=22"></script>
+<title>谛听 · 安心守护</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0a0a0b; --ink:#f2ede0; --mut:#9a948a;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
+  --serif:var(--font-serif);
+  --sans:var(--font-sans);
+  --mono:var(--font-mono);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans);
+  min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased}
+header{padding:20px 28px; display:flex; align-items:center; justify-content:space-between}
+.logo{font-size:30px; letter-spacing:8px; color:var(--gold2)}
+.logo .en{font-size:11px; letter-spacing:4px; color:var(--mut); font-family:var(--sans)}
+main{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:10px 20px 40px; gap:26px}
+.greet{font-size:24px; color:var(--mut); text-align:center; line-height:1.9; max-width:560px}
+.greet b{color:var(--gold2); font-weight:500}
+
+/* 大圆环 */
+.ring{width:250px; height:250px; border-radius:50%; display:grid; place-items:center;
+  position:relative; transition:background .5s; box-shadow:0 0 0 10px rgba(0,0,0,.25) inset}
+.ring::before{content:''; position:absolute; inset:18px; border-radius:50%; background:var(--bg);
+  box-shadow:0 0 0 2px rgba(242,237,224,.06)}
+.ring .word{position:relative; font-family:var(--sans); font-size:64px; letter-spacing:8px;
+  font-weight:600; color:#101010; text-align:center}
+.ring .word small{display:block; font-size:20px; letter-spacing:3px; font-family:var(--sans);
+  font-weight:400; margin-top:10px}
+.ring.green{background:var(--ok)} .ring.yellow{background:var(--warn)} .ring.red{background:var(--bad)}
+.ring.red .word{color:#fff}
+.ring.idle{background:#2c2c2e} .ring.idle .word{color:var(--ink)}
+
+.state{font-size:26px; color:var(--gold2); text-align:center; min-height:36px; letter-spacing:2px}
+.advice{font-size:22px; color:var(--ink); text-align:center; max-width:560px; line-height:2;
+  min-height:44px}
+.monitor-status{
+  width:min(560px,100%); min-height:48px; display:flex; align-items:center; justify-content:center;
+  gap:10px; padding:10px 16px; border:1px solid var(--line2); border-radius:12px;
+  background:rgba(255,255,255,.025); color:var(--mut); font-size:18px; text-align:center;
+}
+.monitor-status i{
+  width:10px; height:10px; flex:0 0 auto; border-radius:50%; background:var(--mut);
+  box-shadow:0 0 0 4px rgba(154,148,138,.08);
+}
+.monitor-status[data-state="starting"]{color:var(--warn);border-color:rgba(223,168,68,.45)}
+.monitor-status[data-state="starting"] i{background:var(--warn);animation:pulse 1.2s infinite}
+.monitor-status[data-state="on"]{color:var(--ok);border-color:rgba(127,191,142,.45)}
+.monitor-status[data-state="on"] i{background:var(--ok);box-shadow:0 0 16px rgba(127,191,142,.6)}
+.monitor-status[data-state="error"]{color:var(--bad);border-color:rgba(217,122,110,.5)}
+.monitor-status[data-state="error"] i{background:var(--bad)}
+
+/* 按钮区 */
+.btns{display:flex; flex-direction:column; gap:18px; width:min(560px,100%)}
+.btn{font-size:26px; padding:22px 28px; border-radius:16px; border:2px solid var(--gold);
+  background:none; color:var(--gold2); cursor:pointer; letter-spacing:4px; font-family:var(--sans);
+  transition:all .2s; text-align:center}
+.btn:active{transform:scale(.98); background:rgba(212,180,131,.12)}
+.btn.primary{background:var(--gold); color:#1a1a1a; font-weight:600}
+.btn.ghost{border-color:rgba(154,148,138,.5); color:var(--mut); font-size:22px}
+.btn.recording{border-color:var(--bad); color:var(--bad); animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.5}}
+.btn.call-child{border-color:var(--bad); color:var(--bad)}
+.btn.call-child.on{background:var(--bad); color:#fff; font-weight:600}
+
+/* 场景条 */
+.scenes{display:flex; gap:14px; flex-wrap:wrap; justify-content:center}
+.scene{font-size:20px; padding:16px 22px; border-radius:12px; border:1px solid rgba(212,180,131,.4);
+  background:none; color:var(--ink); cursor:pointer}
+.scene:active{background:rgba(212,180,131,.12)}
+.scene b{color:var(--gold2); display:block; font-size:22px}
+
+footer{padding:14px; text-align:center; font-size:14px; color:var(--mut); letter-spacing:2px}
+.hidden{display:none!important}
+.replay{font-size:18px; color:var(--mut); cursor:pointer; letter-spacing:2px; margin-top:4px;
+  background:none; border:0; font-family:var(--sans); padding:10px 16px; border-radius:10px}
+.replay:active{color:var(--gold2)}
+.voices{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:8px}
+.vtag{font-size:18px; color:var(--mut); border:1px solid rgba(154,148,138,.4); padding:8px 16px; border-radius:20px}
+.btn:focus-visible,.scene:focus-visible,.replay:focus-visible{outline:3px solid var(--gold); outline-offset:3px}
+.btn[disabled]{opacity:.55}
+.loading .ring{animation:breathe 1.6s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.72}}
+</style>
+<link rel="stylesheet" href="ui.css?v=22">
+<script src="ui.js?v=22" defer></script>
+</head>
+<body data-app="elder">
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="24" cy="24" r="21.5" stroke="currentColor" stroke-width="1" opacity=".55"></circle>
+      <path d="M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+      <path d="M24.5 17.8c3 0 5.2 2.3 5.2 5.1 0 2-1.2 3.1-2.4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"></path>
+      <circle cx="23.8" cy="25.8" r="1.7" fill="currentColor"></circle>
+      <path d="M13.5 20.5a11 11 0 0 0 0 7" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".4"></path>
+    </svg>
+    <span class="cn">谛听</span><span class="en">VERICALL CARE</span>
+  </div>
+  <div class="header-tools">
+    <div style="font-size:16px;color:var(--mut)" id="sysState" role="status" aria-live="polite">正在连接…</div>
+    <a class="entry-link" id="btnEntry" href="login.html#elder" title="返回统一入口" aria-label="返回统一入口">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 18-6-6 6-6"></path>
+        <path d="M9 12h10"></path>
+      </svg>
+      <span>入口</span>
+    </a>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换到浅色模式" title="切换到浅色模式" aria-pressed="false">
+      <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="greet" id="greet">您好，我是<b>谛听</b>。我会在您接电话时，从声音真伪、家人声纹和话术风险三个方面，帮您多一道判断。</div>
+
+  <div class="monitor-status" id="monitorStatus" data-state="off" role="status" aria-live="polite">
+    <i aria-hidden="true"></i><span id="monitorStatusText">常开守护未开启</span>
+  </div>
+
+  <div class="ring idle" id="ring" role="status" aria-live="polite">
+    <div class="word" id="ringWord">待 命<small>点下方按钮试试</small></div>
+  </div>
+
+  <div class="state" id="state" aria-live="assertive"></div>
+  <div class="advice" id="advice" aria-live="polite"></div>
+  <button class="replay hidden" id="replay" type="button">再听一遍</button>
+
+  <div class="btns" id="btns">
+    <button class="btn primary" id="recBtn" aria-describedby="advice">点我录音 · 说完再点一次</button>
+    <button class="btn ghost" id="liveBtn2" aria-pressed="false">开启常开守护 · 说话即测</button>
+    <div class="scenes">
+      <button class="scene" data-demo="A"><b>家人真声</b>听这个</button>
+      <button class="scene" data-demo="B"><b>AIGC 冒充</b>听这个</button>
+      <button class="scene" data-demo="C"><b>陌生人</b>听这个</button>
+    </div>
+    <label class="btn ghost" for="upFile">或 选一段电话录音</label>
+    <input type="file" id="upFile" accept="audio/*" class="hidden">
+    <button class="btn call-child hidden" id="callChildBtn">叫子女进通话</button>
+  </div>
+
+  <div class="voices" id="voices"></div>
+</main>
+
+<footer>在保护隐私的前提下分析声音与通话风险 · 转写仅送云端判断风险 · 声纹与记录保存在本机</footer>
+
+<script src="copy.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const ELDER_KEY="vericall_elder_access_key";
+try{
+  const hashKey=new URLSearchParams(location.hash.replace(/^#/,"")).get("key");
+  if(hashKey) sessionStorage.setItem(ELDER_KEY,hashKey.trim());
+}catch(_){}
+if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+function elderFetch(path,opt){
+  opt=opt||{};
+  const key=sessionStorage.getItem(ELDER_KEY)||"";
+  opt.headers=Object.assign({},opt.headers||{},key?{"X-Elder-Access-Key":key}:{});
+  return fetch(path,opt);
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const COPY=(window.VERICALL_COPY&&window.VERICALL_COPY.states)||{
+  green:{word:"通话正常",short:"放心聊",advise:"通话正常，放心聊。"},
+  yellow:{word:"话术可疑",short:"多留个心眼",advise:"先别急着答应，问家人平时的号码确认一下。"},
+  red:{word:"声音存疑",short:"先挂断，回拨确认",advise:"这个声音听起来不对劲，建议挂断，拨打{family}平时的号码确认。"}
+};
+function speak(t){ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="zh-CN"; u.rate=.9; speechSynthesis.speak(u);}catch(e){} }
+function finalToState(f){ return f==="block"?"red":(f==="caution"?"yellow":"green"); }
+function familyName(){ return (window.__familyNames&&window.__familyNames[0])||"家人"; }
+let busy=false;
+
+function setRing(state, advice){
+  const r=$("ring"), w=$("ringWord");
+  document.body.classList.remove("loading");
+  r.className="ring "+state;
+  const c=COPY[state]||COPY.green;
+  w.innerHTML=c.word.replace(" ","&nbsp;")+'<small>'+esc(c.short)+'</small>';
+  $("state").textContent=c.word;
+  const adv=(advice||c.advise).replace("{family}",familyName());
+  $("advice").textContent=adv;
+  speak(adv);
+  $("replay").classList.remove("hidden");
+}
+
+async function loadStatus(){
+  try{
+    const r=await elderFetch("/api/status");
+    const s=await r.json();
+    if(s.access_mode==="public"){
+      try{sessionStorage.removeItem(ELDER_KEY);}catch(_){}
+      location.replace("login.html#elder");
+      return;
+    }
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    $("sysState").textContent=(s.device||"")+"·"+(s.ollama?"语义在":"离线");
+    window.__familyNames=(s.voices||[]).map(v=>v.name);
+    const vs=s.voices||[];
+    $("voices").innerHTML=vs.length?("<span style='font-size:16px;color:var(--mut)'>已登记家人：</span>"+vs.map(v=>"<span class='vtag'>"+esc(v.name)+"</span>").join("")):"";
+  }catch(e){ $("sysState").textContent="服务未连"; }
+}
+
+async function analyze(fd){
+  if(busy) return; busy=true;
+  setIdle("分析中……请稍等",true);
+  try{
+    const r=await elderFetch("/api/analyze",{method:"POST",body:fd});
+    const d=await r.json();
+    if(d.error){ document.body.classList.remove("loading");
+      $("advice").textContent="分析失败：" + esc(d.message||d.error); speak("分析失败，请再试一次。"); return; }
+    const st=finalToState(d.final);
+    const rationale=(d.rationale||"").split("；")[0];
+    setRing(st, rationale||undefined);
+    if(st!=="green"){ $("callChildBtn").classList.remove("hidden"); lastRisk={rationale:d.rationale||""}; }
+    else $("callChildBtn").classList.add("hidden");
+  }catch(e){
+    $("advice").textContent="网络或服务异常，请检查谛听是否已启动。";
+  }finally{ busy=false; document.body.classList.remove("loading"); }
+}
+
+function setIdle(t,busy){
+  document.body.classList.toggle("loading",!!busy);
+  const r=$("ring"); r.className="ring idle";
+  $("ringWord").innerHTML="分 析 中<small>"+esc(t||"请稍等")+"</small>";
+  $("state").textContent=""; $("advice").textContent=""; $("replay").classList.add("hidden");
+}
+
+/* 场景 */
+document.querySelectorAll(".scene").forEach(b=>b.onclick=()=>{
+  const fd=new FormData(); fd.append("demo",b.dataset.demo); analyze(fd);
+});
+/* 上传 */
+$("upFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const fd=new FormData(); fd.append("file",f,f.name); analyze(fd);
+};
+/* 录音 */
+let mediaRecorder=null, chunks=[];
+$("recBtn").onclick=async ()=>{
+  if(mediaRecorder && mediaRecorder.state==="recording"){ mediaRecorder.stop(); return; }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    chunks=[]; mediaRecorder=new MediaRecorder(stream);
+    mediaRecorder.ondataavailable=e=>chunks.push(e.data);
+    mediaRecorder.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      $("recBtn").classList.remove("recording"); $("recBtn").textContent="点我录音 · 说完再点一次";
+      const blob=new Blob(chunks,{type:"audio/webm"});
+      const fd=new FormData(); fd.append("file",blob,"recording.webm"); analyze(fd);
+    };
+    mediaRecorder.start();
+    $("recBtn").classList.add("recording"); $("recBtn").textContent="正在录音……再点一次结束";
+    speak("请开始说话，说完再点一下我。");
+    setTimeout(()=>{ if(mediaRecorder&&mediaRecorder.state==="recording") mediaRecorder.stop(); }, 15000);
+  }catch(e){ speak("无法打开麦克风，请检查权限。"); $("advice").textContent="无法打开麦克风，请允许浏览器使用麦克风。"; }
+};
+$("replay").onclick=()=>{ const t=$("advice").textContent; if(t) speak(t); };
+
+/* ===== 叫子女进通话（P3-1 · 与 index.html 同一套 /ws/call 房间） ===== */
+let lastRisk=null, cWs=null, cAC=null, cPlayAC=null, cPlayNext=0, cMic=null;
+$("callChildBtn").onclick=async()=>{
+  if(cWs){ endChildCall(); return; }
+  try{
+    const r=await elderFetch("/api/call/invite",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({reason:(lastRisk&&lastRisk.rationale)||"谛听检测到可疑来电",level:"red"})});
+    const d=await r.json();
+    if(!r.ok||!d.ok){ speak("呼叫失败，请稍后再试。"); return; }
+    openChildCall(d.room_id,d.ws_ticket);
+  }catch(e){ speak("网络异常，叫不动孩子。请直接打电话给孩子。"); }
+};
+function openChildCall(roomId,ticket){
+  const btn=$("callChildBtn");
+  btn.classList.add("on"); btn.textContent="正在叫孩子……（再点取消）";
+  speak("正在叫孩子进来，请稍等。");
+  const wsProto=location.protocol==="https:"?"wss:":"ws:";
+  const ticketQuery=ticket?"&ticket="+encodeURIComponent(ticket):"";
+  cWs=new WebSocket(wsProto+"//"+location.host+"/ws/call/"+roomId+"?role=elder"+ticketQuery);
+  cWs.binaryType="arraybuffer";
+  cWs.onmessage=e=>{
+    if(typeof e.data==="string"){
+      let m; try{m=JSON.parse(e.data);}catch(_){return;}
+      if(m.type==="peer_joined"&&m.role==="child"){
+        btn.textContent="孩子在通话中（点我挂断）";
+        $("state").textContent="孩子已进来";
+        speak("孩子进来了，你们说话吧。"); startChildMic();
+      }else if(m.type==="peer_left"&&m.role==="child"){ endChildCall(true); speak("孩子挂断了。"); }
+      else if(m.type==="hangup"){ endChildCall(true); }
+    }else playChildPcm(e.data);
+  };
+  cWs.onclose=()=>{ if(cWs){ endChildCall(true); } };
+  cWs.onerror=()=>{ endChildCall(true); };
+}
+function startChildMic(){
+  navigator.mediaDevices.getUserMedia({audio:{channelCount:1}}).then(stream=>{
+    cAC=gCreateAudioContext();
+    const resample=gCreateResampler(cAC.sampleRate,16000);
+    const src=cAC.createMediaStreamSource(stream);
+    const proc=cAC.createScriptProcessor(4096,1,1);
+    const silent=cAC.createGain(); silent.gain.value=0;
+    src.connect(proc); proc.connect(silent); silent.connect(cAC.destination);
+    proc.onaudioprocess=e=>{
+      if(!cWs||cWs.readyState!==1)return;
+      const ch=resample(e.inputBuffer.getChannelData(0)),buf=new ArrayBuffer(ch.length*2),v=new DataView(buf);
+      for(let i=0;i<ch.length;i++){let s=Math.max(-1,Math.min(1,ch[i]));v.setInt16(i*2,s<0?s*0x8000:s*0x7FFF,true);}
+      cWs.send(buf);
+    };
+    cMic={stream,src,proc,silent};
+  }).catch(()=>{});
+}
+function playChildPcm(ab){
+  try{
+    if(!cPlayAC){cPlayAC=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});cPlayNext=0;}
+    const ac=cPlayAC,n=ab.byteLength/2,iv=new Int16Array(ab),fv=new Float32Array(n);
+    for(let i=0;i<n;i++)fv[i]=iv[i]/0x8000;
+    const buf=ac.createBuffer(1,n,16000); buf.getChannelData(0).set(fv);
+    const src=ac.createBufferSource(); src.buffer=buf; src.connect(ac.destination);
+    const t=Math.max(ac.currentTime,cPlayNext); src.start(t); cPlayNext=t+buf.duration;
+  }catch(e){}
+}
+function endChildCall(peerEnded){
+  if(cWs){try{if(!peerEnded)cWs.send(JSON.stringify({type:"hangup"}));cWs.close();}catch(e){} cWs=null;}
+  try{
+    if(cMic){cMic.proc.disconnect();cMic.src.disconnect();cMic.silent.disconnect();cMic.stream.getTracks().forEach(t=>t.stop());cMic=null;}
+    if(cAC){cAC.close();cAC=null;}
+    if(cPlayAC){cPlayAC.close();cPlayAC=null;}
+  }catch(e){}
+  const btn=$("callChildBtn");
+  btn.classList.remove("on"); btn.textContent="叫子女进通话";
+  $("state").textContent="";
+}
+
+/* ===== 常开守护（一体机管家）：/ws/stream 边说边测，无需任何点击 ===== */
+function gCreateAudioContext(){
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  let ac;
+  try{ac=new Ctx({sampleRate:16000});}catch(_){ac=new Ctx();}
+  if(ac.sampleRate!==16000)console.warn("AudioContext 实际采样率为",ac.sampleRate,"，已在前端重采样到 16kHz");
+  return ac;
+}
+function gCreateResampler(inputRate,outputRate){
+  if(inputRate===outputRate)return x=>x;
+  const step=inputRate/outputRate;
+  let tail=new Float32Array(0),pos=0;
+  return input=>{
+    const data=new Float32Array(tail.length+input.length);
+    data.set(tail); data.set(input,tail.length);
+    const out=[];
+    while(pos<data.length-1){
+      const i=Math.floor(pos),f=pos-i;
+      out.push(data[i]+(data[i+1]-data[i])*f);
+      pos+=step;
+    }
+    const consumed=Math.min(Math.floor(pos),data.length);
+    tail=data.slice(consumed); pos-=consumed;
+    return Float32Array.from(out);
+  };
+}
+let gWs=null, gAC=null, gSrc=null, gProc=null, gSilent=null, gResample=null;
+let gStream=null, gMicReady=false, gStopReason="", gLastState="", gLastSpk=0;
+function setMonitorState(state,text){
+  const bar=$("monitorStatus");
+  bar.dataset.state=state;
+  $("monitorStatusText").textContent=text;
+}
+function setLiveButton(state){
+  const btn=$("liveBtn2");
+  if(state==="starting"){
+    btn.textContent="正在开启… · 点我取消";
+    btn.setAttribute("aria-busy","true");
+    btn.setAttribute("aria-pressed","false");
+  }else if(state==="on"){
+    btn.textContent="常开守护中 · 点我暂停";
+    btn.setAttribute("aria-busy","false");
+    btn.setAttribute("aria-pressed","true");
+  }else{
+    btn.textContent="开启常开守护 · 说话即测";
+    btn.setAttribute("aria-busy","false");
+    btn.setAttribute("aria-pressed","false");
+  }
+}
+function gSet(st){
+  if(st===gLastState) return;
+  gLastState=st;
+  const c=st==="RED"?"red":(st==="YELLOW"?"yellow":"green");
+  const copy=COPY[c]||COPY.green;
+  $("ring").className="ring "+c;
+  $("ringWord").innerHTML=copy.word.replace(" ","&nbsp;")+'<small>'+esc(copy.short)+'</small>';
+  $("state").textContent=copy.word;
+}
+function gSpeak(st, text){
+  const now=Date.now();
+  if(st==="YELLOW"&&now-gLastSpk<20000) return;  // 黄色提醒 20s 冷却，不烦老人
+  gLastSpk=now;
+  speak(text);
+}
+$("liveBtn2").onclick=async()=>{
+  if(gWs){ gStopReason="manual"; gWs.close(); return; }
+  gStopReason="";
+  setMonitorState("starting","正在开启麦克风与安全连接…");
+  setLiveButton("starting");
+  try{
+    const streamUrl=window.VeriCallStream?await window.VeriCallStream.websocketUrl():
+      `${location.protocol==="https:"?"wss:":"ws:"}//${location.host}/ws/stream`;
+    const socket=new WebSocket(streamUrl);
+    gWs=socket;
+    socket.onopen=()=>{
+      if(gWs!==socket) return;
+      socket.send(JSON.stringify({type:"config",sr:16000}));
+      startGMic().then(ok=>{
+        if(gWs!==socket){stopGMic();return;}
+        if(!ok) return;
+        gMicReady=true;
+        setMonitorState("on","麦克风正在监听 · 可疑风险会立即提醒");
+        setLiveButton("on");
+        setIdle("常开守护 · 说话即测");
+        speak("常开守护已开启。您接电话的时候我会在旁边听着，有可疑马上提醒您。");
+      });
+    };
+    socket.onmessage=e=>{ try{ handleGEv(JSON.parse(e.data)); }catch(_){} };
+    socket.onclose=()=>{
+      if(gWs!==socket) return;
+      gWs=null;
+      stopGMic();
+      setLiveButton("off");
+      if(gStopReason==="error"){
+        setMonitorState("error","安全连接失败 · 请检查谛听服务后重试");
+        speak("守护连接失败，请检查服务是否启动。");
+      }else if(gStopReason==="mic"){
+        setMonitorState("error","麦克风未授权 · 请在浏览器允许后重试");
+      }else{
+        setMonitorState("off","常开守护已暂停");
+        setIdle("守护已暂停");
+      }
+      gStopReason="";
+    };
+    socket.onerror=()=>{
+      if(gWs!==socket) return;
+      gStopReason="error";
+      setMonitorState("error","安全连接异常 · 正在结束本次守护");
+    };
+  }catch(e){
+    gStopReason="error";
+    setLiveButton("off");
+    setMonitorState("error","无法开启守护 · 请稍后重试");
+    speak("无法开启守护。");
+  }
+};
+function handleGEv(ev){
+  if(ev.type==="window"){
+    gSet(ev.state||"GREEN");
+    if(ev.state==="YELLOW") gSpeak("YELLOW",COPY.yellow.advise);
+  }else if(ev.type==="alert"){
+    const adv=ev.advice||COPY.red.advise;
+    gLastState="";
+    $("ring").className="ring red";
+    $("ringWord").innerHTML=COPY.red.word+'<small>'+esc(COPY.red.short)+'</small>';
+    $("state").textContent=COPY.red.word;
+    $("advice").textContent=adv;
+    $("replay").classList.remove("hidden");
+    speak(adv);
+    $("callChildBtn").classList.remove("hidden");
+    lastRisk={rationale:ev.rationale||""};
+  }
+}
+function startGMic(){
+  return navigator.mediaDevices.getUserMedia({audio:{channelCount:1}}).then(stream=>{
+    if(!gWs||gWs.readyState!==1){stream.getTracks().forEach(t=>t.stop());return false;}
+    gStream=stream;
+    gAC=gCreateAudioContext();
+    gResample=gCreateResampler(gAC.sampleRate,16000);
+    gSrc=gAC.createMediaStreamSource(stream);
+    gProc=gAC.createScriptProcessor(4096,1,1);
+    gSilent=gAC.createGain(); gSilent.gain.value=0;
+    gSrc.connect(gProc); gProc.connect(gSilent); gSilent.connect(gAC.destination);
+    gProc.onaudioprocess=e=>{
+      if(!gWs||gWs.readyState!==1) return;
+      const ch=gResample(e.inputBuffer.getChannelData(0)), buf=new ArrayBuffer(ch.length*2), v=new DataView(buf);
+      for(let i=0;i<ch.length;i++){let s=Math.max(-1,Math.min(1,ch[i]));v.setInt16(i*2,s<0?s*0x8000:s*0x7FFF,true)}
+      gWs.send(buf);
+    };
+    return true;
+  }).catch(()=>{
+    gStopReason="mic";
+    setMonitorState("error","麦克风未授权 · 请在浏览器允许后重试");
+    speak("打不开麦克风，请在浏览器地址栏里允许麦克风权限。");
+    if(gWs)gWs.close();
+    return false;
+  });
+}
+function stopGMic(){
+  try{
+    if(gProc)gProc.disconnect();
+    if(gSrc)gSrc.disconnect();
+    if(gSilent)gSilent.disconnect();
+    if(gStream)gStream.getTracks().forEach(t=>t.stop());
+    if(gAC)gAC.close();
+  }catch(_){}
+  gAC=null; gSrc=null; gProc=null; gSilent=null; gResample=null; gStream=null;
+  gMicReady=false;
+}
+
+$("btnEntry").onclick=()=>{
+  try{sessionStorage.removeItem(ELDER_KEY);}catch(_){}
+};
+
+loadStatus();
+</script>
+</body>
+</html>

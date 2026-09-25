@@ -1,0 +1,60 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    restart: unless-stopped
+    env_file:
+      - deploy/.env.production
+    environment:
+      VERICALL_HOST: 0.0.0.0
+      VERICALL_PORT: 8000
+      VERICALL_ACOUSTIC: ${VERICALL_ACOUSTIC:-xlsr_cn:wide}
+      # Caddy 是本 Compose 中唯一的反向代理，会覆盖客户端提交的转发头。
+      VERICALL_TRUST_PROXY_HEADERS: "1"
+      VERICALL_ENABLE_DOCS: "0"
+      VERICALL_MAX_STREAM_CONNECTIONS: "4"
+      VERICALL_MAX_STREAM_FRAME_MB: "2"
+      VERICALL_NUMBER_BLOCKLIST: /app/data/numbers/blocklist.txt
+      VERICALL_FAMILY_NUMBER_BLOCKLIST: /app/data/numbers/family_blocklist.jsonl
+      VERICALL_HISTORY_DIR: /app/data/history
+      VERICALL_MAX_CALL_CONNECTIONS: "8"
+      VERICALL_MAX_CALL_FRAME_MB: "2"
+      VERICALL_MAX_CALL_CONTROL_KB: "16"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models:ro
+      - ./external:/app/external:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 512
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    env_file:
+      - deploy/.env.production
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  caddy_data:
+  caddy_config:

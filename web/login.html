@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="谛听 VeriCall 统一入口，可选择进入子女守护端、适老守护端或鉴真演示台。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#000000">
+<title>谛听 · 选择入口</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
+<script src="theme.js?v=22"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+
+body[data-app="login"]{
+  min-height:100vh;
+  min-height:100dvh;
+  background:var(--ui-bg)!important;
+  color:var(--ui-text);
+}
+body[data-app="login"]::before,
+body[data-app="login"]::after{display:none!important}
+
+.login-main{
+  width:min(560px,100%);
+  min-height:100vh;
+  min-height:100dvh;
+  max-width:none!important;
+  margin:0 auto;
+  padding:max(22px,env(safe-area-inset-top)) 20px max(28px,env(safe-area-inset-bottom))!important;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:22px;
+}
+
+.login-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  width:100%;
+}
+
+.login-brand{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  gap:11px;
+}
+
+.login-brand-mark{
+  display:grid;
+  width:42px;
+  height:42px;
+  flex:0 0 auto;
+  place-items:center;
+  border-radius:13px;
+  background:var(--ui-surface-strong);
+  color:var(--ui-accent);
+}
+
+.login-brand-mark svg{
+  width:28px;
+  height:28px;
+}
+
+.login-brand-copy{
+  min-width:0;
+}
+
+.login-brand-name{
+  display:block;
+  font-size:20px;
+  line-height:1.15;
+  font-weight:750;
+  letter-spacing:.04em;
+}
+
+.login-brand-en{
+  display:block;
+  margin-top:3px;
+  color:var(--ui-faint);
+  font:9px/1.2 var(--font-mono);
+  letter-spacing:.15em;
+}
+
+.login-card{
+  min-width:0;
+  overflow:hidden;
+  border:1px solid var(--ui-line);
+  border-radius:24px;
+  background:var(--ui-surface);
+  box-shadow:var(--ui-shadow);
+}
+
+.login-head{
+  padding:26px 24px 20px;
+  border-bottom:1px solid var(--ui-line);
+  text-align:center;
+}
+
+.login-head h1{
+  margin:0;
+  font:700 25px/1.24 var(--font-sans);
+  letter-spacing:.02em;
+}
+
+.login-head p{
+  max-width:380px;
+  margin:8px auto 0;
+  color:var(--ui-muted);
+  font-size:13px;
+  line-height:1.7;
+}
+
+.role-switch{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:3px;
+  margin:18px 18px 0;
+  padding:3px;
+  border-radius:12px;
+  background:rgba(118,118,128,.24);
+}
+
+.role-tab{
+  min-width:0;
+  min-height:42px;
+  padding:8px 6px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:var(--ui-muted);
+  cursor:pointer;
+  font:600 12.5px/1.2 var(--font-sans);
+  white-space:nowrap;
+  transition:background .18s var(--ui-ease),color .18s var(--ui-ease),box-shadow .18s var(--ui-ease);
+}
+
+.role-tab:hover{
+  color:var(--ui-text);
+  background:rgba(118,118,128,.14);
+}
+
+.role-tab.on{
+  color:#fff;
+  background:#636366;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+
+.role-tab:focus-visible{
+  outline:2px solid var(--ui-accent)!important;
+  outline-offset:2px;
+}
+
+.login-body{
+  min-width:0;
+  padding:22px 24px 24px;
+}
+
+.role-panel{
+  min-width:0;
+  display:none;
+  animation:login-panel-in .24s var(--ui-ease) both;
+}
+
+.role-panel.on{display:block}
+
+@keyframes login-panel-in{
+  from{opacity:0;transform:translateY(5px)}
+  to{opacity:1;transform:none}
+}
+
+.role-heading{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:20px;
+}
+
+.role-icon{
+  display:grid;
+  width:44px;
+  height:44px;
+  flex:0 0 auto;
+  place-items:center;
+  border-radius:13px;
+  background:rgba(10,132,255,.14);
+  color:var(--ui-accent);
+}
+
+.role-icon.gold{
+  background:rgba(212,180,131,.15);
+  color:var(--ui-gold);
+}
+
+.role-icon.green{
+  background:rgba(48,209,88,.14);
+  color:var(--ui-ok);
+}
+
+.role-icon svg{
+  width:23px;
+  height:23px;
+}
+
+.role-heading h2{
+  margin:0;
+  font:650 17px/1.3 var(--font-sans);
+  letter-spacing:.01em;
+}
+
+.role-heading p{
+  margin:4px 0 0;
+  color:var(--ui-muted);
+  font-size:12.5px;
+  line-height:1.6;
+}
+
+.field{
+  min-width:0;
+  margin-top:15px!important;
+}
+
+.field label{
+  display:block;
+  margin:0 0 8px;
+  color:var(--ui-muted);
+  font-size:12px;
+  letter-spacing:.02em;
+}
+
+.field input{
+  width:100%;
+  min-width:0;
+  min-height:48px!important;
+  padding:0 14px!important;
+  border:1px solid transparent!important;
+  border-radius:13px!important;
+  outline:none;
+  background:var(--ui-surface-strong)!important;
+  color:var(--ui-text)!important;
+  font:16px/1.2 var(--font-sans)!important;
+  transition:border-color .18s var(--ui-ease),box-shadow .18s var(--ui-ease);
+}
+
+.field input:focus{
+  border-color:var(--ui-accent)!important;
+  box-shadow:0 0 0 3px rgba(10,132,255,.18)!important;
+}
+
+.field input::placeholder{
+  color:var(--ui-faint);
+}
+
+.login-submit{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  width:100%;
+  min-height:50px;
+  margin-top:20px;
+  padding:12px 16px;
+  border:0;
+  border-radius:14px;
+  background:var(--ui-accent);
+  color:#fff;
+  cursor:pointer;
+  font:650 15px/1.2 var(--font-sans);
+  letter-spacing:.01em;
+  transition:background .18s var(--ui-ease),transform .18s var(--ui-ease),opacity .18s var(--ui-ease);
+}
+
+.login-submit:hover{
+  background:var(--ui-teal-deep);
+}
+
+.login-submit:active{
+  transform:scale(.99);
+}
+
+.login-submit[disabled]{
+  cursor:wait;
+  opacity:.66;
+}
+
+.login-submit svg{
+  width:18px;
+  height:18px;
+  flex:0 0 auto;
+}
+
+.form-message{
+  min-height:20px;
+  margin:12px 2px 0;
+  color:var(--ui-muted);
+  font-size:12.5px;
+  line-height:1.55;
+  text-align:center;
+}
+
+.form-message.error{color:var(--ui-bad)}
+.form-message.ok{color:var(--ui-ok)}
+
+.demo-access{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--ui-line);
+}
+
+.demo-access[hidden]{display:none!important}
+
+.demo-copy{
+  margin:0 0 10px;
+  color:var(--ui-muted);
+  font-size:12px;
+  line-height:1.6;
+  text-align:center;
+}
+
+.demo-credentials{
+  display:grid;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.demo-credential{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  min-height:42px;
+  padding:9px 12px;
+  border:1px solid var(--ui-line);
+  border-radius:12px;
+  background:var(--ui-surface-strong);
+  color:var(--ui-muted);
+  cursor:pointer;
+  font:600 12.5px/1.2 var(--font-sans);
+  text-align:left;
+  transition:border-color .18s var(--ui-ease),background .18s var(--ui-ease),color .18s var(--ui-ease);
+}
+
+.demo-credential:hover{
+  border-color:var(--ui-line-strong);
+  color:var(--ui-text);
+}
+
+.demo-credential:focus-visible{
+  outline:2px solid var(--ui-accent)!important;
+  outline-offset:2px;
+}
+
+.demo-credential code{
+  min-width:0;
+  overflow:hidden;
+  color:var(--ui-accent);
+  font-family:var(--font-mono);
+  font-size:12px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.demo-button{
+  width:100%;
+  min-height:42px;
+  padding:9px 14px;
+  border:0;
+  border-radius:12px;
+  background:var(--ui-surface-strong);
+  color:var(--ui-accent);
+  cursor:pointer;
+  font:600 13px/1.2 var(--font-sans);
+}
+
+.demo-button:hover{
+  background:#3a3a3c;
+}
+
+.demo-note{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-top:14px;
+  padding:13px 14px;
+  border-radius:13px;
+  background:var(--ui-bg-soft);
+  color:var(--ui-muted);
+  font-size:12px;
+  line-height:1.65;
+}
+
+.demo-note svg{
+  width:17px;
+  height:17px;
+  flex:0 0 auto;
+  margin-top:1px;
+  color:var(--ui-accent);
+}
+
+.login-footer{
+  margin:0;
+  color:var(--ui-faint);
+  font-size:11.5px;
+  line-height:1.65;
+  text-align:center;
+}
+
+html[data-theme="light"] .role-tab.on{
+  color:var(--ui-text);
+  background:#fff;
+  box-shadow:0 1px 4px rgba(28,28,30,.14);
+}
+
+html[data-theme="light"] .login-card{
+  background:#fff;
+}
+
+html[data-theme="light"] .demo-button:hover{
+  background:#d1d1d6;
+}
+
+@media(max-width:520px){
+  .login-main{
+    width:100%;
+    justify-content:flex-start;
+    padding-right:14px!important;
+    padding-left:14px!important;
+  }
+
+  .login-card{
+    border-radius:20px;
+  }
+
+  .login-head{
+    padding:22px 18px 18px;
+  }
+
+  .login-head h1{
+    font-size:23px;
+  }
+
+  .role-switch{
+    margin-right:14px;
+    margin-left:14px;
+  }
+
+  .role-tab{
+    min-height:44px;
+    font-size:12px;
+  }
+
+  .login-body{
+    padding:20px 18px 20px;
+  }
+}
+</style>
+<link rel="stylesheet" href="ui.css?v=22">
+<script src="ui.js?v=22" defer></script>
+</head>
+<body data-app="login">
+<main class="login-main" id="main-content">
+  <div class="login-topbar">
+    <div class="login-brand">
+      <span class="login-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <circle cx="24" cy="24" r="21.5" stroke="currentColor" stroke-width="1" opacity=".55"></circle>
+          <path d="M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+          <path d="M24.5 17.8c3 0 5.2 2.3 5.2 5.1 0 2-1.2 3.1-2.4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"></path>
+          <circle cx="23.8" cy="25.8" r="1.7" fill="currentColor"></circle>
+          <path d="M13.5 20.5a11 11 0 0 0 0 7" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".4"></path>
+        </svg>
+      </span>
+      <span class="login-brand-copy">
+        <span class="login-brand-name">谛听</span>
+        <span class="login-brand-en">VERICALL</span>
+      </span>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换到浅色模式" title="切换到浅色模式" aria-pressed="false">
+      <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+      </svg>
+      <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+      </svg>
+    </button>
+  </div>
+
+  <section class="login-card" aria-labelledby="loginTitle">
+    <div class="login-head">
+      <h1 id="loginTitle">选择要进入的守护端</h1>
+      <p>子女查看告警和处理事件，老人使用大字守护界面，演示台用于查看三通道鉴真过程。</p>
+    </div>
+
+    <div class="role-switch" role="tablist" aria-label="选择登录入口">
+      <button type="button" class="role-tab on" id="tab-child" data-role="child" role="tab" aria-selected="true" aria-controls="panel-child" tabindex="0">子女守护</button>
+      <button type="button" class="role-tab" id="tab-elder" data-role="elder" role="tab" aria-selected="false" aria-controls="panel-elder" tabindex="-1">适老守护</button>
+      <button type="button" class="role-tab" id="tab-index" data-role="index" role="tab" aria-selected="false" aria-controls="panel-index" tabindex="-1">鉴真演示</button>
+    </div>
+
+    <div class="login-body">
+      <section class="role-panel on" id="panel-child" role="tabpanel" aria-labelledby="tab-child">
+        <div class="role-heading">
+          <span class="role-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3 5 6v6c0 4.2 2.9 7.6 7 9 4.1-1.4 7-4.8 7-9V6z"></path>
+              <path d="M12 10v4M12 17v.1"></path>
+            </svg>
+          </span>
+          <div>
+            <h2>子女守护端</h2>
+            <p>接收高风险来电告警，查看拦截记录并加入守护通话。</p>
+          </div>
+        </div>
+        <form id="childForm" novalidate>
+          <div class="field">
+            <label for="childUser">用户名</label>
+            <input id="childUser" name="username" type="text" autocomplete="username" placeholder="请输入子女账号" required>
+          </div>
+          <div class="field">
+            <label for="childPass">密码</label>
+            <input id="childPass" name="password" type="password" autocomplete="current-password" placeholder="请输入登录密码" required>
+          </div>
+          <button type="submit" class="login-submit" id="childSubmit">
+            <span>进入子女守护端</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6"></path>
+            </svg>
+          </button>
+          <div class="form-message" id="childMessage" role="status" aria-live="polite"></div>
+        </form>
+        <div class="demo-access" id="childDemo" hidden>
+          <p class="demo-copy">测试账号密码 · 点击即可输入</p>
+          <div class="demo-credentials">
+            <button type="button" class="demo-credential" id="childDemoUser" aria-label="填入测试子女账号">
+              <span>账号</span>
+              <code id="childDemoUserValue">--</code>
+            </button>
+            <button type="button" class="demo-credential" id="childDemoPass" aria-label="填入测试子女密码">
+              <span>密码</span>
+              <code id="childDemoPassValue">--</code>
+            </button>
+          </div>
+          <button type="button" class="demo-button" id="childDemoButton">填入账号密码并登录</button>
+        </div>
+      </section>
+
+      <section class="role-panel" id="panel-elder" role="tabpanel" aria-labelledby="tab-elder" hidden>
+        <div class="role-heading">
+          <span class="role-icon gold" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 21s7-4.2 7-10a7 7 0 1 0-14 0c0 5.8 7 10 7 10Z"></path>
+              <circle cx="12" cy="10" r="2.5"></circle>
+            </svg>
+          </span>
+          <div>
+            <h2>适老守护端</h2>
+            <p>大字显示风险结论，支持录音检测、常开守护和呼叫子女。</p>
+          </div>
+        </div>
+        <form id="elderForm" novalidate>
+          <div class="field">
+            <label for="elderKey">家庭访问口令</label>
+            <input id="elderKey" name="access_key" type="password" autocomplete="off" placeholder="请输入管理员提供的访问口令" required>
+          </div>
+          <button type="submit" class="login-submit" id="elderSubmit">
+            <span>进入适老守护端</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6"></path>
+            </svg>
+          </button>
+          <div class="form-message" id="elderMessage" role="status" aria-live="polite"></div>
+        </form>
+        <div class="demo-access" id="elderDemo" hidden>
+          <p class="demo-copy">演示访问口令 · 点击即可输入</p>
+          <button type="button" class="demo-credential" id="elderDemoKey" aria-label="填入适老端演示访问口令">
+            <span>口令</span>
+            <code id="elderDemoKeyValue">--</code>
+          </button>
+          <button type="button" class="demo-button" id="elderDemoButton" style="margin-top:10px">填入口令并登录</button>
+        </div>
+        <div class="demo-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 11v5M12 8v.1"></path>
+          </svg>
+          <span>口令仅保存在本次浏览器会话中，用于适老端受保护接口，不会写入网址或长期存储。</span>
+        </div>
+      </section>
+
+      <section class="role-panel" id="panel-index" role="tabpanel" aria-labelledby="tab-index" hidden>
+        <div class="role-heading">
+          <span class="role-icon green" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 18V6M20 18V6M7 15l3-4 3 2 4-6"></path>
+              <circle cx="7" cy="15" r="1"></circle>
+              <circle cx="10" cy="11" r="1"></circle>
+              <circle cx="13" cy="13" r="1"></circle>
+              <circle cx="17" cy="7" r="1"></circle>
+            </svg>
+          </span>
+          <div>
+            <h2>鉴真演示台</h2>
+            <p>上传音频或运行内置场景，查看声学伪造、家庭声纹和话术语义三路结果。</p>
+          </div>
+        </div>
+        <button type="button" class="login-submit" id="indexSubmit">
+          <span>一键进入鉴真演示台</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6"></path>
+          </svg>
+        </button>
+        <div class="form-message">演示台不读取子女账户，只使用当前设备可访问的声纹与检测服务。</div>
+      </section>
+    </div>
+  </section>
+
+  <p class="login-footer">谛听 VeriCall · 声学鉴真 / 家庭声纹 / 话术风险联合判断</p>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const TOKEN_KEY = "vericall_child_token";
+  const ELDER_KEY = "vericall_elder_access_key";
+  const ROLE_HASHES = {"#child":"child", "#elder":"elder", "#index":"index"};
+  const tabs = [...document.querySelectorAll(".role-tab")];
+  const panels = {
+    child: document.getElementById("panel-child"),
+    elder: document.getElementById("panel-elder"),
+    index: document.getElementById("panel-index"),
+  };
+  const childForm = document.getElementById("childForm");
+  const elderForm = document.getElementById("elderForm");
+  const childSubmit = document.getElementById("childSubmit");
+  const elderSubmit = document.getElementById("elderSubmit");
+  const childDemo = document.getElementById("childDemo");
+  const elderDemo = document.getElementById("elderDemo");
+  const demoCredentials = {
+    childUsername: "",
+    childPassword: "",
+    elderKey: "",
+  };
+
+  function setBusy(button, busy, label) {
+    button.disabled = busy;
+    button.setAttribute("aria-busy", String(busy));
+    if (label) button.querySelector("span").textContent = label;
+  }
+
+  function showMessage(element, message, kind) {
+    element.textContent = message || "";
+    element.className = "form-message" + (kind ? " " + kind : "");
+  }
+
+  function applyPublicConfig(config) {
+    const raw = config && config.demo_account && config.demo_credentials;
+    const credentials = raw && typeof raw === "object" ? raw : {};
+    demoCredentials.childUsername = String(credentials.child_username || "");
+    demoCredentials.childPassword = String(credentials.child_password || "");
+    demoCredentials.elderKey = String(credentials.elder_key || "");
+
+    const childVisible = Boolean(
+      demoCredentials.childUsername && demoCredentials.childPassword);
+    childDemo.hidden = !childVisible;
+    if (childVisible) {
+      document.getElementById("childDemoUserValue").textContent =
+        demoCredentials.childUsername;
+      document.getElementById("childDemoPassValue").textContent =
+        demoCredentials.childPassword;
+    }
+
+    const elderVisible = Boolean(demoCredentials.elderKey);
+    elderDemo.hidden = !elderVisible;
+    if (elderVisible) {
+      document.getElementById("elderDemoKeyValue").textContent =
+        demoCredentials.elderKey;
+    }
+  }
+
+  async function loadPublicConfig() {
+    try {
+      const response = await fetch("api/config", {cache: "no-store"});
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      applyPublicConfig(await responseJson(response));
+    } catch (_) {
+      applyPublicConfig({demo_account: false});
+    }
+  }
+
+  function setRole(role, options = {}) {
+    if (!panels[role]) role = "child";
+    tabs.forEach(tab => {
+      const active = tab.dataset.role === role;
+      tab.classList.toggle("on", active);
+      tab.setAttribute("aria-selected", String(active));
+      tab.tabIndex = active ? 0 : -1;
+      if (active && options.focus) tab.focus({preventScroll: true});
+    });
+    Object.entries(panels).forEach(([name, panel]) => {
+      const active = name === role;
+      panel.classList.toggle("on", active);
+      panel.hidden = !active;
+    });
+    if (options.updateHash !== false) {
+      history.replaceState(null, "", "#" + role);
+    }
+  }
+
+  function initialRole() {
+    const fromHash = ROLE_HASHES[location.hash];
+    if (fromHash) return fromHash;
+    try {
+      const remembered = localStorage.getItem("vericall_login_role");
+      if (panels[remembered]) return remembered;
+    } catch (_) {}
+    return "child";
+  }
+
+  async function responseJson(response) {
+    try {
+      return await response.json();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  async function loginChild() {
+    const username = document.getElementById("childUser").value.trim();
+    const password = document.getElementById("childPass").value;
+    const message = document.getElementById("childMessage");
+    if (!username || !password) {
+      showMessage(message, "请输入用户名和密码", "error");
+      return;
+    }
+    setBusy(childSubmit, true, "正在登录…");
+    showMessage(message, "");
+    try {
+      const response = await fetch("api/family/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username, password}),
+      });
+      const payload = await responseJson(response);
+      if (!response.ok || !payload.token) {
+        const error = payload.message || payload.detail || "用户名或密码不正确";
+        throw new Error(error);
+      }
+      localStorage.setItem(TOKEN_KEY, payload.token);
+      showMessage(message, "登录成功，正在进入…", "ok");
+      location.assign("child.html");
+    } catch (error) {
+      const text = error && error.message
+        ? error.message
+        : "网络异常，请确认谛听服务正在运行";
+      showMessage(message, text, "error");
+      setBusy(childSubmit, false, "进入子女守护端");
+    }
+  }
+
+  async function loginElder() {
+    const key = document.getElementById("elderKey").value.trim();
+    const message = document.getElementById("elderMessage");
+    setBusy(elderSubmit, true, "正在验证…");
+    showMessage(message, "");
+    try {
+      const headers = key ? {"X-Elder-Access-Key": key} : {};
+      const response = await fetch("api/status", {
+        headers,
+        cache: "no-store",
+      });
+      const status = await responseJson(response);
+      const allowed = response.ok
+        && (status.access_mode === "elder_key" || status.access_mode === "local");
+      if (!allowed) {
+        const text = key
+          ? "访问口令不正确，或该入口尚未启用"
+          : "请输入管理员提供的适老访问口令";
+        throw new Error(text);
+      }
+      if (key) sessionStorage.setItem(ELDER_KEY, key);
+      else sessionStorage.removeItem(ELDER_KEY);
+      showMessage(message, "验证成功，正在进入…", "ok");
+      location.assign("elder.html");
+    } catch (error) {
+      const text = error && error.message
+        ? error.message
+        : "无法验证访问口令，请稍后重试";
+      showMessage(message, text, "error");
+      setBusy(elderSubmit, false, "进入适老守护端");
+    }
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => {
+      setRole(tab.dataset.role);
+      try {
+        localStorage.setItem("vericall_login_role", tab.dataset.role);
+      } catch (_) {}
+    });
+    tab.addEventListener("keydown", event => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      let next = index;
+      if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = tabs.length - 1;
+      tabs[next].focus();
+      setRole(tabs[next].dataset.role);
+    });
+  });
+
+  childForm.addEventListener("submit", event => {
+    event.preventDefault();
+    loginChild();
+  });
+
+  elderForm.addEventListener("submit", event => {
+    event.preventDefault();
+    loginElder();
+  });
+
+  document.getElementById("childDemoButton").addEventListener("click", () => {
+    if (!demoCredentials.childUsername || !demoCredentials.childPassword) return;
+    document.getElementById("childUser").value = demoCredentials.childUsername;
+    document.getElementById("childPass").value = demoCredentials.childPassword;
+    loginChild();
+  });
+
+  document.getElementById("childDemoUser").addEventListener("click", () => {
+    if (!demoCredentials.childUsername) return;
+    document.getElementById("childUser").value = demoCredentials.childUsername;
+    document.getElementById("childUser").focus();
+    showMessage(document.getElementById("childMessage"), "测试账号已填入", "ok");
+  });
+
+  document.getElementById("childDemoPass").addEventListener("click", () => {
+    if (!demoCredentials.childPassword) return;
+    document.getElementById("childPass").value = demoCredentials.childPassword;
+    document.getElementById("childPass").focus();
+    showMessage(document.getElementById("childMessage"), "测试密码已填入", "ok");
+  });
+
+  document.getElementById("elderDemoKey").addEventListener("click", () => {
+    if (!demoCredentials.elderKey) return;
+    document.getElementById("elderKey").value = demoCredentials.elderKey;
+    document.getElementById("elderKey").focus();
+    showMessage(document.getElementById("elderMessage"), "演示口令已填入", "ok");
+  });
+
+  document.getElementById("elderDemoButton").addEventListener("click", () => {
+    if (!demoCredentials.elderKey) return;
+    document.getElementById("elderKey").value = demoCredentials.elderKey;
+    loginElder();
+  });
+
+  document.getElementById("indexSubmit").addEventListener("click", () => {
+    location.assign("index.html");
+  });
+
+  window.addEventListener("hashchange", () => {
+    const role = ROLE_HASHES[location.hash];
+    if (role) setRole(role, {updateHash: false});
+  });
+
+  setRole(initialRole(), {updateHash: false});
+  try {
+    const notice = sessionStorage.getItem("vericall_login_notice");
+    if (notice) {
+      showMessage(document.getElementById("childMessage"), notice, "ok");
+      sessionStorage.removeItem("vericall_login_notice");
+    }
+  } catch (_) {}
+  loadPublicConfig();
+})();
+</script>
+</body>
+</html>

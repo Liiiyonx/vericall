@@ -1,0 +1,48 @@
+external/aasist/
+external/GPT-SoVITS/
+external/_GPT-SoVITS.partial/
+external/CosyVoice/
+data/raw/
+data/redteam/**/*.wav
+# 隐私数据（家人声纹/上传音频/历史，勿入库）
+data/voiceprints/
+data/cache/
+data/history.jsonl
+data/history/
+data/uploads/
+data/family_accounts.json
+data/family_invites.json
+data/voice_owners.json
+assets/demo_audio/
+reports/
+evaluation/reports/
+envs/
+*.zip
+__pycache__/
+*.pyc
+.venv/
+output/
+.DS_Store
+.workbuddy/
+.tmp_smoke/
+data/redteam/**/*.mp3
+data/redteam/**/*.flac
+.tmp_ssl/
+.env
+
+# 部署密钥、运行时与本地验收产物
+deploy/.env.production
+data/family_alert_ack.json
+data/family_alert_events.jsonl
+data/secrets/
+.tmp_audit/
+$null
+*.bak
+
+# 大型模型、外部源码与评测缓存
+models/
+external/rawnet2_baseline/
+evaluation/.cache_feat/
+
+# 本机生成的延迟/性能验收结果（含主机元数据，不入库）
+evaluation/e2e_latency_*.json

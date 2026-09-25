@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="谛听子女守护端用于接收高危语音告警、处理拦截事件并查看家庭守护风险概览。">
+<title>谛听 · 子女守护端</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="谛听守护">
+<script src="theme.js?v=22"></script>
+<style>
+:root{
+  --bg:#0a0a0b; --ink:#f2ede0; --mut:#9a948a; --dim:#57544c;
+  --gold:#d4b483; --gold2:#e9d3a7;
+  --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
+  --line:rgba(242,237,224,.08); --line2:rgba(242,237,224,.16);
+  --serif:var(--font-serif);
+  --sans:var(--font-sans);
+  --mono:var(--font-mono);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans); min-height:100vh; min-height:100dvh;
+  -webkit-font-smoothing:antialiased; padding-bottom:60px}
+body::before{content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:radial-gradient(900px 500px at 50% -20%, rgba(212,180,131,.05), transparent 65%)}
+.wrap{max-width:920px; margin:0 auto; padding:20px}
+header{display:flex; align-items:center; justify-content:space-between; padding:14px 0 20px;
+  border-bottom:1px solid var(--line); gap:12px; flex-wrap:wrap}
+.logo{font-size:26px; letter-spacing:6px; color:var(--gold2)}
+.logo .en{font-size:11px; letter-spacing:3px; color:var(--mut); font-family:var(--sans)}
+.tabs{display:flex; gap:8px; flex-wrap:wrap}
+.tab{padding:8px 18px; border:1px solid var(--line2); border-radius:20px; font-size:14px;
+  color:var(--mut); cursor:pointer; letter-spacing:1px; position:relative}
+.tab.on{color:var(--gold2); border-color:var(--gold)}
+.tab .dot{position:absolute; top:2px; right:6px; min-width:16px; height:16px; padding:0 4px;
+  border-radius:8px; background:var(--bad); color:#fff; font-size:10px; line-height:16px;
+  text-align:center; font-family:var(--mono)}
+.usr{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--mut)}
+.usr b{color:var(--gold2); font-weight:500}
+.usr .out{border:0;background:none;padding:2px;cursor:pointer;color:var(--dim);font:inherit;font-size:12px;letter-spacing:1px}
+.usr .out:hover{color:var(--bad)}
+
+h2{font-family:var(--sans); font-size:22px; letter-spacing:4px; color:var(--gold2);
+  margin:26px 0 14px; font-weight:600}
+h2 small{font-size:13px; color:var(--mut); letter-spacing:1px; font-family:var(--sans); font-weight:400; margin-left:10px}
+
+/* ===== 登录 ===== */
+#view-login{max-width:400px; margin:10vh auto 0; text-align:center}
+#view-login .logo{font-size:34px}
+#view-login .sub{font-size:13px; color:var(--mut); margin-top:10px; letter-spacing:2px; line-height:2}
+.login-box{margin-top:36px; text-align:left}
+.login-box label{display:block; font-size:12px; letter-spacing:2px; color:var(--dim); margin:18px 0 8px}
+.login-box input{width:100%; background:rgba(0,0,0,.3); border:1px solid var(--line2);
+  border-radius:8px; color:var(--ink); padding:13px 16px; font-size:15px; outline:none;
+  transition:border-color .25s}
+.login-box input:focus{border-color:var(--gold)}
+.login-box .btn{width:100%; margin-top:26px; padding:14px}
+.login-switch{margin-top:18px; font-size:13px; color:var(--mut)}
+.login-switch button{border:0;background:none;color:var(--gold2);cursor:pointer;padding:4px 2px;font:inherit}
+.login-err{margin-top:14px; font-size:13px; color:var(--bad); min-height:18px}
+.demo-tip{margin-top:22px; padding:12px 16px; border:1px dashed var(--line2); border-radius:10px;
+  font-size:12.5px; color:var(--mut); letter-spacing:1px; line-height:1.9; text-align:center}
+.demo-tip b{color:var(--gold2); font-family:var(--mono); font-weight:500}
+.demo-tip .fill{display:inline-block; margin-top:6px; padding:6px 18px; border:1px solid var(--gold);
+  border-radius:16px; background:none; color:var(--gold2); cursor:pointer; font-size:12.5px; transition:all .2s;
+  font-family:inherit}
+.demo-tip .fill:hover{background:rgba(212,180,131,.12)}
+
+/* ===== 周报 ===== */
+.week{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+@media(max-width:640px){.week{grid-template-columns:repeat(2,1fr)}}
+.wcard{background:rgba(242,237,224,.03); border:1px solid var(--line);
+  border-radius:14px; padding:20px; text-align:center}
+.wcard .n{font-size:34px; font-family:var(--mono); color:var(--gold2); font-weight:600}
+.wcard .l{font-size:13px; color:var(--mut); margin-top:6px; letter-spacing:1px}
+.wcard.green .n{color:var(--ok)} .wcard.red .n{color:var(--bad)} .wcard.warn .n{color:var(--warn)}
+
+/* ===== 事件卡 ===== */
+.card{background:rgba(242,237,224,.03); border:1px solid var(--line); border-radius:14px;
+  padding:20px; margin-bottom:14px}
+.card.fresh{border-color:rgba(217,122,110,.45)}
+.card .top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; gap:10px}
+.card .nm{font-size:18px; font-weight:600; letter-spacing:1px}
+.card .time{font-size:12px; color:var(--mut); font-family:var(--mono)}
+.badge{font-size:12px; padding:3px 12px; border-radius:12px; letter-spacing:1px; white-space:nowrap}
+.badge.block{background:rgba(217,122,110,.15); color:var(--bad)}
+.badge.caution{background:rgba(223,168,68,.15); color:var(--warn)}
+.badge.allow{background:rgba(127,191,142,.15); color:var(--ok)}
+.badge.ackd{background:rgba(154,148,138,.12); color:var(--mut)}
+.channels{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0}
+@media(max-width:640px){.channels{grid-template-columns:1fr}}
+.ch{background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center}
+.ch .c{font-size:11px; color:var(--mut); letter-spacing:1px; margin-bottom:6px}
+.ch .s{font-size:22px; font-family:var(--mono); color:var(--gold2)}
+.ch .d{font-size:11px; color:var(--dim); margin-top:4px}
+.card .rationale{font-size:14px; color:var(--ink); line-height:1.9; padding-top:12px;
+  border-top:1px solid var(--line)}
+.card .acts{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
+.btn{font-size:14px; padding:10px 20px; border-radius:8px; border:1px solid var(--line2);
+  background:none; color:var(--ink); cursor:pointer; letter-spacing:1px; font-family:var(--sans)}
+.btn.primary{border-color:var(--gold); color:var(--gold2)}
+.btn.danger{border-color:var(--bad); color:var(--bad)}
+.btn:active{background:rgba(212,180,131,.1)}
+
+/* ===== 实时守护 ===== */
+.guard-hero{display:flex; align-items:center; gap:18px; padding:22px; margin-top:18px;
+  border:1px solid var(--line); border-radius:16px; background:rgba(242,237,224,.03)}
+.guard-hero .st-orb{width:64px; height:64px; border-radius:50%; display:grid; place-items:center;
+  font-family:var(--sans); font-size:24px; flex-shrink:0}
+.guard-hero .st-orb.green{background:rgba(127,191,142,.15); color:var(--ok); border:1px solid rgba(127,191,142,.4)}
+.guard-hero .st-orb.red{background:rgba(217,122,110,.15); color:var(--bad); border:1px solid rgba(217,122,110,.4)}
+.guard-hero .t{font-size:18px; letter-spacing:1px}
+.guard-hero .s{font-size:13px; color:var(--mut); margin-top:6px; letter-spacing:1px; line-height:1.8}
+
+/* ===== 声纹协助 ===== */
+.voice{display:flex; align-items:center; gap:14px; padding:14px; background:rgba(242,237,224,.03);
+  border:1px solid var(--line); border-radius:12px; margin-bottom:10px}
+.voice .av{width:44px; height:44px; border-radius:50%; background:rgba(212,180,131,.15);
+  display:grid; place-items:center; font-family:var(--sans); color:var(--gold2); font-size:20px}
+.voice .info{flex:1}
+.voice .vn{font-size:16px; letter-spacing:1px}
+.voice .vs{font-size:12px; color:var(--mut)}
+.enroll{border:1px dashed var(--line2); border-radius:12px; padding:22px; text-align:center; color:var(--mut)}
+.enroll label{cursor:pointer; color:var(--gold2)}
+.enroll .field{margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+.enroll input[type=text]{background:rgba(0,0,0,.3); border:1px solid var(--line2); border-radius:8px;
+  color:var(--ink); padding:10px 14px; font-size:14px; width:200px}
+.sr-only-file{
+  position:absolute!important; width:1px!important; height:1px!important; padding:0!important;
+  margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important; border:0!important;
+}
+#enFileLbl{
+  display:inline-flex; align-items:center; justify-content:center; min-height:42px;
+  padding:9px 16px; border:1px solid var(--line2); border-radius:8px;
+  background:rgba(255,255,255,.02); color:var(--gold2); font-size:13px;
+  transition:border-color .2s,background .2s,outline-color .2s;
+}
+#enFileLbl:hover{border-color:var(--gold);background:rgba(212,180,131,.08)}
+.sr-only-file:focus + #enFileLbl{outline:3px solid var(--gold);outline-offset:3px}
+.empty{padding:50px; text-align:center; color:var(--dim); font-size:15px; letter-spacing:2px}
+.page{display:none} .page.on{display:block}
+.sim{font-size:11px; color:var(--dim); font-family:var(--sans)}
+
+/* ===== 来电弹窗 ===== */
+.modal{position:fixed; inset:0; display:none; place-items:center; z-index:200; padding:20px}
+.modal.show{display:grid}
+#incomingModal{background:rgba(10,10,11,.9)}
+.ring-box{max-width:420px; width:100%; text-align:center; padding:44px 32px;
+  border:1px solid rgba(217,122,110,.55); border-radius:20px; background:#0d0c0c;
+  animation:ringpulse 1.4s ease-in-out infinite}
+@keyframes ringpulse{50%{box-shadow:0 0 46px rgba(217,122,110,.28)}}
+.ring-box .lv{font-size:13px; letter-spacing:3px; color:var(--bad); font-family:var(--sans)}
+.ring-box .t{font-family:var(--sans); font-size:32px; letter-spacing:6px; color:var(--ink); margin-top:14px}
+.ring-box .r{font-size:14px; color:var(--mut); line-height:2; margin-top:16px; max-height:120px; overflow:auto}
+.ring-box .ts{font-size:12px; color:var(--dim); line-height:1.9; margin-top:12px; max-height:80px;
+  overflow:auto; border-left:1px solid var(--gold); padding-left:12px; text-align:left}
+.ring-box .row{display:flex; gap:14px; justify-content:center; margin-top:28px}
+.ring-box .btn{padding:14px 34px; font-size:16px}
+.btn.answer{background:var(--ok); border-color:var(--ok); color:#101010; font-weight:600}
+
+/* ===== 通话界面 ===== */
+#callModal{background:#0a0a0b; z-index:210}
+.call-box{width:min(520px,100%); display:flex; flex-direction:column; align-items:center; gap:20px; padding:30px 20px}
+.call-orb{width:120px; height:120px; border-radius:50%; display:grid; place-items:center; position:relative;
+  border:2px solid var(--bad)}
+.call-orb::before,.call-orb::after{content:''; position:absolute; inset:-2px; border-radius:50%;
+  border:1px solid rgba(217,122,110,.5); animation:ripple 1.8s ease-out infinite}
+.call-orb::after{animation-delay:.9s}
+@keyframes ripple{from{transform:scale(1); opacity:.9} to{transform:scale(1.6); opacity:0}}
+.call-orb svg{width:44px; height:44px}
+.call-state{font-size:20px; letter-spacing:3px; color:var(--gold2)}
+.call-reason{font-size:14px; color:var(--mut); text-align:center; line-height:2; max-width:440px}
+.call-trans{width:100%; min-height:80px; max-height:140px; overflow:auto; padding:16px;
+  border:1px solid var(--line); border-radius:12px; font-size:14px; color:var(--ink);
+  line-height:1.9; background:rgba(242,237,224,.03)}
+.call-trans .lbl{font-size:11px; color:var(--dim); letter-spacing:2px; display:block; margin-bottom:6px}
+.call-btns{display:flex; gap:16px}
+.call-btns .btn{padding:14px 36px; font-size:16px; border-radius:40px}
+.btn.hangup{background:var(--bad); border-color:var(--bad); color:#fff; font-weight:600}
+.mic-hint{font-size:12px; color:var(--dim); letter-spacing:1px}
+
+.toast{position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(16px);
+  background:#111110; border:1px solid var(--line2); color:var(--ink); font-size:13px;
+  letter-spacing:1.5px; padding:13px 26px; opacity:0; transition:all .35s; z-index:300; pointer-events:none}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:rgba(217,122,110,.6); color:var(--bad)}
+/* ===== 共享层补充：事件工具条 / 指标卡 ===== */
+.spacer{flex:1}
+.event-search svg{width:14px;height:14px}
+.hist-empty{padding:44px 12px;text-align:center;color:var(--dim);font-size:14px;letter-spacing:1px}
+</style>
+<link rel="stylesheet" href="ui.css?v=22">
+<script src="ui.js?v=22" defer></script>
+</head>
+<body data-app="child">
+
+<div id="main-content">
+
+<!-- ================= 登录 / 注册 ================= -->
+<div id="view-login">
+  <div class="logo">
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="24" cy="24" r="21.5" stroke="currentColor" stroke-width="1" opacity=".55"></circle>
+      <path d="M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+      <path d="M24.5 17.8c3 0 5.2 2.3 5.2 5.1 0 2-1.2 3.1-2.4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"></path>
+      <circle cx="23.8" cy="25.8" r="1.7" fill="currentColor"></circle>
+      <path d="M13.5 20.5a11 11 0 0 0 0 7" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".4"></path>
+    </svg>
+    <span class="cn">谛听</span><span class="en">VERICALL · 子女守护端</span>
+  </div>
+  <div class="sub">父母在家接电话，谛听帮您盯着。<br>识别到可疑来电，第一时间通知您，并可一键加入通话。</div>
+  <div class="login-box">
+    <label for="inNick" id="lblName" style="display:none">昵称（父母看到的称呼，如「儿子」）</label>
+    <input id="inNick" name="nickname" placeholder="选填" autocomplete="nickname" style="display:none">
+    <label for="inInvite" id="lblInvite" style="display:none">家庭邀请码</label>
+    <input id="inInvite" name="invitation" placeholder="由项目管理员提供" autocomplete="off" style="display:none">
+    <label for="inUser">用户名</label>
+    <input id="inUser" name="username" placeholder="3-20 位字母 / 数字 / 下划线" autocomplete="username">
+    <label for="inPass">密码</label>
+    <input id="inPass" name="password" type="password" placeholder="至少 6 位" autocomplete="current-password">
+    <button class="btn primary" id="btnLogin" type="button">登 录</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-switch" id="registerSwitch" style="display:none">还没有账号？<button type="button" id="switchMode">注册一个</button></div>
+    <div class="demo-tip" id="demoTip" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ================= 主界面 ================= -->
+<div class="wrap hidden" id="view-main" style="display:none">
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="24" cy="24" r="21.5" stroke="currentColor" stroke-width="1" opacity=".55"></circle>
+      <path d="M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+      <path d="M24.5 17.8c3 0 5.2 2.3 5.2 5.1 0 2-1.2 3.1-2.4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"></path>
+      <circle cx="23.8" cy="25.8" r="1.7" fill="currentColor"></circle>
+      <path d="M13.5 20.5a11 11 0 0 0 0 7" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".4"></path>
+    </svg>
+    <span class="cn">谛听</span><span class="en">子女守护端</span>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="子女端导航">
+    <button type="button" class="tab on" data-p="guard" data-label="实时守护">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3 5 6v6c0 4.2 2.9 7.6 7 9 4.1-1.4 7-4.8 7-9V6z"/><path d="m9.5 12 1.8 1.8 3.4-3.6"/></svg>实时守护<span class="dot" id="alertDot" style="display:none">0</span>
+    </button>
+    <button type="button" class="tab" data-p="events" data-label="拦截事件">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 4.5 3.5 19.5h17z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>拦截事件
+    </button>
+    <button type="button" class="tab" data-p="week" data-label="本周周报">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 19h16"/><path d="M7 19v-6M12 19V6M17 19v-9"/></svg>本周周报
+    </button>
+    <button type="button" class="tab" data-p="voices" data-label="声纹协助">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-4 3-6 7-6s6.2 2 7 6"/></svg>声纹协助
+    </button>
+  </nav>
+  <button type="button" class="command-trigger" data-command-open aria-label="打开快速操作">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m8 9-4 3 4 3M16 9l4 3-4 3M14 5l-4 14"/></svg>
+    <span>快速操作</span><kbd>Ctrl K</kbd>
+  </button>
+  <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换到浅色模式" title="切换到浅色模式" aria-pressed="false">
+    <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+  </button>
+  <div class="usr"><span id="syncState" style="font-size:12px;color:var(--dim)"></span><b id="usrName"></b><button type="button" class="out" id="btnEntry">入口</button><button type="button" class="out" id="btnLogout">退出</button></div>
+</header>
+
+<!-- 实时守护 -->
+<div class="page on" id="p-guard">
+  <div class="guard-hero">
+    <div class="st-orb green" id="guardOrb">安</div>
+    <div>
+      <div class="t" id="guardTitle">父母端一切正常</div>
+      <div class="s" id="guardSub">谛听正在待命 · 检测到可疑来电时会立刻通知您，并可将您拉入通话</div>
+    </div>
+  </div>
+  <div class="guard-metrics">
+    <div class="metric alert">
+      <div class="label">未确认告警</div><div class="value" id="metricAlerts">--</div><div class="hint">待您核实确认</div>
+    </div>
+    <div class="metric">
+      <div class="label">今日判定</div><div class="value" id="metricToday">--</div><div class="hint">0 点至今的通话</div>
+    </div>
+    <div class="metric">
+      <div class="label">本周风险</div><div class="value" id="metricRisk">--</div><div class="hint">拦截 + 警惕合计</div>
+    </div>
+    <div class="metric safe">
+      <div class="label">最近同步</div><div class="value" id="metricSync">--</div><div class="hint">每 10 秒自动刷新</div>
+    </div>
+  </div>
+  <h2>待确认告警<small>识别到风险 · 请尽快联系父母核实</small></h2>
+  <div id="guardAlerts"></div>
+</div>
+
+<!-- 拦截事件 -->
+<div class="page" id="p-events">
+  <h2>拦截与告警<small>按时间倒序 · 共 <span id="cnt">0</span> 条</small></h2>
+  <div class="event-toolbar">
+    <label class="event-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+      <input type="search" id="eventQuery" placeholder="搜索来电 / 号码 / 结论" aria-label="搜索拦截事件" autocomplete="off">
+    </label>
+    <button type="button" class="filter-chip on" data-ef="">全部</button>
+    <button type="button" class="filter-chip" data-ef="block">拦截</button>
+    <button type="button" class="filter-chip" data-ef="caution">警惕</button>
+    <button type="button" class="filter-chip" data-ef="allow">放行</button>
+    <span class="spacer"></span>
+    <button type="button" class="btn" id="eventExport" title="导出当前筛选结果为 CSV">导出 CSV</button>
+  </div>
+  <div id="events"></div>
+  <div id="syncAnnouncer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+</div>
+
+<!-- 周报 -->
+<div class="page" id="p-week">
+  <h2>本周守护周报<small>近 7 天</small></h2>
+  <div class="week" id="weekStats"></div>
+  <h2>逐日分布<small>拦截数 / 告警数 / 放行数</small></h2>
+  <div id="daily"></div>
+</div>
+
+<!-- 声纹协助 -->
+<div class="page" id="p-voices">
+  <h2>家人声纹库<small>帮父母登记 / 更新家人声纹</small></h2>
+  <div id="voiceList"></div>
+  <div class="enroll">
+    <div>远程帮家人登记：请家人对着电话说一句日常话（10 秒），上传到这里</div>
+    <div class="field">
+      <input type="text" id="enName" placeholder="家人称谓（如 妈妈）">
+      <input type="file" id="enFile" class="sr-only-file" accept="audio/*">
+      <label for="enFile" id="enFileLbl">选择录音文件</label>
+    </div>
+    <div class="field"><button class="btn primary" id="enSubmit" disabled>登记声纹</button></div>
+    <div style="font-size:12px;color:var(--dim);margin-top:10px">声纹只存本机加密向量，可随时删除</div>
+  </div>
+</div>
+
+</div>
+
+</div><!-- /#main-content -->
+
+<!-- ================= 来电弹窗 ================= -->
+<div class="modal" id="incomingModal" role="dialog" aria-modal="true" aria-label="父母端来电告警" aria-hidden="true">
+  <div class="ring-box">
+    <div class="lv">INCOMING · 谛听守护呼叫</div>
+    <div class="t">父母可能正遭遇可疑来电</div>
+    <div class="r" id="ringReason"></div>
+    <div class="ts" id="ringTrans" style="display:none"></div>
+    <div class="row">
+      <button class="btn answer" id="ringAnswer" data-dialog-autofocus>接听 · 加入通话</button>
+      <button class="btn" id="ringIgnore">稍后</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 通话界面 ================= -->
+<div class="modal" id="callModal" role="dialog" aria-modal="true" aria-label="与父母端通话" aria-hidden="true" data-dialog-escape="false">
+  <div class="call-box">
+    <div class="call-orb">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#d97a6e" stroke-width="1.4" stroke-linecap="round">
+        <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/>
+      </svg>
+    </div>
+    <div class="call-state" id="callState">连接中 …</div>
+    <div class="call-reason" id="callReason"></div>
+    <div class="call-trans"><span class="lbl">父母端实时转写</span><span id="callTrans">等待谛听同步 …</span></div>
+    <div class="mic-hint" id="callMicHint">麦克风已开启 · 您说的话会实时传给父母端</div>
+    <div class="call-btns">
+      <button class="btn hangup" id="callHangup" data-dialog-autofocus>挂断</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+function openModal(el,options){
+  if(window.VeriCallDialog) return window.VeriCallDialog.open(el,options||{});
+  const trigger=options&&options.trigger;
+  el.classList.add("show"); el.setAttribute("aria-hidden","false");
+  const target=el.querySelector("[data-dialog-autofocus]")||el;
+  if(target===el&&!el.hasAttribute("tabindex"))el.tabIndex=-1;
+  requestAnimationFrame(()=>target.focus({preventScroll:true}));
+  return {trigger:trigger||document.activeElement};
+}
+function closeModal(el){
+  if(window.VeriCallDialog&&window.VeriCallDialog.isOpen(el))
+    return window.VeriCallDialog.close(el);
+  el.classList.remove("show"); el.setAttribute("aria-hidden","true"); return false;
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+let toastT=null;
+function toast(msg,err){const t=$("toast");t.textContent=msg;t.className="toast show"+(err?" err":"");
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),3200);}
+
+/* ================= 登录态 ================= */
+const TOKEN_KEY="vericall_child_token";
+let token=localStorage.getItem(TOKEN_KEY)||null;
+let mode="login";
+const authConfig={allow_registration:false,demo_account:false};
+const demoCredentials={childUsername:"",childPassword:""};
+
+function authHeaders(){return token?{"Authorization":"Bearer "+token}:{};}
+async function api(path,opt){
+  opt=opt||{}; opt.headers=Object.assign({},opt.headers||{},authHeaders());
+  const r=await fetch(path,opt);
+  if(r.status===401){ logout(true); throw new Error("登录已过期，请重新登录"); }
+  return r;
+}
+function switchView(){
+  $("view-login").style.display=token?"none":"block";
+  $("view-main").style.display=token?"block":"none";
+}
+function setAuthMode(next){
+  mode=next==="register"&&authConfig.allow_registration?"register":"login";
+  const reg=mode==="register";
+  $("lblName").style.display=reg?"block":"none";
+  $("inNick").style.display=reg?"block":"none";
+  const invite=reg&&authConfig.invite_required;
+  $("lblInvite").style.display=invite?"block":"none";
+  $("inInvite").style.display=invite?"block":"none";
+  $("btnLogin").textContent=reg?"注 册":"登 录";
+  $("switchMode").textContent=reg?"直接登录":"注册一个";
+  $("inPass").setAttribute("autocomplete",reg?"new-password":"current-password");
+  $("loginErr").textContent="";
+}
+function applyPublicConfig(config){
+  authConfig.allow_registration=config&&config.allow_registration===true;
+  authConfig.demo_account=config&&config.demo_account===true;
+  authConfig.invite_required=config&&config.invite_required===true;
+  const credentials=config&&config.demo_account&&config.demo_credentials;
+  demoCredentials.childUsername=String(credentials&&credentials.child_username||"");
+  demoCredentials.childPassword=String(credentials&&credentials.child_password||"");
+  const canDemo=Boolean(demoCredentials.childUsername&&demoCredentials.childPassword);
+  $("registerSwitch").style.display=authConfig.allow_registration?"block":"none";
+  $("demoTip").style.display=authConfig.demo_account&&canDemo?"block":"none";
+  if(canDemo){
+    const username=document.createElement("b");
+    const password=document.createElement("b");
+    const fillButton=document.createElement("button");
+    const lineBreak=document.createElement("br");
+    username.textContent=demoCredentials.childUsername;
+    password.textContent=demoCredentials.childPassword;
+    fillButton.type="button";
+    fillButton.className="fill";
+    fillButton.id="demoFill";
+    fillButton.textContent="一键填入并登录";
+    $("demoTip").replaceChildren("演示账号 ",username," / ",password,lineBreak,fillButton);
+    fillButton.onclick=()=>{
+      if(mode!=="login")$("switchMode").click();
+      $("inUser").value=demoCredentials.childUsername;
+      $("inPass").value=demoCredentials.childPassword;
+      $("btnLogin").click();
+    };
+  }
+  if(!authConfig.allow_registration&&mode==="register") setAuthMode("login");
+}
+async function loadPublicConfig(){
+  try{
+    const response=await fetch("/api/config",{cache:"no-store"});
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    applyPublicConfig(await response.json());
+  }catch(_error){
+    applyPublicConfig({allow_registration:false,demo_account:false,invite_required:false});
+  }
+}
+$("switchMode").onclick=()=>setAuthMode(mode==="login"?"register":"login");
+$("btnLogin").onclick=async()=>{
+  const username=$("inUser").value.trim(), password=$("inPass").value;
+  if(!username||!password){$("loginErr").textContent="请输入用户名和密码";return;}
+  if(mode==="register"&&authConfig.invite_required&&!$("inInvite").value.trim()){
+    $("loginErr").textContent="请输入家庭邀请码";return;
+  }
+  try{
+    const r=await fetch("/api/family/"+mode,{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username,password,
+        display_name:$("inNick").value.trim()||undefined,
+        invitation:$("inInvite").value.trim()||undefined})});
+    const d=await r.json();
+    if(!r.ok||d.error){$("loginErr").textContent=d.message||d.detail||"操作失败";return;}
+    if(mode==="register"){
+      setAuthMode("login");
+      $("loginErr").textContent="注册成功，请登录"; return;
+    }
+    token=d.token; localStorage.setItem(TOKEN_KEY,token);
+    $("usrName").textContent=d.user.display_name;
+    switchView(); init(); toast("登录成功，欢迎回来");
+  }catch(e){$("loginErr").textContent="网络异常，请检查谛听服务是否已启动";}
+};
+$("inPass").addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click();});
+function logout(expired){
+  token=null; localStorage.removeItem(TOKEN_KEY);
+  stopCall(true); switchView();
+  try{sessionStorage.setItem("vericall_login_notice",expired?"登录已过期，请重新登录":"已退出登录");}catch(_){}
+  location.replace("login.html#child");
+}
+$("btnEntry").onclick=()=>logout(false);
+$("btnLogout").onclick=()=>logout(false);
+
+/* ================= 数据 ================= */
+let ALL=[], ALERTS=[], evFilter="", evQuery="";
+let eventsLoadState="loading";
+function chName(c){return ({acoustic:"声学伪造",voiceprint:"家庭声纹",semantic:"话术语义"})[c]||c;}
+function chLabel(v){
+  return ({
+    spoof:"疑似合成",bonafide:"真人语音",uncertain:"证据不足",
+    mismatch:"声纹不符",match:"声纹匹配",unknown:"未登记",
+    scam:"诈骗话术",suspicious:"可疑话术",benign:"正常语义",
+    impersonation:"冒充话术",normal:"正常语义",error:"分析异常"
+  })[v]||v||"";
+}
+function isAiDemo(r){
+  return Boolean(r&&(r.demo===true||String(r.source||"").toLowerCase()==="ai-demo"));
+}
+function recordSource(r){
+  const src=String((r&&r.source)||"").trim();
+  if(isAiDemo(r)) return "AI 模拟检测";
+  if(/^demo:[abc]$/i.test(src)) return "内置演示 "+src.slice(-1).toUpperCase();
+  if(src==="upload") return "本机上传";
+  return src||"本机记录";
+}
+function recordTranscript(r){
+  const top=String((r&&r.transcript)||"").trim();
+  if(top) return top;
+  const semantic=(r&&r.channels||[]).find(c=>(c.name||c.channel)==="semantic");
+  return String((semantic&&semantic.transcript)||"").trim();
+}
+function aiDemoBadge(r){
+  return isAiDemo(r)?'<span class="ai-demo-badge" title="用于答辩演示的模拟检测数据">AI 演示</span>':"";
+}
+
+function channelHtml(ch){
+  if(!ch||!ch.length) return "";
+  return '<div class="channels">'+ch.map(c=>{
+    const nm=chName(c.name||c.channel||"");
+    const sc=(typeof c.score==="number")?c.score.toFixed(2):(c.score||"--");
+    return '<div class="ch"><div class="c">'+esc(nm)+'</div><div class="s">'+esc(sc)+'</div><div class="d">'+esc(chLabel(c.label||c.verdict))+'</div></div>';
+  }).join("")+'</div>';
+}
+function transcriptHtml(r){
+  const text=recordTranscript(r);
+  return text?'<div class="record-transcript"><b>对话转写</b>'+esc(text)+'</div>':"";
+}
+function verdictTxt(f){return ({block:"拦截",caution:"警惕",allow:"放行"})[f]||f;}
+
+function renderGuard(){
+  const unacked=ALERTS.filter(a=>!a.ack);
+  const dot=$("alertDot");
+  dot.style.display=unacked.length?"inline-block":"none";
+  dot.textContent=unacked.length>99?"99+":unacked.length;
+  const orb=$("guardOrb");
+  if(unacked.length){
+    orb.className="st-orb red"; orb.textContent="险";
+    $("guardTitle").textContent="有 "+unacked.length+" 条可疑来电待核实";
+    $("guardSub").textContent="建议尽快拨打父母平时的号码确认 · 或在下方一键确认已知悉";
+  }else{
+    orb.className="st-orb green"; orb.textContent="安";
+    $("guardTitle").textContent="父母端一切正常";
+    $("guardSub").textContent="谛听正在待命 · 检测到可疑来电时会立刻通知您，并可将您拉入通话";
+  }
+  const el=$("guardAlerts");
+  el.innerHTML=unacked.length?unacked.map(a=>
+    '<div class="card fresh"><div class="top"><div><span class="nm">'+esc(a.name||a.source||"未知来电")+'</span>'+aiDemoBadge(a)
+    +'<div class="sim">'+esc(recordSource(a))+' · 可疑度 '+esc(a.score!=null?a.score:"--")+'</div></div>'
+    +'<div><span class="time">'+esc(a.time||"")+'</span> <span class="badge '+esc(a.final)+'">'+esc(verdictTxt(a.final))+'</span></div></div>'
+    +channelHtml(a.channels)
+    +transcriptHtml(a)
+    +(a.rationale?'<div class="rationale">'+esc(a.rationale)+'</div>':"")
+    +'<div class="acts"><button class="btn primary" data-ack="'+esc(a.id)+'">已联系父母 · 确认知悉</button>'
+    +'<button class="btn" data-tel="1">回拨父母核实</button>'
+    +(a.caller_number?'<button class="btn danger" data-rep="'+esc(a.caller_number)+'">举报此号码</button>':"")
+    +'</div></div>'
+  ).join(""):'<div class="empty">暂无待确认告警 · 天下无诈</div>';
+  el.querySelectorAll("[data-ack]").forEach(b=>b.onclick=async()=>{
+    try{await api("/api/family/alerts/"+encodeURIComponent(b.dataset.ack)+"/ack",{method:"POST"});
+      toast("已确认"); loadAlerts();}catch(e){toast(e.message,true);}
+  });
+  el.querySelectorAll("[data-tel]").forEach(b=>b.onclick=()=>toast("建议拨打父母平时的号码，听到熟悉的声音再确认"));
+  el.querySelectorAll("[data-rep]").forEach(b=>b.onclick=async()=>{
+    try{
+      await api("/api/family/numbers/report",{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({number:b.dataset.rep,remark:"子女端举报"})});
+      toast("已加入本家庭黑名单 · 该号码来电将直接拦截");
+      b.remove();
+    }catch(e){toast(e.message,true);}
+  });
+  const ma=$("metricAlerts"); if(ma) ma.textContent=unacked.length;
+}
+
+function eventMatch(r){
+  if(evFilter&&r.final!==evFilter) return false;
+  if(!evQuery) return true;
+  const hay=[r.name,recordSource(r),r.caller_number,r.final,verdictTxt(r.final),
+    r.rationale,recordTranscript(r),...(r.channels||[]).map(c=>[c.detail,chLabel(c.label||c.verdict)])]
+    .flat().filter(Boolean).join(" ").toLowerCase();
+  return hay.includes(evQuery);
+}
+function eventRows(){ return ALL.filter(eventMatch); }
+function renderEvents(){
+  const el=$("events");
+  const recs=eventRows();
+  $("cnt").textContent=recs.length;
+  if(eventsLoadState==="loading"&&!ALL.length){
+    el.innerHTML='<div class="ui-state" role="status"><span class="ui-spinner" aria-hidden="true"></span><span>正在同步本机拦截记录…</span></div>';
+    return;
+  }
+  if(eventsLoadState==="error"&&!ALL.length){
+    el.innerHTML='<div class="ui-state error" role="alert"><strong>事件加载失败</strong><span>请确认谛听服务正在运行，然后重新同步。</span><button class="btn" id="eventRetry" type="button">重新同步</button></div>';
+    $("eventRetry").onclick=init;
+    return;
+  }
+  if(!recs.length){
+    el.innerHTML='<div class="empty">'+(ALL.length?'没有符合筛选条件的记录':'暂无记录 · 父母接通电话后这里会显示每一次判定')+'</div>';
+    return;
+  }
+  el.innerHTML=recs.map(r=>
+    '<div class="card"><div class="top"><div><span class="nm">'+esc(r.name||r.source||"未知来电")+'</span>'+aiDemoBadge(r)
+    +'<div class="sim">'+esc(recordSource(r))+(r.caller_number?" · "+esc(r.caller_number):"")+' · '+esc(r.elapsed_s!=null?r.elapsed_s+"s":"")+'</div></div>'
+    +'<div><span class="time">'+esc(r.time||"")+'</span> <span class="badge '+esc(r.final)+'">'+esc(verdictTxt(r.final))+'</span></div></div>'
+    +channelHtml(r.channels)
+    +transcriptHtml(r)
+    +(r.rationale?'<div class="rationale">'+esc(r.rationale)+'</div>':"")
+    +'</div>'
+  ).join("");
+}
+
+function csvCell(v){
+  let s=String(v==null?"":v);
+  if(typeof v==="string"&&/^[=+\-@\t\r]/.test(s)) s="'"+s;
+  s=s.replace(/"/g,'""');
+  return /[",\n]/.test(s)?'"'+s+'"':s;
+}
+$("eventExport").onclick=()=>{
+  const rs=eventRows();
+  if(!rs.length){toast("当前没有可导出的事件",true);return;}
+  const rows=[["时间","来电","来源","号码","裁决","声学","声纹","话术","综合分","耗时(s)","对话转写","说明"]].concat(
+    rs.map(r=>{
+      const c=k=>{const hit=(r.channels||[]).find(x=>(x.name||x.channel)===k); return hit?hit.score:"";};
+      return [r.time,r.name||r.source||"",recordSource(r),r.caller_number||"",verdictTxt(r.final),
+        c("acoustic"),c("voiceprint"),c("semantic"),r.score,r.elapsed_s,recordTranscript(r),r.rationale||""];
+    }));
+  const csv="\ufeff"+rows.map(row=>row.map(csvCell).join(",")).join("\r\n");
+  const d=new Date(),p=n=>String(n).padStart(2,"0");
+  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  const a=document.createElement("a");
+  a.href=url; a.download="谛听拦截事件_"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast("已导出 "+rs.length+" 条事件");
+};
+document.querySelectorAll(".filter-chip").forEach(c=>c.onclick=()=>{
+  document.querySelectorAll(".filter-chip").forEach(x=>x.classList.remove("on"));
+  c.classList.add("on"); evFilter=c.dataset.ef; renderEvents();
+});
+$("eventQuery").addEventListener("input",e=>{
+  evQuery=e.target.value.trim().toLowerCase(); renderEvents();
+});
+
+function localDay(d){
+  const p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+function renderMetrics(){
+  const today=localDay(new Date());
+  const weekStart=localDay(new Date(Date.now()-6*864e5));
+  const todayCount=ALL.filter(r=>(r.time||"").slice(0,10)===today).length;
+  const risk=ALL.filter(r=>{const d=(r.time||"").slice(0,10);
+    return d>=weekStart&&(r.final==="block"||r.final==="caution");}).length;
+  const mt=$("metricToday"), mr=$("metricRisk");
+  if(mt) mt.textContent=todayCount;
+  if(mr) mr.textContent=risk;
+}
+
+function renderWeek(recs){
+  const now=new Date(), days=[];
+  for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);days.push(localDay(d));}
+  const stat={allow:0,caution:0,block:0,total:0};
+  const byDay=Object.fromEntries(days.map(d=>[d,{allow:0,caution:0,block:0}]));
+  recs.forEach(r=>{const day=(r.time||"").slice(0,10),f=r.final||"allow";
+    if(byDay[day])byDay[day][f]++; stat[f]=(stat[f]||0)+1; stat.total++;});
+  $("weekStats").innerHTML=
+    '<div class="wcard"><div class="n">'+stat.total+'</div><div class="l">本周总通话判定</div></div>'
+    +'<div class="wcard green"><div class="n">'+stat.allow+'</div><div class="l">正常放行</div></div>'
+    +'<div class="wcard warn"><div class="n">'+stat.caution+'</div><div class="l">警惕提醒</div></div>'
+    +'<div class="wcard red"><div class="n">'+stat.block+'</div><div class="l">拦截</div></div>';
+  $("daily").innerHTML=days.map(d=>{
+    const b=byDay[d],tot=b.allow+b.caution+b.block;
+    const summary=d+'：放行 '+b.allow+'，警惕 '+b.caution+'，拦截 '+b.block+'，共 '+tot+' 条';
+    return '<div role="img" aria-label="'+esc(summary)+'" style="display:flex;align-items:center;gap:12px;margin-bottom:8px">'
+      +'<div style="width:70px;font-family:var(--mono);font-size:12px;color:var(--mut)">'+d.slice(5)+'</div>'
+      +'<div aria-hidden="true" style="flex:1;height:22px;background:rgba(0,0,0,.25);border-radius:6px;overflow:hidden;display:flex">'
+      +'<div style="width:'+(tot?b.allow/tot*100:0)+'%;background:var(--ok)" title="放行 '+b.allow+'"></div>'
+      +'<div style="width:'+(tot?b.caution/tot*100:0)+'%;background:var(--warn)" title="警惕 '+b.caution+'"></div>'
+      +'<div style="width:'+(tot?b.block/tot*100:0)+'%;background:var(--bad)" title="拦截 '+b.block+'"></div>'
+      +'</div><div style="width:60px;font-size:13px;color:var(--mut)">'+tot+' 条</div></div>';
+  }).join("");
+}
+
+async function renderVoices(){
+  try{
+    const s=await(await api("/api/voices")).json();
+    const vs=s.voices||[];
+    $("voiceList").innerHTML=vs.length?vs.map(v=>
+      '<div class="voice"><div class="av">'+esc((v.name||"?").slice(0,1))+'</div>'
+      +'<div class="info"><div class="vn">'+esc(v.name)+'</div><div class="vs">声纹样本 '+esc(v.samples)+' 条</div></div></div>'
+    ).join(""):'<div class="empty">还没有登记家人声纹 · 点击下方登记</div>';
+  }catch(e){$("voiceList").innerHTML='<div class="empty">服务未连接</div>';}
+}
+$("enFile").onchange=()=>{const f=$("enFile").files[0];
+  $("enFileLbl").textContent=f?f.name:"选择录音文件";
+  $("enSubmit").disabled=!($("enName").value.trim()&&f);};
+$("enName").oninput=()=>{$("enSubmit").disabled=!($("enName").value.trim()&&$("enFile").files[0]);};
+$("enSubmit").onclick=async()=>{
+  const nm=$("enName").value.trim(),f=$("enFile").files[0]; if(!nm||!f)return;
+  const fd=new FormData(); fd.append("name",nm); fd.append("file",f,f.name);
+  try{
+    const r=await api("/api/enroll",{method:"POST",body:fd});
+    const d=await r.json();
+    if(d.error){toast("登记失败："+(d.message||d.error),true);return;}
+    $("enName").value="";$("enFile").value="";$("enFileLbl").textContent="选择录音文件";
+    $("enSubmit").disabled=true; toast("已登记："+nm+" 的声纹"); renderVoices();
+  }catch(e){toast("服务异常，请检查谛听是否已启动",true);}
+};
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on"); $("p-"+t.dataset.p).classList.add("on");
+  if(t.dataset.p==="voices")renderVoices();
+  if(t.dataset.p==="week")renderWeek(ALL);
+});
+
+/* ================= 守护呼叫（加入通话） ================= */
+let currentRing=null, lastRingId=null;
+let initInFlight=false, ringPollInFlight=false, callAttempt=0;
+async function pollRing(){
+  if(!token||document.hidden||ringPollInFlight||call.ws) return;
+  ringPollInFlight=true;
+  try{
+    const d=await(await api("/api/call/pending")).json();
+    if(d.ringing && d.room_id!==lastRingId && !call.ws){
+      lastRingId=d.room_id; currentRing=d;
+      $("ringReason").textContent=d.reason||"谛听检测到可疑来电";
+      if(d.transcript){$("ringTrans").style.display="block";
+        $("ringTrans").textContent="实时转写："+d.transcript;}
+      else $("ringTrans").style.display="none";
+      openModal($("incomingModal"));
+      ringBeep();
+    }
+  }catch(e){}finally{ringPollInFlight=false;}
+}
+let beepCtx=null;
+function ringBeep(){
+  try{
+    beepCtx=beepCtx||new (window.AudioContext||window.webkitAudioContext)();
+    [0,0.5,1.0].forEach(dt=>{
+      const o=beepCtx.createOscillator(),g=beepCtx.createGain();
+      o.frequency.value=880; o.type="sine";
+      g.gain.setValueAtTime(0.0001,beepCtx.currentTime+dt);
+      g.gain.exponentialRampToValueAtTime(0.25,beepCtx.currentTime+dt+0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001,beepCtx.currentTime+dt+0.4);
+      o.connect(g); g.connect(beepCtx.destination);
+      o.start(beepCtx.currentTime+dt); o.stop(beepCtx.currentTime+dt+0.45);
+    });
+  }catch(e){}
+}
+$("ringIgnore").onclick=()=>closeModal($("incomingModal"));
+$("ringAnswer").onclick=()=>{
+  closeModal($("incomingModal"));
+  if(currentRing) openCall(currentRing.room_id,currentRing);
+};
+
+/* --- 通话：WebSocket 双向 PCM（16kHz Int16） --- */
+const call={ws:null,ac:null,playAc:null,playNext:0,micNodes:null};
+function createCallAudioContext(){
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  let ac;
+  try{ac=new Ctx({sampleRate:16000});}catch(_){ac=new Ctx();}
+  if(ac.sampleRate!==16000)console.warn("AudioContext 实际采样率为",ac.sampleRate,"，已在前端重采样到 16kHz");
+  return ac;
+}
+function createCallResampler(inputRate,outputRate){
+  if(inputRate===outputRate)return x=>x;
+  const step=inputRate/outputRate;
+  let tail=new Float32Array(0),pos=0;
+  return input=>{
+    const data=new Float32Array(tail.length+input.length);
+    data.set(tail); data.set(input,tail.length);
+    const out=[];
+    while(pos<data.length-1){
+      const i=Math.floor(pos),f=pos-i;
+      out.push(data[i]+(data[i+1]-data[i])*f);
+      pos+=step;
+    }
+    const consumed=Math.min(Math.floor(pos),data.length);
+    tail=data.slice(consumed); pos-=consumed;
+    return Float32Array.from(out);
+  };
+}
+async function openCall(roomId,info){
+  if(call.ws) return;
+  const attempt=++callAttempt;
+  const modal=$("callModal");
+  openModal(modal,{trigger:null});
+  $("callState").textContent="连接中 …";
+  $("callReason").textContent=info&&info.reason?info.reason:"";
+  if(info&&info.transcript)$("callTrans").textContent=info.transcript;
+  let ws;
+  try{
+    const r=await api("/api/call/ws-ticket",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({room_id:roomId})});
+    const d=await r.json();
+    if(!r.ok||!d.ticket) throw new Error(d.message||d.detail||"无法建立安全通话");
+    if(attempt!==callAttempt) return;
+    const wsProto=location.protocol==="https:"?"wss:":"ws:";
+    ws=new WebSocket(wsProto+"//"+location.host+"/ws/call/"+encodeURIComponent(roomId)+"?role=child&ticket="+encodeURIComponent(d.ticket));
+  }catch(e){
+    if(attempt!==callAttempt) return;
+    $("callState").textContent="呼叫已失效";
+    toast(e.message||"通话连接失败，请稍后重试",true);
+    closeModal(modal);
+    return;
+  }
+  ws.binaryType="arraybuffer"; call.ws=ws;
+  ws.onopen=()=>{$("callState").textContent="等待父母端接入 …"; startCallMic(ws);};
+  ws.onmessage=e=>{
+    if(typeof e.data==="string"){
+      let m; try{m=JSON.parse(e.data);}catch(_){return;}
+      if(m.type==="joined"){$("callState").textContent=m.state==="active"?"守护通话中":"等待父母端接入 …";
+        if(m.transcript)$("callTrans").textContent=m.transcript;}
+      else if(m.type==="peer_joined"&&m.role==="elder"){$("callState").textContent="守护通话中 · 已接通父母端";}
+      else if(m.type==="transcript"){$("callTrans").textContent=m.text||"";}
+      else if(m.type==="peer_left"){$("callState").textContent="父母端已挂断"; stopCallMedia();}
+      else if(m.type==="hangup"){toast("父母端已结束通话"); stopCall();}
+    }else{
+      playPcm(e.data);
+    }
+  };
+  ws.onclose=()=>{
+    if(call.ws===ws) call.ws=null;
+    if(modal.classList.contains("show")){$("callState").textContent="连接已断开"; stopCallMedia();}
+  };
+  ws.onerror=()=>{toast("通话连接失败",true);};
+}
+function startCallMic(ws){
+  navigator.mediaDevices.getUserMedia({audio:{channelCount:1}}).then(stream=>{
+    const ac=createCallAudioContext();
+    const resample=createCallResampler(ac.sampleRate,16000);
+    const src=ac.createMediaStreamSource(stream);
+    const proc=ac.createScriptProcessor(4096,1,1);
+    const silent=ac.createGain(); silent.gain.value=0;
+    src.connect(proc); proc.connect(silent); silent.connect(ac.destination);
+    proc.onaudioprocess=e=>{
+      if(!call.ws||call.ws.readyState!==1)return;
+      const ch=resample(e.inputBuffer.getChannelData(0)),buf=new ArrayBuffer(ch.length*2),v=new DataView(buf);
+      for(let i=0;i<ch.length;i++){let s=Math.max(-1,Math.min(1,ch[i]));v.setInt16(i*2,s<0?s*0x8000:s*0x7FFF,true);}
+      call.ws.send(buf);
+    };
+    call.ac=ac; call.micNodes={stream,src,proc,silent};
+    $("callMicHint").textContent="麦克风已开启 · 您说的话会实时传给父母端";
+  }).catch(()=>{$("callMicHint").textContent="麦克风不可用 · 您仍可收听父母端声音";});
+}
+function playPcm(ab){
+  try{
+    if(!call.playAc){call.playAc=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});call.playNext=0;}
+    const ac=call.playAc, n=ab.byteLength/2, iv=new Int16Array(ab), fv=new Float32Array(n);
+    for(let i=0;i<n;i++)fv[i]=iv[i]/0x8000;
+    const buf=ac.createBuffer(1,n,16000); buf.getChannelData(0).set(fv);
+    const src=ac.createBufferSource(); src.buffer=buf; src.connect(ac.destination);
+    const t=Math.max(ac.currentTime,call.playNext); src.start(t); call.playNext=t+buf.duration;
+  }catch(e){}
+}
+function stopCallMedia(){
+  try{
+    if(call.micNodes){call.micNodes.proc.disconnect();call.micNodes.src.disconnect();call.micNodes.silent.disconnect();
+      call.micNodes.stream.getTracks().forEach(t=>t.stop());}
+    if(call.ac)call.ac.close();
+    if(call.playAc)call.playAc.close();
+  }catch(e){}
+  call.ac=null; call.playAc=null; call.micNodes=null;
+}
+function stopCall(silent){
+  callAttempt++;
+  if(call.ws){try{call.ws.send(JSON.stringify({type:"hangup"}));call.ws.close();}catch(e){} call.ws=null;}
+  stopCallMedia();
+  closeModal($("callModal"));
+  if(!silent)toast("已挂断");
+}
+$("callHangup").onclick=()=>stopCall();
+
+/* ================= 初始化 & 轮询 ================= */
+function markSync(ok){
+  const el=$("syncState"); if(!el) return;
+  const ms=$("metricSync");
+  if(ok){const t=new Date(),p=n=>String(n).padStart(2,"0");
+    const clock=p(t.getHours())+":"+p(t.getMinutes())+":"+p(t.getSeconds());
+    el.textContent="已同步 "+clock;
+    el.style.color="var(--dim)";
+    if(ms) ms.textContent=p(t.getHours())+":"+p(t.getMinutes());
+  }else{
+    el.textContent="连接异常 · 重试中"; el.style.color="var(--bad)";
+    if(ms) ms.textContent="异常";
+  }
+}
+async function loadAlerts(){
+  try{const d=await(await api("/api/family/alerts")).json(); ALERTS=d.alerts||[]; renderGuard();}
+  catch(e){}
+}
+async function init(){
+  if(initInFlight||document.hidden) return;
+  initInFlight=true;
+  if(!ALL.length){eventsLoadState="loading";renderEvents();}
+  try{
+    const r=await api("/api/history?limit=200");
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const h=await r.json();
+    ALL=h.records||[];
+    eventsLoadState="ready";
+    markSync(true);
+  }catch(e){
+    eventsLoadState="error";
+    markSync(false);
+  }finally{
+    initInFlight=false;
+    renderEvents(); renderMetrics(); renderVoices(); loadAlerts();
+  }
+}
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden&&token){init();pollRing();}
+});
+loadPublicConfig();
+if(token){
+  api("/api/family/me").then(r=>r.json()).then(d=>{
+    $("usrName").textContent=d.user.display_name; switchView(); init();
+  }).catch(()=>{});
+}else switchView();
+if(!token) location.replace("login.html#child");
+setInterval(()=>{if(token&&!document.hidden)init();},10000);
+setInterval(pollRing,2500);
+</script>
+<script>
+/* PWA：注册 Service Worker（失败静默，浏览器不支持时不影响页面） */
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>

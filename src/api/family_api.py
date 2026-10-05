@@ -46,7 +46,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, WebSocke
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from paths import DATA_DIR, DEFAULT_FAMILY_ID, HIST_FILE, VOICE_DIR
+from paths import DATA_DIR, DEFAULT_FAMILY_ID, HIST_FILE, VOICE_DIR, env as read_env
 from api.history_store import iter_history
 from private_fs import append_private_text, write_private_text
 
@@ -74,16 +74,23 @@ _ws_tickets: dict[str, dict] = {}
 _ws_tickets_lock = threading.Lock()
 _login_failures: dict[str, list[float]] = {}
 _login_lock = threading.Lock()
+_generated_demo_password = ""
+
+
+def _setting(name: str, default: str = "") -> str:
+    """Read runtime config through the project's unified precedence rules."""
+    value = read_env(name, default)
+    return default if value is None else str(value)
 
 
 def _env_enabled(name: str, default: str = "1") -> bool:
-    return (os.environ.get(name, default) or default).strip().lower() in (
+    return (_setting(name, default) or default).strip().lower() in (
         "1", "true", "yes", "on")
 
 
 def _env_positive_int(name: str, default: int) -> int:
     try:
-        value = int(os.environ.get(name, str(default)) or default)
+        value = int(_setting(name, str(default)) or default)
     except (TypeError, ValueError):
         return default
     return value if value > 0 else default
@@ -111,7 +118,68 @@ def _header_value(headers, name: str) -> str:
 
 
 def _elder_access_key() -> str:
-    return (os.environ.get(ELDER_ACCESS_ENV, "") or "").strip()
+    return (_setting(ELDER_ACCESS_ENV, "") or "").strip()
+
+
+def _demo_password_for_request(local_request: bool) -> str:
+    """Return a configured demo password, or a process-local one on loopback."""
+    configured = _setting("VERICALL_DEMO_PASSWORD", "").strip()
+    if configured:
+        return configured
+    if not local_request:
+        return ""
+    global _generated_demo_password
+    if not _generated_demo_password:
+        _generated_demo_password = "vc-" + secrets.token_urlsafe(12)
+    return _generated_demo_password
+
+
+def _sync_demo_account(username: str, password: str) -> bool:
+    """Create or repair the configured demo account so login always matches."""
+    if not re.fullmatch(r"[\w-]{3,20}", username):
+        return False
+    if not PASSWORD_MIN_CHARS <= len(password) <= PASSWORD_MAX_CHARS:
+        return False
+    with _store_lock:
+        store = _load_store()
+        existing = store["users"].get(username)
+        salt = str(existing.get("salt") or "") if isinstance(existing, dict) else ""
+        try:
+            valid_salt = len(bytes.fromhex(salt)) == 16
+        except ValueError:
+            valid_salt = False
+        if not valid_salt:
+            salt = secrets.token_hex(16)
+        password_hash = _hash_pw(password, salt)
+        if (isinstance(existing, dict)
+                and secrets.compare_digest(
+                    password_hash, str(existing.get("hash") or ""))
+                and str(existing.get("salt") or "") == salt):
+            return True
+        created = (
+            str(existing.get("created"))
+            if isinstance(existing, dict) and existing.get("created")
+            else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        display_name = (
+            str(existing.get("display_name") or "演示子女").strip()[:20]
+            if isinstance(existing, dict)
+            else "演示子女"
+        )
+        family_id = (
+            str(existing.get("family_id") or DEMO_FAMILY_ID).strip()
+            if isinstance(existing, dict)
+            else DEMO_FAMILY_ID
+        )
+        store["users"][username] = {
+            "salt": salt,
+            "hash": password_hash,
+            "display_name": display_name or "演示子女",
+            "family_id": family_id or DEMO_FAMILY_ID,
+            "created": created,
+        }
+        _save_store(store)
+        return True
 
 
 def _has_valid_elder_access(request: Request | None) -> bool:
@@ -126,7 +194,7 @@ def _has_valid_elder_access(request: Request | None) -> bool:
 
 
 def _public_config(request: Request | None = None) -> dict:
-    raw_limit = os.environ.get("VERICALL_MAX_UPLOAD_MB", "25")
+    raw_limit = _setting("VERICALL_MAX_UPLOAD_MB", "25")
     try:
         max_upload_mb = int(raw_limit)
     except (TypeError, ValueError):
@@ -146,13 +214,17 @@ def _public_config(request: Request | None = None) -> dict:
     expose_demo_credentials = _env_enabled(
         EXPOSE_DEMO_CREDENTIALS_ENV, "0")
     local_request = bool(request is not None and is_local_request(request))
-    demo_username = os.environ.get("VERICALL_DEMO_USERNAME", "DemoChild").strip()
-    demo_password = os.environ.get("VERICALL_DEMO_PASSWORD", "").strip()
-    if (
+    demo_username = _setting("VERICALL_DEMO_USERNAME", "DemoChild").strip()
+    demo_password = _demo_password_for_request(local_request)
+    account_ready = bool(
         demo_account
-        and (expose_demo_credentials or local_request)
         and demo_username
         and demo_password
+        and _sync_demo_account(demo_username, demo_password)
+    )
+    if (
+        account_ready
+        and (expose_demo_credentials or local_request)
     ):
         credentials = {
             "child_username": demo_username,
@@ -898,7 +970,7 @@ async def call_invite(body: dict, request: Request):
     公网适老端必须携带 VERICALL_ELDER_ACCESS_KEY；需放开其他远程调用时
     可显式设置 VERICALL_ALLOW_REMOTE_INVITE=1。
     """
-    if os.environ.get("VERICALL_ALLOW_REMOTE_INVITE", "0") != "1":
+    if _setting("VERICALL_ALLOW_REMOTE_INVITE", "0") != "1":
         if (not _has_valid_elder_access(request)
                 and not is_local_request(request)):
             return JSONResponse({"error": "forbidden",
@@ -1018,7 +1090,7 @@ async def call_ws(ws: WebSocket, room_id: str):
                 await ws.close(code=4401)
                 return
             user = {"family_id": ticket_family}
-        elif (os.environ.get("VERICALL_ALLOW_REMOTE_INVITE", "0") != "1"
+        elif (_setting("VERICALL_ALLOW_REMOTE_INVITE", "0") != "1"
                 and not is_local_websocket(ws)):
             await ws.close(code=4403)
             return

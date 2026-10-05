@@ -1,10 +1,9 @@
 /* 谛听 VeriCall · 子女守护端 Service Worker（PWA 离线壳）
- * 策略：应用壳（child.html/manifest/icon）缓存优先；/api/ 与 /ws 一律直连不缓存，
- * 保证告警与通话数据实时（后台 10s 轮询即可唤醒 SW）。
+ * 策略：静态资源网络优先并回填缓存，离线时回退缓存；/api/ 与 /ws 一律直连不缓存。
  */
-const CACHE = 'vericall-child-v22';
+const CACHE = 'vericall-child-v25';
 const SHELL = ['./child.html', './manifest.json', './icon-192.png', './icon-512.png',
-  './theme.js?v=22', './ui.css?v=22', './ui.js?v=22', './copy.js'];
+  './path.js?v=25', './theme.js?v=25', './ui.css?v=25', './ui.js?v=25', './copy.js'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -31,13 +30,17 @@ self.addEventListener('fetch', (e) => {
     : url.pathname.replace(/^\//, '');
   if (scopedPath.startsWith('api/') || scopedPath.startsWith('ws/')) return; // API/WS 实时不缓存
   e.respondWith(
-    caches.match(e.request).then((hit) => {
-      if (hit) return hit;
-      return fetch(e.request).then((resp) => {
+    fetch(e.request).then((resp) => {
+      if (resp && resp.ok) {
         const copy = resp.clone();
         caches.open(CACHE).then((c) => c.put(e.request, copy));
-        return resp;
-      });
+      }
+      return resp;
+    }).catch(async () => {
+      const hit = await caches.match(e.request);
+      if (hit) return hit;
+      if (e.request.mode === 'navigate') return caches.match('./child.html');
+      throw new Error('offline');
     })
   );
 });

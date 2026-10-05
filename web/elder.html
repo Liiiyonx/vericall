@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="谛听适老守护端提供大字录音检测、常开守护和风险时一键呼叫子女功能。">
 <meta name="theme-color" content="#000000">
-<script src="theme.js?v=22"></script>
+<script src="path.js?v=25"></script>
+<script>window.VeriCallPath=window.VeriCallPath||{base:new URL("./",location.href).href,resolve:function(p){return new URL(String(p||"").replace(/^\/+/,""),new URL("./",location.href)).href},websocket:function(p){var u=new URL(String(p||"").replace(/^\/+/,""),new URL("./",location.href));u.protocol=location.protocol==="https:"?"wss:":"ws:";return u.href}};</script>
+<script src="theme.js?v=25"></script>
 <title>谛听 · 安心守护</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
 <style>
@@ -13,9 +15,7 @@
   --bg:#0a0a0b; --ink:#f2ede0; --mut:#9a948a;
   --gold:#d4b483; --gold2:#e9d3a7;
   --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
-  --serif:var(--font-serif);
   --sans:var(--font-sans);
-  --mono:var(--font-mono);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg); color:var(--ink); font-family:var(--sans);
@@ -92,8 +92,8 @@ footer{padding:14px; text-align:center; font-size:14px; color:var(--mut); letter
 .loading .ring{animation:breathe 1.6s ease-in-out infinite}
 @keyframes breathe{50%{opacity:.72}}
 </style>
-<link rel="stylesheet" href="ui.css?v=22">
-<script src="ui.js?v=22" defer></script>
+<link rel="stylesheet" href="ui.css?v=25">
+<script src="ui.js?v=25" defer></script>
 </head>
 <body data-app="elder">
 <header>
@@ -169,7 +169,7 @@ function elderFetch(path,opt){
   opt=opt||{};
   const key=sessionStorage.getItem(ELDER_KEY)||"";
   opt.headers=Object.assign({},opt.headers||{},key?{"X-Elder-Access-Key":key}:{});
-  return fetch(path,opt);
+  return fetch(window.VeriCallPath.resolve(path),opt);
 }
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 const COPY=(window.VERICALL_COPY&&window.VERICALL_COPY.states)||{
@@ -285,9 +285,8 @@ function openChildCall(roomId,ticket){
   const btn=$("callChildBtn");
   btn.classList.add("on"); btn.textContent="正在叫孩子……（再点取消）";
   speak("正在叫孩子进来，请稍等。");
-  const wsProto=location.protocol==="https:"?"wss:":"ws:";
   const ticketQuery=ticket?"&ticket="+encodeURIComponent(ticket):"";
-  cWs=new WebSocket(wsProto+"//"+location.host+"/ws/call/"+roomId+"?role=elder"+ticketQuery);
+  cWs=new WebSocket(window.VeriCallPath.websocket("ws/call/"+roomId+"?role=elder"+ticketQuery));
   cWs.binaryType="arraybuffer";
   cWs.onmessage=e=>{
     if(typeof e.data==="string"){
@@ -413,7 +412,7 @@ $("liveBtn2").onclick=async()=>{
   setLiveButton("starting");
   try{
     const streamUrl=window.VeriCallStream?await window.VeriCallStream.websocketUrl():
-      `${location.protocol==="https:"?"wss:":"ws:"}//${location.host}/ws/stream`;
+      window.VeriCallPath.websocket("ws/stream");
     const socket=new WebSocket(streamUrl);
     gWs=socket;
     socket.onopen=()=>{

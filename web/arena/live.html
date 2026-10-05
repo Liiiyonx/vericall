@@ -6,15 +6,14 @@
 <meta name="theme-color" content="#000000">
 <title>Arena Live · 现场录入</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
-<script src="/theme.js?v=16"></script>
+<script src="../theme.js?v=25"></script>
 <style>
 :root{
   --bg:#0a0a0b; --ink:#f2ede0; --mut:#9a948a;
   --brand:#993C1D; --brand-lt:#D85A30; --brand-lt2:#F0997B;
   --gold:#d4b483; --gold2:#e9d3a7;
   --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
-  --sans:"PingFang SC","Microsoft YaHei",sans-serif;
-  --mono:ui-monospace,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei UI","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg); color:var(--ink); font-family:var(--sans); min-height:100vh;
@@ -105,11 +104,11 @@ button,.btn{
   letter-spacing:.02em!important;
 }
 .rec-hint b{
-  font-family:var(--mono)!important;
+  font-family:var(--sans)!important;
   font-variant-numeric:tabular-nums;
 }
 .done-card .hash-value{
-  font-family:var(--mono)!important;
+  font-family:var(--sans)!important;
   font-variant-numeric:tabular-nums;
   word-break:break-all;
 }

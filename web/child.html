@@ -10,16 +10,16 @@
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="谛听守护">
-<script src="theme.js?v=22"></script>
+<script src="path.js?v=25"></script>
+<script>window.VeriCallPath=window.VeriCallPath||{base:new URL("./",location.href).href,resolve:function(p){return new URL(String(p||"").replace(/^\/+/,""),new URL("./",location.href)).href},websocket:function(p){var u=new URL(String(p||"").replace(/^\/+/,""),new URL("./",location.href));u.protocol=location.protocol==="https:"?"wss:":"ws:";return u.href}};</script>
+<script src="theme.js?v=25"></script>
 <style>
 :root{
   --bg:#0a0a0b; --ink:#f2ede0; --mut:#9a948a; --dim:#57544c;
   --gold:#d4b483; --gold2:#e9d3a7;
   --ok:#7fbf8e; --warn:#dfa844; --bad:#d97a6e;
   --line:rgba(242,237,224,.08); --line2:rgba(242,237,224,.16);
-  --serif:var(--font-serif);
   --sans:var(--font-sans);
-  --mono:var(--font-mono);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg); color:var(--ink); font-family:var(--sans); min-height:100vh; min-height:100dvh;
@@ -37,7 +37,7 @@ header{display:flex; align-items:center; justify-content:space-between; padding:
 .tab.on{color:var(--gold2); border-color:var(--gold)}
 .tab .dot{position:absolute; top:2px; right:6px; min-width:16px; height:16px; padding:0 4px;
   border-radius:8px; background:var(--bad); color:#fff; font-size:10px; line-height:16px;
-  text-align:center; font-family:var(--mono)}
+  text-align:center; font-family:var(--sans)}
 .usr{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--mut)}
 .usr b{color:var(--gold2); font-weight:500}
 .usr .out{border:0;background:none;padding:2px;cursor:pointer;color:var(--dim);font:inherit;font-size:12px;letter-spacing:1px}
@@ -63,7 +63,7 @@ h2 small{font-size:13px; color:var(--mut); letter-spacing:1px; font-family:var(-
 .login-err{margin-top:14px; font-size:13px; color:var(--bad); min-height:18px}
 .demo-tip{margin-top:22px; padding:12px 16px; border:1px dashed var(--line2); border-radius:10px;
   font-size:12.5px; color:var(--mut); letter-spacing:1px; line-height:1.9; text-align:center}
-.demo-tip b{color:var(--gold2); font-family:var(--mono); font-weight:500}
+.demo-tip b{color:var(--gold2); font-family:var(--sans); font-weight:500}
 .demo-tip .fill{display:inline-block; margin-top:6px; padding:6px 18px; border:1px solid var(--gold);
   border-radius:16px; background:none; color:var(--gold2); cursor:pointer; font-size:12.5px; transition:all .2s;
   font-family:inherit}
@@ -74,7 +74,7 @@ h2 small{font-size:13px; color:var(--mut); letter-spacing:1px; font-family:var(-
 @media(max-width:640px){.week{grid-template-columns:repeat(2,1fr)}}
 .wcard{background:rgba(242,237,224,.03); border:1px solid var(--line);
   border-radius:14px; padding:20px; text-align:center}
-.wcard .n{font-size:34px; font-family:var(--mono); color:var(--gold2); font-weight:600}
+.wcard .n{font-size:34px; font-family:var(--sans); color:var(--gold2); font-weight:600}
 .wcard .l{font-size:13px; color:var(--mut); margin-top:6px; letter-spacing:1px}
 .wcard.green .n{color:var(--ok)} .wcard.red .n{color:var(--bad)} .wcard.warn .n{color:var(--warn)}
 
@@ -84,7 +84,7 @@ h2 small{font-size:13px; color:var(--mut); letter-spacing:1px; font-family:var(-
 .card.fresh{border-color:rgba(217,122,110,.45)}
 .card .top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; gap:10px}
 .card .nm{font-size:18px; font-weight:600; letter-spacing:1px}
-.card .time{font-size:12px; color:var(--mut); font-family:var(--mono)}
+.card .time{font-size:12px; color:var(--mut); font-family:var(--sans)}
 .badge{font-size:12px; padding:3px 12px; border-radius:12px; letter-spacing:1px; white-space:nowrap}
 .badge.block{background:rgba(217,122,110,.15); color:var(--bad)}
 .badge.caution{background:rgba(223,168,68,.15); color:var(--warn)}
@@ -94,7 +94,7 @@ h2 small{font-size:13px; color:var(--mut); letter-spacing:1px; font-family:var(-
 @media(max-width:640px){.channels{grid-template-columns:1fr}}
 .ch{background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center}
 .ch .c{font-size:11px; color:var(--mut); letter-spacing:1px; margin-bottom:6px}
-.ch .s{font-size:22px; font-family:var(--mono); color:var(--gold2)}
+.ch .s{font-size:22px; font-family:var(--sans); color:var(--gold2)}
 .ch .d{font-size:11px; color:var(--dim); margin-top:4px}
 .card .rationale{font-size:14px; color:var(--ink); line-height:1.9; padding-top:12px;
   border-top:1px solid var(--line)}
@@ -193,8 +193,8 @@ h2 small{font-size:13px; color:var(--mut); letter-spacing:1px; font-family:var(-
 .event-search svg{width:14px;height:14px}
 .hist-empty{padding:44px 12px;text-align:center;color:var(--dim);font-size:14px;letter-spacing:1px}
 </style>
-<link rel="stylesheet" href="ui.css?v=22">
-<script src="ui.js?v=22" defer></script>
+<link rel="stylesheet" href="ui.css?v=25">
+<script src="ui.js?v=25" defer></script>
 </head>
 <body data-app="child">
 
@@ -406,7 +406,7 @@ const demoCredentials={childUsername:"",childPassword:""};
 function authHeaders(){return token?{"Authorization":"Bearer "+token}:{};}
 async function api(path,opt){
   opt=opt||{}; opt.headers=Object.assign({},opt.headers||{},authHeaders());
-  const r=await fetch(path,opt);
+  const r=await fetch(window.VeriCallPath.resolve(path),opt);
   if(r.status===401){ logout(true); throw new Error("登录已过期，请重新登录"); }
   return r;
 }
@@ -460,7 +460,7 @@ function applyPublicConfig(config){
 }
 async function loadPublicConfig(){
   try{
-    const response=await fetch("/api/config",{cache:"no-store"});
+    const response=await fetch(window.VeriCallPath.resolve("api/config"),{cache:"no-store"});
     if(!response.ok)throw new Error("HTTP "+response.status);
     applyPublicConfig(await response.json());
   }catch(_error){
@@ -475,7 +475,7 @@ $("btnLogin").onclick=async()=>{
     $("loginErr").textContent="请输入家庭邀请码";return;
   }
   try{
-    const r=await fetch("/api/family/"+mode,{method:"POST",
+    const r=await fetch(window.VeriCallPath.resolve("api/family/"+mode),{method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({username,password,
         display_name:$("inNick").value.trim()||undefined,
@@ -576,13 +576,13 @@ function renderGuard(){
     +'</div></div>'
   ).join(""):'<div class="empty">暂无待确认告警 · 天下无诈</div>';
   el.querySelectorAll("[data-ack]").forEach(b=>b.onclick=async()=>{
-    try{await api("/api/family/alerts/"+encodeURIComponent(b.dataset.ack)+"/ack",{method:"POST"});
+    try{await api("api/family/alerts/"+encodeURIComponent(b.dataset.ack)+"/ack",{method:"POST"});
       toast("已确认"); loadAlerts();}catch(e){toast(e.message,true);}
   });
   el.querySelectorAll("[data-tel]").forEach(b=>b.onclick=()=>toast("建议拨打父母平时的号码，听到熟悉的声音再确认"));
   el.querySelectorAll("[data-rep]").forEach(b=>b.onclick=async()=>{
     try{
-      await api("/api/family/numbers/report",{method:"POST",
+      await api("api/family/numbers/report",{method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({number:b.dataset.rep,remark:"子女端举报"})});
       toast("已加入本家庭黑名单 · 该号码来电将直接拦截");
@@ -692,7 +692,7 @@ function renderWeek(recs){
     const b=byDay[d],tot=b.allow+b.caution+b.block;
     const summary=d+'：放行 '+b.allow+'，警惕 '+b.caution+'，拦截 '+b.block+'，共 '+tot+' 条';
     return '<div role="img" aria-label="'+esc(summary)+'" style="display:flex;align-items:center;gap:12px;margin-bottom:8px">'
-      +'<div style="width:70px;font-family:var(--mono);font-size:12px;color:var(--mut)">'+d.slice(5)+'</div>'
+      +'<div style="width:70px;font-family:var(--sans);font-size:12px;color:var(--mut)">'+d.slice(5)+'</div>'
       +'<div aria-hidden="true" style="flex:1;height:22px;background:rgba(0,0,0,.25);border-radius:6px;overflow:hidden;display:flex">'
       +'<div style="width:'+(tot?b.allow/tot*100:0)+'%;background:var(--ok)" title="放行 '+b.allow+'"></div>'
       +'<div style="width:'+(tot?b.caution/tot*100:0)+'%;background:var(--warn)" title="警惕 '+b.caution+'"></div>'
@@ -703,7 +703,7 @@ function renderWeek(recs){
 
 async function renderVoices(){
   try{
-    const s=await(await api("/api/voices")).json();
+    const s=await(await api("api/voices")).json();
     const vs=s.voices||[];
     $("voiceList").innerHTML=vs.length?vs.map(v=>
       '<div class="voice"><div class="av">'+esc((v.name||"?").slice(0,1))+'</div>'
@@ -719,7 +719,7 @@ $("enSubmit").onclick=async()=>{
   const nm=$("enName").value.trim(),f=$("enFile").files[0]; if(!nm||!f)return;
   const fd=new FormData(); fd.append("name",nm); fd.append("file",f,f.name);
   try{
-    const r=await api("/api/enroll",{method:"POST",body:fd});
+    const r=await api("api/enroll",{method:"POST",body:fd});
     const d=await r.json();
     if(d.error){toast("登记失败："+(d.message||d.error),true);return;}
     $("enName").value="";$("enFile").value="";$("enFileLbl").textContent="选择录音文件";
@@ -742,7 +742,7 @@ async function pollRing(){
   if(!token||document.hidden||ringPollInFlight||call.ws) return;
   ringPollInFlight=true;
   try{
-    const d=await(await api("/api/call/pending")).json();
+    const d=await(await api("api/call/pending")).json();
     if(d.ringing && d.room_id!==lastRingId && !call.ws){
       lastRingId=d.room_id; currentRing=d;
       $("ringReason").textContent=d.reason||"谛听检测到可疑来电";
@@ -812,14 +812,13 @@ async function openCall(roomId,info){
   if(info&&info.transcript)$("callTrans").textContent=info.transcript;
   let ws;
   try{
-    const r=await api("/api/call/ws-ticket",{method:"POST",
+    const r=await api("api/call/ws-ticket",{method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({room_id:roomId})});
     const d=await r.json();
     if(!r.ok||!d.ticket) throw new Error(d.message||d.detail||"无法建立安全通话");
     if(attempt!==callAttempt) return;
-    const wsProto=location.protocol==="https:"?"wss:":"ws:";
-    ws=new WebSocket(wsProto+"//"+location.host+"/ws/call/"+encodeURIComponent(roomId)+"?role=child&ticket="+encodeURIComponent(d.ticket));
+    ws=new WebSocket(window.VeriCallPath.websocket("ws/call/"+encodeURIComponent(roomId)+"?role=child&ticket="+encodeURIComponent(d.ticket)));
   }catch(e){
     if(attempt!==callAttempt) return;
     $("callState").textContent="呼叫已失效";
@@ -909,7 +908,7 @@ function markSync(ok){
   }
 }
 async function loadAlerts(){
-  try{const d=await(await api("/api/family/alerts")).json(); ALERTS=d.alerts||[]; renderGuard();}
+  try{const d=await(await api("api/family/alerts")).json(); ALERTS=d.alerts||[]; renderGuard();}
   catch(e){}
 }
 async function init(){
@@ -917,7 +916,7 @@ async function init(){
   initInFlight=true;
   if(!ALL.length){eventsLoadState="loading";renderEvents();}
   try{
-    const r=await api("/api/history?limit=200");
+    const r=await api("api/history?limit=200");
     if(!r.ok)throw new Error("HTTP "+r.status);
     const h=await r.json();
     ALL=h.records||[];
@@ -936,7 +935,7 @@ document.addEventListener("visibilitychange",()=>{
 });
 loadPublicConfig();
 if(token){
-  api("/api/family/me").then(r=>r.json()).then(d=>{
+  api("api/family/me").then(r=>r.json()).then(d=>{
     $("usrName").textContent=d.user.display_name; switchView(); init();
   }).catch(()=>{});
 }else switchView();

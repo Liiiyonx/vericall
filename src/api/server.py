@@ -442,8 +442,15 @@ async def analyze(file: UploadFile | None = File(default=None),
                 pipe = get_pipe()
                 if DEMO_FAMILY_NAME not in _enrolled and \
                         Path(DEMO_FAMILY_ENROLL).is_file():
-                    pipe.enroll(DEMO_FAMILY_NAME, DEMO_FAMILY_ENROLL)
-                    _enrolled.add(DEMO_FAMILY_NAME)
+                    try:
+                        pipe.enroll(DEMO_FAMILY_NAME, DEMO_FAMILY_ENROLL)
+                        _enrolled.add(DEMO_FAMILY_NAME)
+                    except Exception as e:  # noqa: BLE001
+                        # 声纹只是三通道之一。模型/音频后端不可用时保留
+                        # 声学与语义通道，避免可选辅助能力拖垮整个演示。
+                        print(
+                            "[API] demo voiceprint enroll skipped: "
+                            f"{type(e).__name__}: {e}")
                 source = f"demo:{demo}"
                 name = title
         else:

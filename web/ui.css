@@ -1,10 +1,6 @@
 :root{
-  --font-sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei UI","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",sans-serif;
-  --font-serif:"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","Noto Serif SC","SimSun",serif;
-  --font-mono:ui-monospace,"Cascadia Code","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei UI","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",sans-serif;
   --sans:var(--font-sans);
-  --serif:var(--font-serif);
-  --mono:var(--font-mono);
   --ui-bg:#07090b;
   --ui-bg-soft:#0b0e11;
   --ui-surface:rgba(255,255,255,.035);
@@ -295,7 +291,7 @@ body[data-app="child"] .logo .en{font-size:10px;letter-spacing:2px}
   border-radius:4px;
   background:rgba(0,0,0,.25);
   color:var(--ui-faint);
-  font:10px/1.4 var(--mono);
+  font:10px/1.4 var(--sans);
 }
 
 main{
@@ -316,12 +312,12 @@ main{
 .panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid var(--ui-line)}
 .panel-head .eyebrow,.eyebrow{
   color:var(--ui-teal);
-  font:10px/1.4 var(--mono);
+  font:10px/1.4 var(--sans);
   letter-spacing:1.7px;
   text-transform:uppercase;
 }
 .panel-head h2,.panel-head h3{font-family:var(--sans)!important;font-size:15px!important;letter-spacing:.4px!important}
-.panel-head .meta{color:var(--ui-faint);font:10px/1.4 var(--mono)}
+.panel-head .meta{color:var(--ui-faint);font:10px/1.4 var(--sans)}
 
 .btn{border-radius:var(--ui-radius)!important}
 .btn:hover{box-shadow:0 0 0 3px rgba(212,180,131,.08)}
@@ -408,7 +404,7 @@ body[data-app="index"] #p-about .dash{
   border-radius:7px;
   background:rgba(255,255,255,.025);
   color:var(--ui-muted);
-  font:10px/1.2 var(--mono);
+  font:10px/1.2 var(--sans);
 }
 .status-chip i{width:6px;height:6px;border-radius:50%;background:var(--ui-teal);box-shadow:0 0 10px rgba(112,212,198,.65)}
 
@@ -464,7 +460,7 @@ body[data-app="index"] #p-about .dash{
 .drop-zone input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .drop-zone strong{display:block;color:var(--ui-text);font-size:13px;font-weight:600}
 .drop-zone span{display:block;margin-top:4px;color:var(--ui-faint);font-size:11px}
-#fileName{display:block;margin-top:6px;color:var(--ui-teal);font:10px/1.5 var(--mono)}
+#fileName{display:block;margin-top:6px;color:var(--ui-teal);font:10px/1.5 var(--sans)}
 
 .caller-field{padding:0 18px 16px}
 .caller-field label{display:block;margin-bottom:8px;color:var(--ui-faint);font-size:10px;letter-spacing:1px}
@@ -477,7 +473,7 @@ body[data-app="index"] #p-about .dash{
   outline:none;
   background:rgba(0,0,0,.18);
   color:var(--ui-text);
-  font:13px/1 var(--mono);
+  font:13px/1 var(--sans);
   transition:border-color .2s var(--ui-ease),background .2s var(--ui-ease);
 }
 .caller-field input::placeholder{
@@ -488,7 +484,7 @@ body[data-app="index"] #p-about .dash{
 
 .demos{padding:14px 18px 16px;border-top:1px solid var(--ui-line)}
 .demos-title{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}
-.demos-title span{color:var(--ui-faint);font:10px/1.2 var(--mono);letter-spacing:1px}
+.demos-title span{color:var(--ui-faint);font:10px/1.2 var(--sans);letter-spacing:1px}
 .demos-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .demo{
   min-width:0;
@@ -589,7 +585,7 @@ body[data-app="index"] #p-about .dash{
   border-radius:7px;
   background:rgba(112,212,198,.045);
   color:var(--ui-teal);
-  font:9px/1 var(--mono);
+  font:9px/1 var(--sans);
   letter-spacing:.08em;
 }
 .result-empty strong{display:block;color:var(--ui-text);font-size:13px;font-weight:600}
@@ -694,7 +690,7 @@ body[data-app="index"] #p-about .dash{
   flex-wrap:wrap;
   margin-top:12px;
   color:var(--ui-faint);
-  font:10.5px/1.5 var(--mono);
+  font:10.5px/1.5 var(--sans);
 }
 .hist-summary b{color:var(--ui-muted);font-weight:500}
 .hist-list{margin-top:14px}
@@ -746,7 +742,7 @@ body[data-app="index"] #p-about .dash{
   text-align:left;
 }
 .live-metrics .lm span{display:block;color:var(--ui-faint);font-size:10px;letter-spacing:.4px}
-.live-metrics .lm b{display:block;margin-top:6px;color:var(--ui-text);font:15px/1.2 var(--mono);font-weight:450}
+.live-metrics .lm b{display:block;margin-top:6px;color:var(--ui-text);font:15px/1.2 var(--sans);font-weight:450}
 .chal-live{margin-top:30px!important;max-width:920px!important}
 .cl-scripts{gap:10px!important}
 .cl-card{border-radius:7px!important;background:rgba(0,0,0,.14)!important}
@@ -814,7 +810,7 @@ body[data-app="child"] .metric{
   background:var(--ui-surface);
 }
 body[data-app="child"] .metric .label{color:var(--ui-muted);font-size:11px;letter-spacing:.3px}
-body[data-app="child"] .metric .value{margin-top:8px;color:var(--ui-text);font:24px/1 var(--mono);font-weight:450}
+body[data-app="child"] .metric .value{margin-top:8px;color:var(--ui-text);font:24px/1 var(--sans);font-weight:450}
 body[data-app="child"] .metric .hint{margin-top:6px;color:var(--ui-faint);font-size:10px}
 body[data-app="child"] .metric.alert .value{color:var(--bad)}
 body[data-app="child"] .metric.safe .value{color:var(--ok)}
@@ -848,7 +844,7 @@ body[data-app="child"] .ch{
   border-radius:6px!important;
   background:rgba(0,0,0,.2)!important;
 }
-body[data-app="child"] .ch .s{font-family:var(--mono)!important;font-size:19px!important}
+body[data-app="child"] .ch .s{font-family:var(--sans)!important;font-size:19px!important}
 body[data-app="child"] .card .rationale{
   padding:10px 12px!important;
   border-top:0!important;
@@ -992,10 +988,10 @@ body[data-app="elder"] footer{padding-bottom:max(18px,env(safe-area-inset-bottom
   border:1px solid var(--ui-line);
   border-radius:5px;
   color:var(--ui-faint);
-  font:10px/1 var(--mono);
+  font:10px/1 var(--sans);
 }
 .command-list{max-height:480px;overflow:auto;padding:8px}
-.command-section{padding:8px 9px 5px;color:var(--ui-faint);font:9px/1 var(--mono);letter-spacing:1.3px}
+.command-section{padding:8px 9px 5px;color:var(--ui-faint);font:9px/1 var(--sans);letter-spacing:1.3px}
 .command-item{
   display:flex;
   align-items:center;
@@ -1024,12 +1020,12 @@ body[data-app="elder"] footer{padding-bottom:max(18px,env(safe-area-inset-bottom
   border-radius:6px;
   background:rgba(0,0,0,.22);
   color:var(--ui-teal);
-  font:11px/1 var(--mono);
+  font:11px/1 var(--sans);
 }
 .command-item .copy{min-width:0;flex:1}
 .command-item strong{display:block;font-size:13px;font-weight:550;color:inherit}
 .command-item span{display:block;margin-top:2px;overflow:hidden;color:var(--ui-faint);font-size:10.5px;white-space:nowrap;text-overflow:ellipsis}
-.command-item .key{color:var(--ui-faint);font:9px/1 var(--mono)}
+.command-item .key{color:var(--ui-faint);font:9px/1 var(--sans)}
 .command-empty{padding:34px 16px;color:var(--ui-faint);text-align:center;font-size:12px}
 .command-foot{
   display:flex;
@@ -1037,7 +1033,7 @@ body[data-app="elder"] footer{padding-bottom:max(18px,env(safe-area-inset-bottom
   padding:9px 14px;
   border-top:1px solid var(--ui-line);
   color:var(--ui-faint);
-  font:9.5px/1 var(--mono);
+  font:9.5px/1 var(--sans);
 }
 .command-foot kbd{color:var(--ui-muted)}
 
@@ -1244,8 +1240,7 @@ body[data-app="elder"] footer{padding-bottom:max(18px,env(safe-area-inset-bottom
 }
 
 /* ================= Typography roles ================= */
-/* Sans is the default for every interface element. Exceptions below are
-   deliberately limited to the wordmark and machine-readable values. */
+/* One sans stack is used for every interface element, value, and number. */
 body,
 body *{
   font-family:var(--font-sans)!important;
@@ -1269,9 +1264,9 @@ h1,h2,h3,h4,h5,h6,
   letter-spacing:0!important;
 }
 
-/* Serif is reserved exclusively for the 谛听 wordmark. */
+/* The wordmark uses the same sans stack as the rest of the interface. */
 .logo .cn{
-  font-family:var(--font-serif)!important;
+  font-family:var(--font-sans)!important;
   font-weight:600!important;
   letter-spacing:.08em!important;
 }
@@ -1291,7 +1286,7 @@ label,.field label,.caller-field label,.login-box label{
   letter-spacing:.02em!important;
 }
 
-/* Machine-readable values are the only content allowed to use monospace. */
+/* Numeric and machine-readable values keep the same sans stack. */
 code,pre,kbd,.mono,[data-mono],.num,
 .ch .idx,.demo i,.pc i,
 .caller-field input,
@@ -1304,18 +1299,17 @@ body[data-app="child"] .metric .value,
 body[data-app="child"] .card .time,
 body[data-app="child"] .wcard .n,
 body[data-app="child"] .ch .s,
-[style*="font-family:var(--mono)"],
 .gauge .gtxt b,.ch .score,.ch .conf,.m-card .n,
 .rt-row b,.dash .dk .n,.dash .bars .b span,.dash .bars .bx,
 .detail-box .ch2 .sc,.chal-box .d{
-  font-family:var(--font-mono)!important;
+  font-family:var(--font-sans)!important;
   font-variant-numeric:tabular-nums;
 }
 
 /* English technical labels share one tracking scale; Chinese group labels
    stay in the sans stack. */
 .eyebrow,.panel-head .eyebrow{
-  font-family:var(--font-mono)!important;
+  font-family:var(--font-sans)!important;
   letter-spacing:.12em!important;
 }
 .command-section{

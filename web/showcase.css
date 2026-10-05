@@ -1,0 +1,679 @@
+/* =========================================================================
+   谛听 VeriCall · 展示落地页
+   -------------------------------------------------------------------------
+   原创性说明（对应 Awwwards / FWA 评审关注点）：
+   本页不使用模板化的「光斑 + 玻璃卡片 + 渐变按钮」组合。
+   视觉母题只有一个 —— 语音频谱。频谱场的波形形态取自语音信号的
+   1/f 能量分布（低频密集、高频衰减），是「声音」这一主题的形式化表达，
+   而非任意装饰。所有分隔、指标、图形均从这一母题派生。
+   ========================================================================= */
+
+/* ========== 页面骨架 ========== */
+body[data-app="showcase"]{
+  background:var(--ui-bg)!important;
+  color:var(--ui-text);
+  --sc-max:1240px;
+}
+body[data-app="showcase"]::before,
+body[data-app="showcase"]::after{display:none!important}
+.showcase{min-width:0}
+
+/* ========== 1. 导航 ========== */
+.sc-nav{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;gap:var(--sp-6);
+  max-width:var(--sc-max);margin:0 auto;
+  padding:calc(env(safe-area-inset-top) + 14px) var(--gutter);
+  background:color-mix(in srgb,var(--ui-bg) 82%,transparent);
+  backdrop-filter:blur(20px) saturate(1.7);
+  -webkit-backdrop-filter:blur(20px) saturate(1.7);
+  border-bottom:1px solid transparent;
+  transition:border-color var(--dur-2) var(--ease-out),background-color var(--dur-2) var(--ease-out);
+}
+.sc-nav.is-stuck{
+  border-bottom-color:var(--ui-line);
+  background:color-mix(in srgb,var(--ui-bg) 93%,transparent);
+}
+.sc-logo{
+  display:flex;align-items:center;gap:var(--sp-3);
+  text-decoration:none;color:var(--ui-gold);flex:0 0 auto;
+}
+.sc-logo svg{width:30px;height:30px}
+.sc-logo-txt{display:flex;flex-direction:column;line-height:1.1}
+.sc-logo-txt b{
+  font-size:var(--fs-4);font-weight:var(--fw-semi);
+  letter-spacing:.16em;color:var(--ui-text);
+}
+.sc-logo-txt i{
+  font-style:normal;font-size:9px;letter-spacing:.26em;
+  color:var(--ui-faint);
+}
+.sc-navlinks{
+  display:flex;gap:var(--sp-5);margin-left:auto;
+  min-width:0;overflow:hidden;
+}
+.sc-navlinks a{
+  font-size:var(--fs-2);letter-spacing:var(--ls-base);
+  color:var(--ui-muted);text-decoration:none;
+  padding:6px 0;position:relative;
+  transition:color var(--dur-1) var(--ease-out);
+  white-space:nowrap;
+}
+.sc-navlinks a::after{
+  content:'';position:absolute;left:0;right:0;bottom:2px;height:1px;
+  background:var(--ui-gold);transform:scaleX(0);transform-origin:right;
+  transition:transform var(--dur-2) var(--ease-out);
+}
+.sc-navlinks a:hover{color:var(--ui-text)}
+.sc-navlinks a:hover::after{transform:scaleX(1);transform-origin:left}
+.sc-navact{display:flex;align-items:center;gap:var(--sp-3);flex:0 0 auto}
+.sc-navact .theme-toggle{
+  min-width:40px;min-height:40px;border-radius:var(--radius-s);
+  border:1px solid var(--ui-line);
+  transition:background-color var(--dur-1) var(--ease-out);
+}
+.sc-navact .theme-toggle:hover{background:var(--surface-1)}
+.sc-cta{
+  display:inline-flex;align-items:center;min-height:40px;
+  padding:9px 18px;
+  font-size:var(--fs-2);letter-spacing:var(--ls-base);
+  color:var(--ui-gold);text-decoration:none;
+  border:1px solid var(--ui-gold);border-radius:var(--radius-s);
+  transition:background-color var(--dur-1) var(--ease-out),color var(--dur-1) var(--ease-out);
+}
+.sc-cta:hover{background:rgba(var(--ui-gold-rgb),.12);color:var(--ui-gold-soft)}
+
+/* ========== 2. Hero ========== */
+.sc-hero{
+  position:relative;
+  min-height:min(100svh,940px);
+  display:flex;align-items:center;
+  /* 顶部留出 sticky nav 高度，频谱不被压住 */
+  padding:calc(var(--sp-8) + 40px) 0 clamp(48px,7vh,80px);
+  overflow:hidden;
+  isolation:isolate;
+}
+/* 频谱场：全站唯一的光源，位置固定不随滚动（避免廉价的跟随鼠标光斑） */
+.sc-field{
+  position:absolute;inset:0;width:100%;height:100%;
+  z-index:-1;pointer-events:none;
+  /* 关键：压到右侧并整体淡出，让左侧文字区保持干净可读。
+     频谱是氛围层，不该与 H1 争夺注意力。 */
+  -webkit-mask-image:radial-gradient(86% 70% at 72% 50%,#000 0%,rgba(0,0,0,.62) 46%,transparent 82%);
+  mask-image:radial-gradient(86% 70% at 72% 50%,#000 0%,rgba(0,0,0,.62) 46%,transparent 82%);
+  opacity:1;
+}
+.sc-hero-inner{
+  max-width:var(--sc-max);width:100%;margin:0 auto;
+  padding:0 var(--gutter);
+  position:relative;
+}
+.sc-eyebrow{
+  display:inline-flex;align-items:center;gap:var(--sp-2);
+  font-size:var(--fs-2);letter-spacing:var(--ls-wide);
+  color:var(--ui-gold);margin-bottom:var(--sp-6);
+  animation:sc-up var(--dur-4) var(--ease-out) both;
+}
+.sc-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--ui-gold);
+  box-shadow:0 0 0 0 rgba(var(--ui-gold-rgb),.5);
+  animation:sc-pulse 2.6s var(--ease-inout) infinite;
+}
+@keyframes sc-pulse{
+  0%{box-shadow:0 0 0 0 rgba(var(--ui-gold-rgb),.45)}
+  70%{box-shadow:0 0 0 9px rgba(var(--ui-gold-rgb),0)}
+  100%{box-shadow:0 0 0 0 rgba(var(--ui-gold-rgb),0)}
+}
+/* 主标题：中文用正字距保持庄重，数字层用负字距 */
+.sc-h1{
+  font-size:clamp(38px,7.2vw,92px)!important;
+  line-height:1.04!important;
+  font-weight:var(--fw-semi)!important;
+  margin:0;
+  max-width:15ch;
+}
+.sc-h1 span{display:block}
+.sc-l1{
+  color:var(--ui-text);
+  letter-spacing:-.03em;
+  animation:sc-up var(--dur-4) .08s var(--ease-out) both;
+}
+.sc-l2{
+  /* 关键词用金色实色（渐变文字在浅色主题下对比度不可控）。
+     全站规则：金色 = 数据/结论，此处是 slogan，用 --ui-gold 实色。 */
+  color:var(--ui-gold)!important;
+  letter-spacing:-.03em;
+  animation:sc-up var(--dur-4) .16s var(--ease-out) both;
+}
+.sc-lead{
+  margin-top:var(--sp-6)!important;
+  font-size:var(--fs-5)!important;
+  line-height:1.75!important;
+  color:var(--ui-muted)!important;
+  max-width:46ch;
+  text-wrap:pretty;
+  animation:sc-up var(--dur-4) .26s var(--ease-out) both;
+}
+.sc-herometric{
+  display:flex;flex-wrap:wrap;gap:var(--sp-6) var(--sp-8);
+  margin-top:var(--sp-8);
+  padding-top:var(--sp-5);
+  border-top:1px solid var(--ui-line);
+  animation:sc-up var(--dur-4) .34s var(--ease-out) both;
+}
+.sc-hm{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sc-hm b{
+  font-size:var(--fs-7);font-weight:var(--fw-normal);
+  line-height:1;letter-spacing:-.035em;
+  color:var(--ui-gold);
+  font-variant-numeric:tabular-nums;
+  display:flex;align-items:baseline;gap:.05em;
+}
+.sc-hm b i{
+  font-style:normal;
+  /* max() 兜底：.36em 在移动端主数字缩到 22.8px 时只有 8.2px，不可读 */
+  font-size:max(11px, .34em);
+  font-weight:var(--fw-medium);
+  color:var(--ui-gold-soft);letter-spacing:0;
+}
+.sc-hm span{font-size:var(--fs-1);color:var(--ui-faint);letter-spacing:var(--ls-base)}
+.sc-herocta{
+  display:flex;flex-wrap:wrap;gap:var(--sp-3);
+  margin-top:var(--sp-7);
+  animation:sc-up var(--dur-4) .42s var(--ease-out) both;
+}
+.sc-scroll{
+  display:flex;align-items:center;gap:var(--sp-3);
+  margin-top:var(--sp-7);
+  font-size:var(--fs-1);letter-spacing:var(--ls-wide);
+  color:var(--ui-faint);
+  animation:sc-up var(--dur-4) .5s var(--ease-out) both;
+}
+.sc-scroll i{
+  width:1px;height:34px;
+  background:linear-gradient(180deg,var(--ui-gold),transparent);
+  animation:sc-drop 2.4s var(--ease-inout) infinite;
+}
+@keyframes sc-drop{
+  0%{transform:scaleY(.2);transform-origin:top;opacity:0}
+  40%{opacity:1}
+  100%{transform:scaleY(1);transform-origin:top;opacity:0}
+}
+
+/* ========== 3. 按钮 ========== */
+.sc-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:50px;padding:14px 30px;
+  font-size:var(--fs-3);letter-spacing:var(--ls-base);
+  text-decoration:none;cursor:pointer;
+  border:1px solid var(--ui-line-strong);border-radius:var(--radius-s);
+  color:var(--ui-text);background:transparent;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-spring),
+    color var(--dur-1) var(--ease-out);
+}
+.sc-btn:hover{border-color:var(--ui-muted);background:var(--surface-1)}
+.sc-btn:active{transform:scale(.98)}
+.sc-btn-primary{
+  background:var(--ui-gold);border-color:var(--ui-gold);
+  color:#16130f;font-weight:var(--fw-semi);
+  box-shadow:0 10px 30px -16px rgba(var(--ui-gold-rgb),.6);
+}
+.sc-btn-primary:hover{
+  background:var(--ui-gold-soft);border-color:var(--ui-gold-soft);
+  color:#16130f;
+  box-shadow:0 14px 36px -16px rgba(var(--ui-gold-rgb),.7);
+}
+html[data-theme="light"] .sc-btn-primary{color:#fffdf7}
+html[data-theme="light"] .sc-btn-primary:hover{color:#fffdf7}
+
+/* ========== 6. 微交互：触控与点击目标 ≥ 32px ========== */
+/* 桌面端指针精确，不强制 44px；但导航链接与页脚链接仍需可点区域足够，
+   否则鼠标难以命中（实测出现 28×34 与 41×22 的目标）。 */
+.sc-navlinks a{
+  min-height:34px;
+  min-width:44px;          /* 两字导航链接仅 32px 宽，鼠标难以命中 */
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:6px 8px;
+}
+.sc-foot-n a{
+  min-height:32px;
+  display:inline-flex;align-items:center;
+  padding:4px 0;
+}
+.sc-logo{
+  min-height:36px;
+  padding:4px 2px;margin-left:-2px;
+}
+.sc-spark{height:34px;min-height:34px}
+
+/* 触屏设备：全局提升到 44×44（iOS HIG / WCAG 2.5.5） */
+@media (pointer:coarse){
+  .sc-navlinks a,
+  .sc-foot-n a,
+  .sc-logo,
+  .sc-cta,
+  .sc-btn,
+  .sc-navact .theme-toggle{
+    min-height:44px;min-width:44px;
+  }
+  .sc-nav{padding-top:calc(env(safe-area-inset-top) + 10px);padding-bottom:10px}
+  .sc-logo svg{width:32px;height:32px}
+}
+
+/* ========== 7. 区块通用 ========== */
+.sc-sec{
+  max-width:var(--sc-max);margin:0 auto;
+  padding:clamp(72px,11vh,148px) var(--gutter);
+  min-width:0;
+}
+.sc-sec-alt{
+  max-width:none;
+  background:
+    linear-gradient(180deg,transparent,var(--surface-0) 12%,var(--surface-0) 88%,transparent);
+  border-top:1px solid var(--ui-line);
+  border-bottom:1px solid var(--ui-line);
+}
+.sc-sec-alt > *{
+  max-width:calc(var(--sc-max) - var(--gutter) * 2);margin-left:auto;margin-right:auto;
+}
+.sc-sec-head{max-width:62ch;margin-bottom:clamp(40px,6vh,72px)}
+.sc-sec-num{
+  font-size:var(--fs-2);letter-spacing:var(--ls-mega);
+  color:var(--ui-gold);margin-bottom:var(--sp-4);
+  display:flex;align-items:center;gap:var(--sp-3);
+}
+.sc-sec-num::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--ui-line-strong),transparent);
+  max-width:120px;
+}
+.sc-sec-head h2{
+  font-size:clamp(28px,4.2vw,52px)!important;
+  line-height:1.12!important;
+  font-weight:var(--fw-semi)!important;
+  letter-spacing:-.028em!important;
+  text-wrap:balance;
+}
+.sc-sec-lead{
+  margin-top:var(--sp-5)!important;
+  font-size:var(--fs-4)!important;
+  line-height:var(--lh-relaxed)!important;
+  color:var(--ui-muted)!important;
+  max-width:56ch;
+  text-wrap:pretty;
+}
+
+/* ========== 5. 问题卡 ========== */
+/* auto-fit：3 列 → 2 列 → 1 列随宽度连续变化，无断点塌陷 */
+.sc-problem{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap:1px;background:var(--ui-line);
+  border:1px solid var(--ui-line);border-radius:var(--radius-m);
+  overflow:hidden;
+}
+.sc-pcard{
+  background:var(--ui-bg);
+  padding:var(--sp-7) var(--sp-6);
+  display:flex;flex-direction:column;gap:var(--sp-3);
+  min-width:0;
+  transition:background-color var(--dur-2) var(--ease-out);
+}
+.sc-pcard:hover{background:var(--surface-0)}
+.sc-pcard-n{
+  font-size:var(--fs-1);letter-spacing:var(--ls-wide);
+  color:var(--ui-faint);
+}
+.sc-pcard-v{
+  font-size:var(--fs-7);font-weight:var(--fw-normal);
+  line-height:1;letter-spacing:-.035em;
+  color:var(--ui-text);
+  font-variant-numeric:tabular-nums;
+}
+.sc-pcard p{
+  font-size:var(--fs-3);line-height:var(--lh-relaxed);
+  color:var(--ui-muted);margin:0;
+  text-wrap:pretty;
+}
+/* 唯一使用警示色的卡片 —— 视觉层级里的「矛盾点」 */
+.sc-pcard-hot{
+  background:linear-gradient(180deg,rgba(var(--ui-bad-rgb),.05),transparent 55%);
+}
+.sc-pcard-hot .sc-pcard-v{color:var(--ui-bad)}
+.sc-pcard-hot .sc-pcard-n{color:var(--ui-bad);opacity:.75}
+
+/* ========== 6. 三通道卡 ========== */
+/* 关键：用 auto-fit + minmax 替代固定列数。
+   硬断点会在 1100→1180 之间产生「单列突然跳到三列」的塌陷 ——
+   iPad Pro 竖屏（1024/1100）会看到稀疏的单列布局。
+   auto-fit 让列数随可用宽度连续变化，任何视口都没有中间态。 */
+.sc-chans{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 288px), 1fr));
+  gap:var(--sp-5);
+}
+.sc-chan{
+  position:relative;
+  padding:var(--sp-7) var(--sp-6);
+  border:1px solid var(--ui-line);border-radius:var(--radius-m);
+  background:var(--ui-bg);
+  display:flex;flex-direction:column;gap:var(--sp-4);
+  min-width:0;overflow:hidden;
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
+}
+/* 顶部通道色条：hover 时从中心展开 */
+.sc-chan::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,var(--ui-gold),transparent);
+  transform:scaleX(0);transform-origin:center;
+  transition:transform var(--dur-3) var(--ease-out);
+}
+.sc-chan:hover{
+  border-color:var(--ui-line-strong);
+  transform:translateY(-3px);
+  box-shadow:0 24px 54px -26px rgba(0,0,0,.7);
+}
+.sc-chan:hover::before{transform:scaleX(1)}
+.sc-chan-top{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:var(--sp-3);flex-wrap:wrap;
+}
+.sc-chan-idx{
+  font-size:var(--fs-1);letter-spacing:var(--ls-wide);
+  color:var(--ui-gold);
+}
+.sc-chan-tag{
+  font-size:var(--fs-1);letter-spacing:var(--ls-base);
+  color:var(--ui-faint);
+  padding:2px 10px;border-radius:var(--radius-full);
+  border:1px solid var(--ui-line);
+}
+.sc-chan h3{
+  font-size:var(--fs-6)!important;
+  line-height:var(--lh-snug)!important;
+  font-weight:var(--fw-semi)!important;
+  letter-spacing:-.02em!important;
+}
+/* 关键设计：把「提问」做成视觉主体 —— 这是产品的思考方式 */
+.sc-chan-q{
+  font-size:var(--fs-4)!important;
+  line-height:1.5!important;
+  color:var(--ui-gold-soft)!important;
+  font-weight:var(--fw-medium)!important;
+  padding-left:var(--sp-4);
+  border-left:2px solid rgba(var(--ui-gold-rgb),.4);
+  margin:0!important;
+}
+.sc-chan-d{
+  font-size:var(--fs-3)!important;
+  line-height:var(--lh-relaxed)!important;
+  color:var(--ui-muted)!important;
+  margin:0!important;
+  flex:1;
+  text-wrap:pretty;
+}
+.sc-chan-metrics{
+  display:flex;gap:var(--sp-5);flex-wrap:wrap;
+  padding-top:var(--sp-5);
+  border-top:1px solid var(--ui-line);
+}
+.sc-chan-metrics > div{display:flex;flex-direction:column;gap:1px;min-width:0}
+.sc-chan-metrics b{
+  font-size:var(--fs-5);font-weight:var(--fw-normal);
+  color:var(--ui-text);letter-spacing:-.025em;line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.sc-chan-metrics span{font-size:var(--fs-1);color:var(--ui-faint);letter-spacing:var(--ls-base)}
+/* 频谱迷你图：由 showcase.js 绘制，与 Hero 场同源但形态固定。
+   aria-hidden 已标注，纯装饰，不应进入可点击目标序列。 */
+.sc-spark{
+  height:34px;min-height:34px;
+  width:100%;
+  opacity:.55;
+  margin-top:var(--sp-2);
+  pointer-events:none;   /* 纯装饰，不拦截指针 */
+  user-select:none;
+}
+
+/* ========== 7. 证据表 ========== */
+/* 用 flex 而非 grid：证据表需要「表 : 注释 = 1.5 : 1」的主次比例，
+   grid 的 auto-fit 等分会丢失主次关系。
+   flex-wrap 让两者在空间不足时自然堆叠，同样没有断点塌陷。 */
+.sc-ev{
+  display:flex;flex-wrap:wrap;
+  gap:var(--sp-8);align-items:flex-start;
+}
+.sc-ev-table{flex:1 1 min(100%, 420px)}
+.sc-ev-note{flex:1 1 min(100%, 300px)}
+.sc-ev-table{
+  border:1px solid var(--ui-line);border-radius:var(--radius-m);
+  overflow:hidden;min-width:0;
+}
+.sc-ev-row{
+  display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr) minmax(0,1.2fr);
+  gap:var(--sp-4);align-items:baseline;
+  padding:var(--sp-4) var(--sp-5);
+  border-bottom:1px solid var(--ui-line);
+  font-size:var(--fs-3);
+  min-width:0;
+  transition:background-color var(--dur-1) var(--ease-out);
+}
+.sc-ev-row:last-child{border-bottom:none}
+.sc-ev-row:not(.sc-ev-hd):hover{background:var(--surface-0)}
+.sc-ev-hd{
+  font-size:var(--fs-1)!important;letter-spacing:var(--ls-wide)!important;
+  color:var(--ui-faint)!important;
+  background:var(--surface-0);
+  border-bottom-color:var(--ui-line-strong)!important;
+}
+.sc-ev-row span{color:var(--ui-muted);min-width:0;overflow-wrap:anywhere}
+.sc-ev-row b{
+  color:var(--ui-gold);font-weight:var(--fw-normal);
+  font-size:var(--fs-5);letter-spacing:-.025em;
+  font-variant-numeric:tabular-nums;
+}
+.sc-ev-note{
+  padding:var(--sp-6);
+  border-left:2px solid var(--ui-gold);
+  background:var(--surface-0);
+  border-radius:0 var(--radius-m) var(--radius-m) 0;
+  position:sticky;top:96px;
+}
+.sc-ev-note-t{
+  font-size:var(--fs-3);font-weight:var(--fw-semi);
+  color:var(--ui-text);margin-bottom:var(--sp-4);
+  letter-spacing:var(--ls-base);
+}
+.sc-ev-note p{
+  font-size:var(--fs-3);line-height:var(--lh-relaxed);
+  color:var(--ui-muted);margin:0 0 var(--sp-4);
+  text-wrap:pretty;
+}
+.sc-ev-note p:last-child{margin-bottom:0}
+
+/* ========== 8. 红队自证 ========== */
+/* auto-fit：2 列 → 1 列连续变化 */
+.sc-honest{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap:var(--sp-5);
+}
+.sc-hon-row{
+  display:flex;gap:var(--sp-5);align-items:flex-start;
+  padding:var(--sp-6);
+  border:1px solid var(--ui-line);border-radius:var(--radius-m);
+  background:var(--ui-bg);
+  min-width:0;
+}
+.sc-hon-b{display:flex;flex-direction:column;gap:var(--sp-2);min-width:0;flex:1}
+.sc-hon-b b{
+  font-size:var(--fs-6);font-weight:var(--fw-normal);
+  line-height:1.1;letter-spacing:-.03em;
+  display:flex;align-items:baseline;gap:var(--sp-2);flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.sc-hon-b b i{
+  font-style:normal;font-size:var(--fs-3);
+  font-weight:var(--fw-medium);letter-spacing:var(--ls-base);
+  color:var(--ui-text);
+}
+.sc-hon-b p{
+  font-size:var(--fs-3);line-height:var(--lh-relaxed);
+  color:var(--ui-muted);margin:0;
+  text-wrap:pretty;
+}
+.sc-hon-badge{
+  display:inline-block;min-width:64px;text-align:center;
+  font-size:var(--fs-1);letter-spacing:var(--ls-wide);
+  padding:4px 10px;border-radius:var(--radius-full);
+}
+.sc-hon-good{border-left:2px solid var(--ui-ok)}
+.sc-hon-good .sc-hon-badge{background:rgba(var(--ui-ok-rgb),.12);color:var(--ui-ok)}
+.sc-hon-good .sc-hon-b b{color:var(--ui-ok)}
+.sc-hon-bad{border-left:2px solid var(--ui-bad)}
+.sc-hon-bad .sc-hon-badge{background:rgba(var(--ui-bad-rgb),.12);color:var(--ui-bad)}
+.sc-hon-bad .sc-hon-b b{color:var(--ui-bad)}
+.sc-hon-warn{border-left:2px solid var(--ui-warn)}
+.sc-hon-warn .sc-hon-badge{background:rgba(var(--ui-warn-rgb),.12);color:var(--ui-warn)}
+.sc-hon-warn .sc-hon-b b{color:var(--ui-warn)}
+.sc-hon-foot{
+  margin-top:var(--sp-7);
+  font-size:var(--fs-2);color:var(--ui-faint);
+  line-height:var(--lh-relaxed);
+}
+.sc-hon-foot code{
+  font-family:var(--font-mono);font-size:.92em;
+  color:var(--ui-gold);
+  padding:2px 7px;border-radius:4px;
+  background:var(--surface-1);
+}
+
+/* ========== 9. 收尾 CTA ========== */
+.sc-final{
+  position:relative;
+  padding:clamp(88px,14vh,180px) 0;
+  text-align:center;overflow:hidden;isolation:isolate;
+  border-top:1px solid var(--ui-line);
+}
+.sc-field-dim{
+  opacity:.42;
+  -webkit-mask-image:radial-gradient(100% 80% at 50% 50%,#000 8%,transparent 66%);
+  mask-image:radial-gradient(100% 80% at 50% 50%,#000 8%,transparent 66%);
+}
+.sc-final-inner{
+  max-width:64ch;margin:0 auto;padding:0 var(--gutter);
+  position:relative;z-index:1;
+}
+.sc-final h2{
+  font-size:clamp(28px,4.6vw,58px)!important;
+  line-height:1.1!important;font-weight:var(--fw-semi)!important;
+  letter-spacing:-.03em!important;
+  text-wrap:balance;
+}
+.sc-final p{
+  margin-top:var(--sp-5)!important;
+  font-size:var(--fs-4)!important;line-height:var(--lh-relaxed)!important;
+  color:var(--ui-muted)!important;
+  text-wrap:pretty;
+}
+.sc-finalcta{
+  display:flex;gap:var(--sp-3);justify-content:center;flex-wrap:wrap;
+  margin-top:var(--sp-8);
+}
+.sc-final-meta{
+  display:flex;gap:var(--sp-6);justify-content:center;flex-wrap:wrap;
+  margin-top:var(--sp-9);padding-top:var(--sp-6);
+  border-top:1px solid var(--ui-line);
+  font-size:var(--fs-1);color:var(--ui-faint);letter-spacing:var(--ls-base);
+}
+
+/* ========== 10. 页脚 ========== */
+.sc-foot{border-top:1px solid var(--ui-line)}
+.sc-foot-in{
+  max-width:var(--sc-max);margin:0 auto;
+  padding:var(--sp-7) var(--gutter);
+  display:flex;align-items:center;gap:var(--sp-6);flex-wrap:wrap;
+}
+.sc-foot-l{
+  font-size:var(--fs-3);letter-spacing:.14em;
+  color:var(--ui-text);font-weight:var(--fw-medium);
+}
+.sc-foot-c{font-size:var(--fs-2);color:var(--ui-faint);letter-spacing:var(--ls-base)}
+.sc-foot-n{
+  display:flex;gap:var(--sp-5);margin-left:auto;flex-wrap:wrap;
+}
+.sc-foot-n a{
+  font-size:var(--fs-2);color:var(--ui-muted);text-decoration:none;
+  transition:color var(--dur-1) var(--ease-out);
+}
+.sc-foot-n a:hover{color:var(--ui-gold)}
+
+/* ========== 11. 进场动画 ========== */
+/* 编排逻辑已移至 orchestrate.css（5 种变体 + 错峰），
+   此处只保留首屏的时序（Hero 元素在首屏需要固定编排）。 */
+@keyframes sc-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ========== 12. 响应式 ========== */
+/* 区块网格已改为 auto-fit / flex-wrap，列数随宽度连续变化，
+   此处不再需要按列数覆盖 —— 只保留间距与导航的断点。 */
+@media (max-width:1100px){
+  .sc-ev{gap:var(--sp-6)}
+  .sc-ev-note{position:static}
+}
+@media (max-width:900px){
+  .sc-nav{gap:var(--sp-4);flex-wrap:wrap;padding-bottom:10px}
+  .sc-navlinks{
+    order:3;width:100%;margin-left:0;
+    justify-content:space-between;
+    gap:var(--sp-2);overflow-x:auto;scrollbar-width:none;
+  }
+  .sc-navlinks::-webkit-scrollbar{display:none}
+  .sc-navlinks a{font-size:var(--fs-1);min-height:32px;display:inline-flex;align-items:center}
+  .sc-herometric{gap:var(--sp-6) var(--sp-7)}
+}
+@media (max-width:640px){
+  :root{--gutter:18px}
+  .sc-hero{min-height:auto;padding:clamp(40px,8vh,72px) 0 clamp(40px,7vh,64px)}
+  .sc-h1{max-width:100%;font-size:clamp(32px,10vw,48px)!important}
+  .sc-lead{font-size:var(--fs-4)!important}
+  .sc-herometric{
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:var(--sp-5);margin-top:var(--sp-7);
+  }
+  .sc-hm b{font-size:var(--fs-6)}
+  .sc-herocta{flex-direction:column;align-items:stretch}
+  .sc-herocta .sc-btn{width:100%}
+  .sc-scroll{display:none}
+  .sc-chan,.sc-pcard,.sc-hon-row{padding:var(--sp-5)!important}
+  .sc-ev-row{
+    grid-template-columns:1fr auto;
+    gap:var(--sp-2) var(--sp-3);
+    padding:var(--sp-4);
+  }
+  .sc-ev-row span:nth-child(3){
+    grid-column:1/-1;padding-top:2px;
+    font-size:var(--fs-1);color:var(--ui-faint);
+  }
+  .sc-ev-hd{display:none!important}
+  .sc-finalcta .sc-btn{width:100%}
+  .sc-foot-in{flex-direction:column;align-items:flex-start;gap:var(--sp-4)}
+  .sc-foot-n{margin-left:0;gap:var(--sp-4)}
+}
+@media (max-width:380px){
+  .sc-herometric{grid-template-columns:1fr}
+}
+
+/* ========== 13. 无障碍与降级 ========== */
+/* prefers-reduced-motion 下：频谱场停止绘制（耗电且无信息量），
+   编排动画由 orchestrate.css 统一关闭并强制可见。 */
+@media (prefers-reduced-motion:reduce){
+  .sc-field{display:none!important}
+  .sc-dot,.sc-scroll i{animation:none}
+}

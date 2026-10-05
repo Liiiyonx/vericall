@@ -1,0 +1,766 @@
+/* =========================================================================
+   VeriCall · 精修层 v2
+   解决：主题变量桥接、按钮/输入控件统一、Hero 排版、顶栏密度、移动端
+   ========================================================================= */
+
+/* ========== 1. 主题变量桥接 ========== */
+/* index.html 内联 :root 使用 --gold/--ink/--mut/--dim/--line 等旧变量名，
+   而 ui.css 使用 --ui-* 新命名。两套未打通，导致浅色主题下金色丢失。
+   此处将旧名映射到新体系，使全站令牌单一来源。 */
+:root{
+  --gold:var(--ui-gold);
+  --gold2:var(--ui-gold-soft);
+  --ink:var(--ui-text);
+  --mut:var(--ui-muted);
+  --dim:var(--ui-faint);
+  --line:var(--ui-line);
+  --line2:var(--ui-line-strong);
+  --bg:var(--ui-bg);
+  --ok:var(--ui-ok);
+  --warn:var(--ui-warn);
+  --bad:var(--ui-bad);
+}
+
+/* ========== 1c. 通道区分色达标 ========== */
+/* ui.css 用 --ch-accent 给三通道上色：①青 ②金 ③--ui-blue。
+   浅色主题下 --ui-blue 是 iOS 蓝 #007aff，对白底仅 3.6:1（实测 CHANNEL·03）。
+   通道区分是合理的信息设计，问题只在取值 —— 换成同色系深蓝即可，
+   既保留「三通道可区分」的意图，又满足 WCAG AA。 */
+html[data-theme="light"][data-theme="light"]{
+  --ui-blue:#1d4ed8;          /* 对白底 ≈ 7.0:1 */
+  --ui-blue-rgb:29,78,216;
+}
+.result-panel .ch:nth-child(1){--ch-accent:var(--ui-teal)!important}
+.result-panel .ch:nth-child(2){--ch-accent:var(--ui-gold)!important}
+.result-panel .ch:nth-child(3){--ch-accent:var(--ui-blue)!important}
+/* 通道标签继承各自区分色，但必须达到 4.5:1 —— 由上面的变量保证 */
+.result-panel .ch .idx{
+  color:var(--ch-accent)!important;
+  font-weight:var(--fw-medium)!important;
+}
+
+/* ========== 1b. 品牌字标：消除 9/10px 硬编码 ========== */
+/* VERICALL 这类拉丁字标在小尺寸下需要更大字号才可辨识，
+   但字距必须同步收紧，否则会散架。 */
+.logo .en,
+.login-brand-en,
+.sc-logo-txt i{
+  font-size:var(--fs-1)!important;
+  letter-spacing:.22em!important;
+  color:var(--ui-faint)!important;
+  font-weight:var(--fw-medium);
+  line-height:1.1!important;
+}
+
+/* ========== 2. 按钮系统 ========== */
+/* 原 .btn 依赖内联 var(--gold)，现统一走 --ui-* 并建立三级语义 */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);
+  min-height:46px;
+  padding:13px 28px!important;
+  font-family:var(--sans)!important;
+  font-size:var(--fs-3)!important;
+  font-weight:var(--fw-medium)!important;
+  letter-spacing:var(--ls-wide)!important;
+  line-height:1.2;
+  color:var(--ui-gold-soft)!important;
+  background:transparent!important;
+  border:1px solid var(--ui-gold)!important;
+  border-radius:var(--radius-s)!important;
+  cursor:pointer;
+  transition:
+    color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-spring);
+}
+.btn:hover{
+  background:rgba(var(--ui-gold-rgb),.1)!important;
+  border-color:var(--ui-gold)!important;
+  color:var(--ui-gold)!important;
+  letter-spacing:var(--ls-wide)!important;   /* 覆盖旧版 hover 字距跳动 */
+  box-shadow:0 0 0 4px rgba(var(--ui-gold-rgb),.07);
+}
+.btn:active{transform:scale(.975)}
+.btn:disabled{
+  opacity:.32!important;cursor:not-allowed;
+  box-shadow:none;transform:none;
+  background:transparent!important;
+}
+.btn.secondary{
+  border-color:var(--ui-line-strong)!important;
+  color:var(--ui-text)!important;
+}
+.btn.secondary:hover{
+  border-color:var(--ui-muted)!important;
+  background:var(--surface-1)!important;
+  box-shadow:none;
+}
+/* 危险操作：红框红字，hover 时轻填充 */
+.btn[style*="--bad"],.btn.danger{
+  border-color:var(--ui-bad)!important;color:var(--ui-bad)!important;
+}
+.btn[style*="--bad"]:hover{background:rgba(var(--ui-bad-rgb),.1)!important;box-shadow:0 0 0 4px rgba(var(--ui-bad-rgb),.07)}
+
+/* ========== 3. 表单控件 ========== */
+input[type="text"],input[type="search"],input[type="tel"],input[type="password"]{
+  font-family:var(--sans)!important;
+  font-size:var(--fs-4)!important;
+  color:var(--ui-text)!important;
+  letter-spacing:var(--ls-base)!important;
+  min-height:46px;
+}
+input::placeholder{color:var(--ui-faint);opacity:1}
+input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+
+/* 焦点环：键盘可见、鼠标不打扰 */
+:where(input,textarea,select):focus-visible{
+  outline:2px solid var(--ui-teal);outline-offset:2px;
+  border-radius:var(--radius-s);
+}
+
+/* ========== 4. Hero 排版精修 ========== */
+#p-about .hero{text-align:center;padding-top:0!important}
+#p-about .hero .tag{
+  text-align:center;
+  text-wrap:balance;
+  margin:var(--sp-5) auto 0!important;
+  max-width:36ch;
+}
+#p-about .hero .en{margin-top:var(--sp-3)!important}
+#p-about .hero h1{
+  /* 12ch 会把「AI 拟声电话诈骗」折成两行且左右留白过大。
+     中文标题按 9ch 给足一行宽度，clamp 负责视口自适应。 */
+  font-size:clamp(36px,5.6vw,72px)!important;
+  line-height:1.06!important;
+  letter-spacing:-.02em!important;
+  margin:0 auto;
+  max-width:100%;
+  text-wrap:nowrap;
+}
+/* Hero 与指标墙的间距：--rhhythm(64~104px) 在 Hero 下方过大，
+   因为 Hero 内部已有居中留白，再叠区块节奏会形成断层。 */
+#p-about .hero{margin-bottom:0!important}
+#p-about .m-wall{margin-top:clamp(32px,4.5vw,56px)!important}
+
+/* 频谱纹样：作为 Hero 的品牌标记，宽度与标题呼应 */
+#p-about .hero .spectrum-rule{
+  max-width:200px;height:24px;margin:0 auto var(--sp-4);
+  opacity:1;gap:3px;
+}
+#p-about .hero .spectrum-rule i{
+  background:linear-gradient(180deg,var(--ui-gold),rgba(var(--ui-gold-rgb),.15));
+}
+
+/* ========== 5. 顶栏密度 ========== */
+/* 桌面：压缩垂直占用，让内容更早进入视野 */
+header{padding-top:var(--sp-4)!important;padding-bottom:0!important}
+body[data-app="index"] #p-about .hero{padding-top:var(--sp-6)!important}
+
+/* ========== 6. 移动端顶栏重构 ========== */
+@media (max-width:900px){
+  /* 两行结构：第一行 logo + 工具，第二行为底部固定 Tab */
+  body[data-app="index"] header,
+  body[data-app="index"] header>.header-tools{
+    gap:var(--sp-2)!important;
+  }
+  body[data-app="index"] header{
+    padding:calc(env(safe-area-inset-top) + 10px) var(--gutter) 0!important;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  body[data-app="index"] .logo{flex:0 0 auto}
+  body[data-app="index"] .logo .cn{font-size:var(--fs-5);letter-spacing:.16em}
+  body[data-app="index"] .logo .en{font-size:9px;letter-spacing:.24em}
+  body[data-app="index"] .logo svg{width:28px;height:28px}
+
+  /* 工具区：图标化，去掉文字标签 */
+  body[data-app="index"] .header-tools{margin-left:auto;gap:6px}
+  body[data-app="index"] .entry-link span,
+  body[data-app="index"] .command-trigger span,
+  body[data-app="index"] .command-trigger kbd{display:none}
+  body[data-app="index"] .command-trigger,
+  body[data-app="index"] .entry-link,
+  body[data-app="index"] .theme-toggle,
+  body[data-app="index"] .elder-btn{
+    min-width:40px;min-height:40px;
+    padding:0!important;justify-content:center;
+    border-radius:var(--radius-m);
+    display:inline-flex;align-items:center;
+  }
+  body[data-app="index"] .entry-link svg{width:17px;height:17px}
+  body[data-app="index"] .elder-btn{font-size:var(--fs-2);padding:0 11px!important}
+
+  /* Tab 吸顶，滚动时保持可达 */
+  body[data-app="index"] .tabs{
+    order:3;width:100%;margin-left:0!important;
+    position:sticky;top:0;z-index:40;
+    background:color-mix(in srgb,var(--ui-bg) 88%,transparent);
+    backdrop-filter:blur(18px) saturate(1.6);
+    -webkit-backdrop-filter:blur(18px) saturate(1.6);
+    border-bottom:1px solid var(--ui-line);
+    padding:var(--sp-2) 0;
+    gap:2px;
+    overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  body[data-app="index"] .tabs::-webkit-scrollbar{display:none}
+  body[data-app="index"] .tab{
+    flex:1 0 auto;
+    min-height:40px;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:8px 12px!important;
+    font-size:var(--fs-2)!important;letter-spacing:var(--ls-base)!important;
+    border-radius:var(--radius-s);
+    border-bottom:none!important;
+    white-space:nowrap;
+  }
+  body[data-app="index"] .tab.on{
+    background:var(--surface-2);
+    color:var(--ui-text)!important;
+  }
+  body[data-app="index"] .tab-icon{width:15px;height:15px}
+  body[data-app="index"] .tab.on .tab-icon{color:var(--ui-gold)}
+}
+
+/* ========== 7. 移动端正文排版 ========== */
+@media (max-width:640px){
+  /* 窄屏解除 nowrap，否则中文标题会横向溢出 */
+  #p-about .hero h1{text-wrap:balance;white-space:normal}
+  /* 居中排版在窄屏中文下参差严重，改左对齐 */
+  #p-about .hero{text-align:left}
+  #p-about .hero .tag,
+  #p-about .hero h1,
+  #p-about .hero .en,
+  #p-about .hero .spectrum-rule{margin-left:0!important}
+  #p-about .hero .tag{max-width:100%;text-align:left}
+  #p-about .hero-cta{align-items:flex-start}
+  #p-about .hero-cta .btn{width:100%;max-width:none}
+}
+
+/* ========== 8. DEMO 场景卡 ========== */
+/* 根因修复：.demos 原本是 display:flex，标题与网格成为并列 flex 项，
+   348px 宽的面板里标题抢走大半，网格被压到 136px → 文字竖排。
+   改为纵向堆叠，网格独占整行。 */
+.demos{
+  display:block!important;
+  padding:var(--sp-4) var(--sp-5) var(--sp-5)!important;
+}
+.demos-title{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:var(--sp-3);margin:0 0 var(--sp-3)!important;
+  flex-wrap:wrap;
+}
+.demos-title span{
+  font-size:var(--fs-1)!important;letter-spacing:var(--ls-wide)!important;
+  color:var(--ui-faint)!important;line-height:1.3!important;
+}
+.demos-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:var(--sp-2)!important;
+  width:100%;
+}
+.demo{
+  padding:var(--sp-3)!important;
+  border:1px solid var(--ui-line)!important;
+  border-radius:var(--radius-s)!important;
+  background:var(--surface-0)!important;
+  min-height:58px;min-width:0;
+  display:flex;flex-direction:column;justify-content:center;gap:2px;
+  text-align:left!important;
+}
+.demo:hover{border-color:var(--ui-gold)!important;background:var(--surface-1)!important}
+.demo i{
+  font-size:var(--fs-1)!important;
+  letter-spacing:var(--ls-wide)!important;
+  color:var(--ui-gold)!important;
+  margin:0 0 2px!important;line-height:1.2!important;
+  white-space:nowrap;
+}
+.demo span{
+  font-size:var(--fs-3)!important;
+  line-height:1.4!important;letter-spacing:0!important;
+  color:var(--ui-muted)!important;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;overflow-wrap:anywhere;
+}
+.demo:hover span{color:var(--ui-text)!important;border-bottom:none!important}
+#demoPlay{grid-column:1/-1;min-height:52px}
+
+/* ========== 9. 录音区：布局与波形占位 ========== */
+/* source-stage 是 78px + 1fr 两列；提示与波形需纵向堆叠，
+   否则提示文字与画布在同一行内挤压重叠。 */
+.source-stage{
+  grid-template-columns:84px minmax(0,1fr)!important;
+  align-items:start!important;
+  gap:var(--sp-4)!important;
+  padding:var(--sp-5) var(--sp-5) var(--sp-4)!important;
+}
+.source-stage > div{min-width:0;display:flex;flex-direction:column;gap:var(--sp-3)}
+.orb-hint{
+  font-size:var(--fs-3)!important;
+  line-height:1.5!important;color:var(--ui-muted)!important;
+  letter-spacing:var(--ls-base)!important;
+  min-height:1.5em;
+}
+.orb-hint b{color:var(--ui-bad)!important;font-weight:var(--fw-semi)}
+.wav-can{
+  width:100%!important;max-width:264px;
+  border-radius:var(--radius-s)!important;
+  border:1px solid var(--ui-line)!important;
+  transition:border-color var(--dur-2) var(--ease-out);
+}
+/* 空闲态由 enhance.js 用 canvas 直接绘制（位图无法用 CSS 叠加文字），
+   这里只负责描边与圆角。 */
+.wav-can[data-live]{border-color:var(--ui-gold)!important}
+.source-stage .wav-wrap{display:grid;gap:var(--sp-2);justify-items:start}
+
+/* ========== 10. 面板与卡片：统一材质 ========== */
+.panel{
+  border-radius:var(--radius-m)!important;
+  background:var(--surface-0)!important;
+  border:1px solid var(--ui-line)!important;
+}
+.panel-head{padding:var(--sp-4) var(--sp-5)!important}
+.panel-head h2{font-size:var(--fs-5)!important}
+.panel-head .meta{font-size:var(--fs-1)!important;letter-spacing:var(--ls-wide)!important}
+
+/* 通道卡：三栏等高、留白一致 */
+.channels{
+  gap:1px!important;
+  margin-top:var(--sp-5)!important;
+  background:var(--ui-line);
+  border:1px solid var(--ui-line);
+  border-radius:var(--radius-m);
+  overflow:hidden;
+}
+.ch{
+  padding:var(--sp-5)!important;
+  opacity:.62;
+  background:var(--ui-bg);
+  transition:opacity var(--dur-3) var(--ease-out),background-color var(--dur-2) var(--ease-out);
+  min-width:0;
+}
+.ch+.ch{border-left:none!important}
+.ch:hover{background:var(--surface-0)}
+.ch.pending,.ch.done{opacity:1}
+.ch h3{
+  font-size:var(--fs-5)!important;
+  margin-top:var(--sp-2)!important;
+  line-height:var(--lh-snug)!important;
+}
+.ch .model{
+  font-size:var(--fs-1)!important;
+  color:var(--ui-faint)!important;
+  margin-top:var(--sp-1)!important;
+  line-height:1.45!important;
+  display:block;
+}
+.ch .score{
+  font-size:var(--fs-8)!important;line-height:.94!important;
+  letter-spacing:-.04em!important;font-weight:var(--fw-normal)!important;
+  margin-top:var(--sp-5)!important;
+  min-height:1em;
+}
+.ch .score em{font-size:var(--fs-3);color:var(--ui-faint);margin-left:.15em;font-weight:var(--fw-normal)}
+.ch .track{margin-top:var(--sp-4)!important;height:2px!important;background:var(--ui-surface-2)!important;border-radius:2px}
+.ch .foot{margin-top:var(--sp-3)!important;align-items:center!important}
+.ch .lab{font-size:var(--fs-2)!important;letter-spacing:var(--ls-wide)!important;font-weight:var(--fw-medium)!important}
+.ch .detail{
+  font-size:var(--fs-2)!important;line-height:1.75!important;
+  margin-top:var(--sp-4)!important;color:var(--ui-muted)!important;
+  border-top:1px solid var(--ui-line);padding-top:var(--sp-3);
+}
+.ch.done .detail{max-height:220px}
+
+/* 结果空态：填满剩余高度，明确「等待」而非「坏掉」 */
+.result-panel{
+  display:flex;flex-direction:column;
+}
+.result-panel>.panel-head{flex:0 0 auto}
+.channels{flex:0 0 auto}
+.result-empty{
+  flex:1 1 auto;
+  border:1px dashed var(--ui-line-strong)!important;
+  border-radius:var(--radius-m)!important;
+  background:var(--surface-0)!important;
+  padding:var(--sp-7)!important;
+  margin-top:var(--sp-4);
+  min-height:200px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--sp-4);text-align:center;
+}
+.result-empty .empty-k{
+  font-size:var(--fs-1)!important;letter-spacing:var(--ls-mega)!important;
+  color:var(--ui-faint)!important;
+  padding:5px 14px;border:1px solid var(--ui-line);border-radius:var(--radius-full);
+}
+.result-empty strong{font-size:var(--fs-4)!important;font-weight:var(--fw-medium)!important;display:block!important}
+.result-empty span{
+  font-size:var(--fs-2)!important;max-width:32ch;line-height:1.75!important;
+  display:block!important;margin:0!important;color:var(--ui-faint)!important;
+}
+
+/* ========== 11. 裁决区 ========== */
+.verdict{gap:var(--sp-7)!important;padding:var(--sp-8) 0 var(--sp-6)!important}
+.vword{
+  font-size:clamp(32px,5.4vw,60px)!important;
+  letter-spacing:var(--ls-mega)!important;
+  text-indent:var(--ls-mega)!important;
+  font-weight:var(--fw-semi)!important;
+  line-height:1.05!important;
+}
+.vreason{
+  font-size:var(--fs-4)!important;line-height:var(--lh-relaxed)!important;
+  max-width:52ch!important;margin:var(--sp-5) auto 0!important;
+  color:var(--ui-muted)!important;text-wrap:pretty;
+}
+.vmeta{
+  gap:var(--sp-7)!important;margin-top:var(--sp-6)!important;
+  font-size:var(--fs-2)!important;
+}
+.gauge{width:min(190px,44vw)!important;height:min(190px,44vw)!important}
+.gauge svg{width:100%;height:100%}
+.gauge .gtxt b{font-size:var(--fs-7)!important;font-weight:var(--fw-normal)!important;letter-spacing:-.03em}
+.gauge .gtxt span{font-size:var(--fs-1)!important;letter-spacing:var(--ls-wide)!important;margin-top:var(--sp-2)}
+
+/* ========== 12. 记录页 ========== */
+.hrow{
+  padding:var(--sp-4) var(--sp-2)!important;
+  border-bottom:1px solid var(--ui-line);
+  transition:background-color var(--dur-1) var(--ease-out);
+}
+.hrow:not(.head):hover{background:var(--surface-0)}
+.hrow.head{
+  font-size:var(--fs-1)!important;letter-spacing:var(--ls-wide)!important;
+  color:var(--ui-faint)!important;
+  position:sticky;top:0;z-index:2;
+  background:var(--ui-bg);
+  border-bottom:1px solid var(--ui-line-strong)!important;
+}
+.hchip{
+  min-height:38px;padding:8px 16px!important;
+  font-size:var(--fs-2)!important;letter-spacing:var(--ls-base)!important;
+  border-radius:var(--radius-full)!important;
+  border:1px solid var(--ui-line)!important;
+  display:inline-flex;align-items:center;
+}
+.hchip.on{background:rgba(var(--ui-gold-rgb),.1)!important;border-color:var(--ui-gold)!important;color:var(--ui-gold)!important}
+.mini-btn{
+  min-height:40px;padding:9px 15px!important;
+  font-size:var(--fs-2)!important;letter-spacing:var(--ls-base)!important;
+  border-radius:var(--radius-s)!important;
+}
+.hist-search{
+  min-height:44px;
+  border-radius:var(--radius-s)!important;
+}
+.hist-search input{font-size:var(--fs-3)!important;min-height:42px}
+
+/* ========== 13. 实时监测页 ========== */
+.live-stage{padding:var(--sp-9) 0 var(--sp-6)!important}
+.live-metrics{
+  display:grid;
+  /* auto-fit：4 列 → 2 列连续变化。原硬编码 4 列在 390px 下每列仅 85px，
+     标签「已分析窗口」必然断行。minmax(140px) 保证每列都可读。 */
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap:1px;background:var(--ui-line);
+  border:1px solid var(--ui-line);border-radius:var(--radius-m);
+  overflow:hidden;margin-top:var(--sp-6);width:100%;max-width:680px;
+}
+.live-metrics .lm{
+  background:var(--ui-bg);padding:var(--sp-4)!important;text-align:center;
+  display:flex;flex-direction:column;gap:var(--sp-1);
+  min-width:0;
+}
+.live-metrics .lm span{
+  font-size:var(--fs-1)!important;color:var(--ui-faint)!important;
+  letter-spacing:0!important;line-height:1.35!important;
+  /* 窄屏下标签会断行成「已分析窗/口」，必须允许整词换行而非断字 */
+  overflow-wrap:normal;word-break:keep-all;
+}
+.live-metrics .lm b{
+  font-size:var(--fs-5)!important;font-weight:var(--fw-normal)!important;
+  letter-spacing:-.02em;line-height:1.1;
+  white-space:nowrap;
+}
+.live-trans{
+  font-size:var(--fs-3)!important;line-height:var(--lh-relaxed)!important;
+  max-width:52ch!important;margin-top:var(--sp-5)!important;
+  min-height:3em;
+}
+.live-tip{font-size:var(--fs-2)!important;color:var(--ui-faint)!important;margin-top:var(--sp-5)!important}
+.cl-card{padding:var(--sp-4) var(--sp-5)!important;border-radius:var(--radius-m)!important}
+.cl-card p{font-size:var(--fs-3)!important;line-height:1.85!important}
+.chal-live .t{font-size:var(--fs-6)!important;letter-spacing:var(--ls-tight)!important}
+.chal-live .sub{font-size:var(--fs-2)!important}
+
+/* 实时页的波形画布：垂直排列时不应居中留白 */
+.live-stage .wav-can{margin:var(--sp-4) auto 0!important}
+
+/* 录音球：扩大触控目标 + 悬浮反馈 */
+.orb{
+  width:96px!important;height:96px!important;
+  border-radius:50%!important;
+  border:1px solid var(--ui-line-strong)!important;
+  background:linear-gradient(145deg,rgba(var(--ui-gold-rgb),.1),transparent)!important;
+  transition:transform var(--dur-1) var(--ease-spring),border-color var(--dur-2) var(--ease-out);
+}
+.orb:hover{transform:scale(1.04);border-color:var(--ui-gold)!important}
+.orb:active{transform:scale(.97)}
+.orb svg{width:30px;height:30px}
+
+/* ========== 14. 登记页 ========== */
+.sess{
+  border-radius:var(--radius-s)!important;
+  border:1px solid var(--ui-line)!important;
+  background:var(--surface-0);
+  overflow:hidden;
+}
+.sess button{
+  min-height:46px;font-size:var(--fs-3)!important;
+  letter-spacing:var(--ls-base)!important;
+}
+.sess button.on{background:rgba(var(--ui-gold-rgb),.1)!important;color:var(--ui-gold)!important}
+.field{margin-top:var(--sp-6)!important}
+.field label{font-size:var(--fs-2)!important;letter-spacing:var(--ls-wide)!important;color:var(--ui-faint)!important}
+.prompt{
+  border-left:2px solid var(--ui-gold)!important;
+  background:rgba(var(--ui-gold-rgb),.05)!important;
+  border-radius:0 var(--radius-s) var(--radius-s) 0!important;
+  padding:var(--sp-4) var(--sp-5)!important;
+  font-size:var(--fs-3)!important;line-height:var(--lh-relaxed)!important;
+}
+.vrow{
+  padding:var(--sp-4) var(--sp-2)!important;
+  border-bottom:1px solid var(--ui-line)!important;
+  min-height:56px;
+}
+.vrow .nm{font-size:var(--fs-4)!important;letter-spacing:var(--ls-base)!important}
+
+/* ========== 15. 弹窗 ========== */
+.detail-box,.chal-box,.alert-box,.call-box{
+  border-radius:var(--radius-m)!important;
+  background:var(--ui-bg-soft)!important;
+  border:1px solid var(--ui-line-strong)!important;
+  box-shadow:0 32px 80px -24px rgba(0,0,0,.8)!important;
+  animation:vc-rise var(--dur-3) var(--ease-out) both;
+}
+.alert-box{border-color:rgba(var(--ui-bad-rgb),.4)!important}
+.alert-box .t{font-size:var(--fs-6)!important;letter-spacing:var(--ls-wide)!important;color:var(--ui-bad)!important}
+.alert-box .a{font-size:var(--fs-4)!important;line-height:var(--lh-relaxed)!important}
+.alert-box .r{
+  border-left:2px solid var(--ui-gold)!important;
+  padding-left:var(--sp-4)!important;
+  font-size:var(--fs-3)!important;line-height:var(--lh-relaxed)!important;
+}
+.toast{
+  border-radius:var(--radius-s)!important;
+  background:var(--ui-surface-2)!important;
+  border:1px solid var(--ui-line-strong)!important;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 16px 40px -12px rgba(0,0,0,.7)!important;
+  font-size:var(--fs-3)!important;letter-spacing:var(--ls-base)!important;
+  padding:var(--sp-3) var(--sp-5)!important;
+  min-height:48px;display:flex;align-items:center;
+}
+.toast.err{border-color:var(--ui-bad)!important;color:var(--ui-bad)!important}
+.demo-cap{
+  border-radius:var(--radius-s)!important;
+  background:var(--ui-surface-2)!important;
+  border:1px solid var(--ui-line-strong)!important;
+  border-left:2px solid var(--ui-gold)!important;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 20px 50px -18px rgba(0,0,0,.75)!important;
+  font-size:var(--fs-3)!important;line-height:1.75!important;
+  padding:var(--sp-3) var(--sp-5)!important;
+  min-height:48px;display:flex;align-items:center;justify-content:center;
+}
+.demo-cap b{font-size:var(--fs-4)!important;letter-spacing:var(--ls-wide)!important;color:var(--ui-gold)!important}
+
+/* ========== 16. 适老模式：保留并强化可读性 ========== */
+body.elder{--fs-4:20px;--fs-3:18px;--fs-2:16px;--fs-1:15px}
+body.elder .btn{min-height:60px}
+body.elder .hchip,body.elder .mini-btn,body.elder .sess button{min-height:54px}
+body.elder .demo{min-height:72px}
+
+/* ========== 17b. 收敛遗留硬编码小字号 ========== */
+/* ui.css 中若干处用 `font-size:9px/9.5px/10px !important` 固定了微型标注。
+   这些值在移动端 Retina 上不可读（实测 3 处 9.5px、2 处 10px）。
+   此处按角色提升到 --fs-1 下限，并按同比例收紧字距避免散架。 */
+.logo .en,
+.caller-field label,
+.live-metrics .lm span,
+.status-chip,
+.panel-head .meta,
+.ch .model,
+.ch .foot,
+.ch .conf,
+.ch .idx,
+.demo i,
+.m-card .s,
+.m-card .l,
+.pc i,
+.pc p,
+.rt-row div,
+.rt-note,
+.dash .ds,
+.dash .dk .l,
+.dash .bars .b span,
+.dash .bars .bx,
+.eyebrow,
+.hrow.head,
+.tl .b,
+.vrow .ct,
+.vempty,
+.orb-hint,
+.or-line,
+.hchip,
+.mini-btn,
+.stage-status,
+.sys,
+.sys .it,
+.vlib .ct,
+.elder-btn,
+.child-link,
+.result-empty .empty-k,
+.command-trigger kbd{
+  font-size:max(11px, var(--fs-1))!important;
+  letter-spacing:.06em!important;
+}
+/* ui.css 的 .result-panel .ch .model 特异性更高（0,3,1），需单独覆盖 */
+.result-panel .ch .model,
+.result-panel .panel-head .meta{
+  font-size:max(11px, var(--fs-1))!important;
+  line-height:1.45!important;
+  letter-spacing:var(--ls-base)!important;
+  color:var(--ui-faint)!important;
+}
+/* kbd 是快捷键提示，需要与所在按钮视觉协调 */
+.command-trigger kbd{
+  font-family:var(--font-mono)!important;
+  line-height:1!important;
+  padding:3px 6px!important;
+  color:var(--ui-faint)!important;
+  background:var(--surface-1)!important;
+  border:1px solid var(--ui-line)!important;
+  border-radius:4px!important;
+}
+/* 索引类小标签需要足够对比度（实测 CHANNEL · 03 仅 3.6:1） */
+.ch .idx,.pc i,.demo i,.eyebrow{
+  color:var(--ui-gold)!important;
+  font-weight:var(--fw-medium)!important;
+}
+
+/* ========== 18. 点击目标下限 ========== */
+/* 探针实测三类不足目标：
+   1. .or-line label / .orb-hint 等「文字外观的可点元素」高度仅 16–24px
+   2. 表单 label（用户名 / 密码 / 来电号码）高 24px —— label 可点击聚焦输入框，
+      高度不足会让点击落空，输入框要点两次
+   3. 桌面指针精确，但仍按 32px 视觉基线给足 */
+.or-line label,
+.or-line span,
+.orb-hint,
+.caller-field label,
+.field label,
+.login-v2 .field label,
+.sys .it,
+.empty-k,
+.status-chip{
+  min-height:32px;
+  display:inline-flex;align-items:center;
+}
+/* 表单 label：撑到 32px 并允许换行，不影响输入框位置 */
+.caller-field label,
+.field label{
+  min-height:32px;
+  padding:6px 0;
+  line-height:1.4;
+}
+.drop-zone,
+.drop-zone > span{min-height:0}
+.drop-zone{padding:var(--sp-5)!important}
+.hist-search input{min-height:44px}
+.demos-title{min-height:24px}
+
+/* ========== 19. Tab 导航：完整的交互反馈 ========== */
+/* 问题：`.tab.on` 已是最亮色，原 hover 只改 color → 选中项悬停时
+   计算样式完全不变，用户得不到「可点」的确认。
+   改为：所有 tab 悬停都有背景反馈（选中项用更深底 + 轻微下沉），
+   视觉层级由「颜色」改为「底色 + 位置」双通道表达。 */
+.tab{
+  position:relative;
+  transition:
+    color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-spring);
+}
+.tab:hover{
+  color:var(--ui-text)!important;
+  background:var(--surface-1)!important;
+  transform:translateY(-1px);
+}
+.tab.on{
+  color:var(--ui-text)!important;
+  background:var(--surface-2)!important;
+  transform:none;
+}
+/* ui.css 的 .tab.on / html[light] .tab.on 都用 background:...!important
+   锁定渐变底，且特异性相当 —— 必须同权重覆盖，
+   否则选中项悬停时计算样式完全不变，用户得不到「可点」确认。 */
+.tab.on:hover{
+  background:var(--surface-3)!important;
+  color:var(--ui-text)!important;
+  transform:translateY(-1px);
+}
+html[data-theme="light"] .tab.on:hover{
+  /* 浅色下 --surface-2/3 差异过小（肉眼不可辨），改用明确的下沉阴影
+     + 更深的底部色，悬停时能明确感知「按下去」 */
+  background:linear-gradient(180deg,rgba(24,32,31,.07),rgba(24,32,31,.03))!important;
+  box-shadow:inset 0 -2px 0 var(--ui-gold),0 6px 16px rgba(34,45,42,.14)!important;
+  transform:translateY(-1px);
+}
+html[data-theme="light"] .tab.on{
+  background:linear-gradient(180deg,#fff,rgba(255,255,255,.72))!important;
+}
+/* 暗色下的选中项悬停同样用阴影而非仅底色 */
+.tab.on:hover{
+  box-shadow:inset 0 -2px 0 var(--ui-gold),0 6px 18px rgba(0,0,0,.28)!important;
+}
+.tab:active{transform:translateY(0) scale(.97)}
+.tab:focus-visible{
+  outline:2px solid var(--ui-teal)!important;
+  outline-offset:2px;
+  border-radius:var(--radius-s);
+}
+
+/* 角色切换（登录页）同样补齐：选中项悬停要有反馈 */
+.role-tab:hover{background:var(--surface-2)!important;color:var(--ui-text)!important}
+.role-tab.on:hover{background:var(--ui-surface-2)!important}
+.role-tab:focus-visible{outline:2px solid var(--ui-teal);outline-offset:-2px}
+
+/* 品牌徽标（落地页 logo 是链接）*/
+.sc-logo:hover{color:var(--ui-gold-soft)}
+.sc-logo:hover svg{opacity:1}
+.sc-logo svg{transition:opacity var(--dur-2) var(--ease-out)}
+.sc-logo:focus-visible{outline:2px solid var(--ui-teal);outline-offset:3px;border-radius:var(--radius-s)}
+
+/* ========== 20. 焦点环统一（键盘可达性兜底） ========== */
+/* index.html 的内联样式与 ui.css 的 :focus 规则会覆盖 :focus-visible，
+   导致 outline 变成 `none`。此处用 :focus-visible + !important 锁定，
+   同时排除鼠标点击（:focus-visible 天然只在键盘时生效）。 */
+:where(a,button,[role="button"],summary,input,select,textarea,[tabindex]):focus-visible{
+  outline:2px solid var(--ui-teal)!important;
+  outline-offset:2px!important;
+  border-radius:var(--radius-s);
+}
+/* 焦点环在深色下也清晰：加一层外发光 */
+:where(a,button,[role="button"],summary,input):focus-visible{
+  box-shadow:0 0 0 4px rgba(var(--ui-teal-rgb),.16)!important;
+}
+/* 输入框已有自身边框反馈，去掉外发光避免过重 */
+:where(input,select,textarea):focus-visible{
+  box-shadow:none!important;
+  border-color:var(--ui-gold)!important;
+}

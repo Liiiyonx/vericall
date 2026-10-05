@@ -1,0 +1,318 @@
+/* =========================================================================
+   VeriCall · 排版与层级重置层 v2
+   -------------------------------------------------------------------------
+   加载于 ui.css 之后。职责：把既有 40+ 离散字号收敛到 --fs-1…--fs-8
+   八级流体刻度，重建视觉层级，并统一色彩分工与动效语义。
+   不改动任何布局契约（grid/flex 结构、DOM 层级、JS 选择器）。
+   ========================================================================= */
+
+/* ========== 1. 字号收敛 ========== */
+/* 策略：按「语义角色」而非「像素值」重设。ui.css 中所有历史字号
+   通过下方各节的语义选择器被覆盖，避免逐条 !important 硬碰。 */
+
+body{
+  font-size:var(--fs-4);
+  line-height:var(--lh-normal);
+  letter-spacing:var(--ls-base);
+  font-feature-settings:"tnum" 0;
+  text-rendering:optimizeLegibility;
+}
+
+/* 数字统一等宽数位：分数/计时变化时不抖动 */
+.score,.m-card .n,.dash .dk .n,.gauge .gtxt b,.chal-box .d,
+.lm b,.vrow .ct,.hrow .s,.hrow .e,.hrow .t,.sys,.verdict .vmeta,
+.dash .bars .b span,.dash .bars .bx{
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1,"lnum" 1;
+}
+
+/* ========== 2. 标题层级 ========== */
+/* 中文标题正字距，数字/西文标题微负字距 —— 二者分开处理 */
+:where(h1,h2,h3,h4){
+  font-family:var(--sans);
+  text-wrap:balance;          /* 避免标题出现孤字尾行 */
+  color:var(--ui-text);
+}
+
+/* 页面主标题（各 section 的 h1） */
+.workspace-head h1,
+#p-about .hero h1,
+.ptitle{
+  font-size:var(--fs-7)!important;
+  line-height:var(--lh-tight)!important;
+  font-weight:var(--fw-semi)!important;
+  letter-spacing:-.02em!important;   /* 大字号中文用微负字距更紧凑 */
+  line-break:strict;
+}
+
+/* 区块标题 */
+.panel-head h2,.dash .dt,.chal-live .t,.m-card .l{
+  letter-spacing:var(--ls-tight);
+}
+.panel-head h2{font-size:var(--fs-5)!important;line-height:var(--lh-snug)!important;font-weight:var(--fw-semi)!important}
+
+/* 卡片标题 */
+.ch h3,.pc h3{
+  font-size:var(--fs-5)!important;
+  line-height:var(--lh-snug)!important;
+  font-weight:var(--fw-semi)!important;
+  letter-spacing:var(--ls-base)!important;
+}
+
+/* 区块级导语 */
+.workspace-head p,.psub,.hero .tag{
+  font-size:var(--fs-3)!important;
+  line-height:var(--lh-relaxed)!important;
+  color:var(--ui-muted)!important;
+  max-width:var(--measure);
+  text-wrap:pretty;           /* 改善正文换行，避免行尾孤字 */
+}
+
+/* 眉标 / 角标：全站统一为最小刻度 + 大字距 */
+.eyebrow,.pc i,.m-card .s,.ch .idx,.demo i,.cl-card i,
+.cl-scripts .cl-card i,.demos-title span,.panel-head .meta,
+.hrow.head,.tl,.status-chip{
+  font-size:var(--fs-1)!important;
+  line-height:1.35!important;
+  letter-spacing:var(--ls-wide)!important;
+  font-weight:var(--fw-medium)!important;
+  color:var(--ui-faint)!important;
+}
+/* 眉标用金色，但仅此处 —— 金色从「装饰色」收窄为「结构标识色」 */
+.eyebrow,.pc i,.ch .idx,.demo i,.cl-card i{color:var(--ui-gold)!important}
+
+/* ========== 3. 正文与元信息 ========== */
+.pc p,.ch .model,.ch .detail,.verdict .vreason,.vmeta,
+.vrow,.m-card .l,.dash .ds,.rt-row div,.rt-note,.live-trans,
+.cl-card p,.detail-box .ch2 .de,.prompt,.consent,.detail-box .raz,
+.hrow .n,.result-empty span,.login-sub,.hist-list .hn{
+  font-size:var(--fs-3)!important;
+  line-height:var(--lh-relaxed)!important;
+  letter-spacing:var(--ls-base)!important;
+  text-wrap:pretty;
+}
+
+/* 次级元信息 */
+.ch .foot,.ch .conf,.hrow .t,.hrow .s,.hrow .e,.vmeta,
+.lm span,.live-tip,.vrow .ct,.share-box .hint,
+.or-line,.orb-hint,.stage-status,.result-box .rs{
+  font-size:var(--fs-2)!important;
+  line-height:1.6!important;
+  letter-spacing:var(--ls-base)!important;
+  color:var(--ui-faint)!important;
+}
+
+/* ========== 4. 色彩分工 ========== */
+/* 原则：中性色负责结构与容器；金/青/红/绿只出现在「数据」与「结论」上。
+   浅色主题下原金色 #d4b483 对白底仅 1.9:1，--ui-faint #747c77 仅 3.46:1，
+   两者均低于 WCAG AA 的 4.5:1。此处按用途分档重新定色：
+   -faint 用于 ≥14px 的次级说明 → 目标 ≥4.5:1
+   -muted 用于正文            → 目标 ≥7:1（AAA 正文）
+   -gold  用于 ≥18.66px 加粗或 24px 以上的强调文字 → 目标 ≥4.5:1 */
+/* 注意特异性：ui.css 里已有 `html[data-theme="light"]{...}`，
+   同为单类 + 属性选择器，加载顺序在此之后即可覆盖。
+   但 design-system.css 也在其后加载，故把文字色定义统一放在
+   typography（加载序位于 design-system 之后）并用双类提升特异性，
+   避免被任何后续规则回退。 */
+html[data-theme="light"][data-theme="light"]{
+  --ui-bg:#f2f2f7;
+  --ui-bg-soft:#ececf1;
+  --ui-text:#14161a;          /* 对白底 ≈ 16.5:1 */
+  --ui-muted:#3c4148;         /* 对白底 ≈ 9.6:1  —— 正文 AAA */
+  --ui-faint:#5b6068;         /* 对白底 ≈ 6.4:1  —— 次级 AA */
+  --ui-line:rgba(20,24,28,.12);
+  --ui-line-strong:rgba(20,24,28,.22);
+
+  --ui-gold:#8a6318;          /* 对白底 ≈ 5.6:1 */
+  --ui-gold-soft:#6f5013;     /* 对白底 ≈ 7.4:1 */
+  --ui-teal:#0a6f66;          /* 对白底 ≈ 5.9:1 */
+  --ui-teal-deep:#075750;
+  --ui-ok:#2a6437;            /* 对白底 ≈ 6.5:1 */
+  --ui-warn:#7d5210;          /* 对白底 ≈ 6.2:1 */
+  --ui-bad:#9c3327;           /* 对白底 ≈ 6.9:1 */
+  --ui-gold-rgb:138,99,24;
+  --ui-teal-rgb:10,111,102;
+  --ui-ok-rgb:42,100,55;
+  --ui-warn-rgb:125,82,16;
+  --ui-bad-rgb:156,51,39;
+}
+
+/* 指标数字：金色是数据色，用于一切真实测量值 */
+.m-card .n,.dash .dk .n{
+  font-weight:var(--fw-normal)!important;
+  letter-spacing:-.03em;
+  line-height:1;
+}
+
+/* 裁决色：仅 verdict / lab / v 使用饱和语义色 */
+.vword,.hrow .v,.ch .lab,.live-state{
+  font-weight:var(--fw-semi);
+  letter-spacing:var(--ls-wide);
+}
+
+/* ========== 5. 留白节奏 ========== */
+/* 用 --rhythm 统一区块纵向间距，消灭随意 margin */
+#p-about > * + *,
+#p-detect > * + *{margin-top:var(--rhythm)}
+body[data-app="index"] #p-about .m-wall,
+body[data-app="index"] #p-about .p-chan,
+body[data-app="index"] #p-about .red-team,
+body[data-app="index"] #p-about .dash{margin-top:var(--rhythm)!important}
+
+.workspace-head{padding:var(--sp-7) 0 var(--sp-5)!important}
+.detect-layout{margin-top:var(--sp-6)!important}
+main{padding-bottom:var(--sp-10)!important}
+
+/* ========== 6. 动效语义化 ========== */
+/* 消灭 transition:all —— 改为按属性指定，避免意外过渡 box-shadow/width */
+:where(button,a,.tab,.hchip,.sess button,.filter-chip,.mini-btn,
+        .child-link,.elder-btn,.orb,.demo,.or-line label,.text-action){
+  transition:
+    color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    opacity var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-spring);
+}
+
+/* 统一进场：使用新曲线与时长，替代旧 rise 的 .8s 线性淡入 */
+@keyframes vc-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rise{animation:vc-rise var(--dur-3) var(--ease-out) both}
+
+/* Tab 切换：内容淡入 + 极轻微位移，替代瞬间 display:none/block */
+.page.on{animation:vc-rise var(--dur-3) var(--ease-out) both}
+
+/* ========== 7. 微交互 ========== */
+/* 按下反馈：所有可点元素有明确的物理响应 */
+:where(button,.tab,.hchip,.sess button,.orb,.demo,.filter-chip,.mini-btn,
+        .child-link,.elder-btn,.role-option,.login-sub,.text-action){
+  -webkit-user-select:none; user-select:none;
+}
+:where(button,.tab,.hchip,.sess button,.orb,.demo,.filter-chip,.mini-btn,
+        .child-link,.elder-btn,.login-sub):active{
+  transform:scale(.97);
+}
+:where(button,.tab,.hchip,.sess button,.orb,.demo,.filter-chip,.mini-btn,
+        .child-link,.elder-btn,.login-sub):focus-visible{
+  outline:2px solid var(--ui-teal);outline-offset:3px;
+}
+
+/* 卡片悬浮：极轻的抬升 + 描边提亮，不喧宾夺主 */
+.panel,.m-card,.dk,.pc,.cl-card,.ch{
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
+}
+.panel:hover{
+  border-color:var(--ui-line-strong);
+  box-shadow:var(--lift);
+}
+
+/* 分数更新时的强调闪烁（由 JS 加 .bump 类触发） */
+@keyframes vc-bump{
+  0%{transform:translateY(4px);opacity:.4;filter:blur(3px)}
+  100%{transform:none;opacity:1;filter:none}
+}
+.score.bump,.gauge .gtxt b.bump{animation:vc-bump var(--dur-3) var(--ease-out) both}
+
+/* 轨道填充：更缓的曲线，读起来像仪表而非进度条 */
+.track i{transition:width 1.4s var(--ease-out)!important}
+.gauge .fgc{transition:stroke-dashoffset 1.7s var(--ease-out)!important}
+
+/* ========== 8. 响应式：三档断点体系 ========== */
+/* 原代码仅 880 / 560 两档且 834(iPad) 直接落单列。
+   新增 1100 / 900 / 640 三档，覆盖 iPad 横竖与 iPhone SE。 */
+
+@media (max-width:1100px){
+  :root{--gutter:clamp(18px,3vw,32px)}
+  .detect-layout{grid-template-columns:minmax(0,1fr)!important}
+  .m-wall{grid-template-columns:repeat(2,1fr)!important}
+  .dash .dc{grid-template-columns:repeat(2,1fr)!important}
+  .enroll{grid-template-columns:1fr!important;gap:var(--rhythm)!important}
+}
+
+@media (max-width:900px){
+  :root{--rhythm:clamp(40px,8vw,64px)}
+  .p-chan{grid-template-columns:1fr!important}
+  .cl-scripts{grid-template-columns:1fr!important}
+  .workspace-head{grid-template-columns:1fr!important;align-items:start!important;gap:var(--sp-4)!important}
+  .workspace-meta{justify-content:flex-start!important}
+  .hrow{grid-template-columns:minmax(0,1fr) auto!important;gap:var(--sp-2) var(--sp-4)!important}
+  .hrow .t{grid-column:1/-1}
+  .enroll{gap:var(--sp-8)!important}
+}
+
+@media (max-width:640px){
+  :root{--rhythm:clamp(32px,9vw,48px);--gutter:16px}
+  main{padding-left:var(--gutter)!important;padding-right:var(--gutter)!important}
+  .m-wall{grid-template-columns:1fr!important;gap:var(--sp-2)!important}
+  .dash .dc{grid-template-columns:1fr 1fr!important;gap:var(--sp-2)!important}
+  .cl-scripts{gap:var(--sp-3)!important}
+  .demos-grid{grid-template-columns:1fr!important}
+  .verdict .vmeta{flex-direction:column;gap:var(--sp-2)!important;align-items:center}
+  .vmeta{gap:var(--sp-4)!important;flex-wrap:wrap}
+  .gauge{width:140px!important;height:140px!important}
+  .gauge svg{width:140px!important;height:140px!important}
+  .alert-box{padding:var(--sp-7) var(--sp-5)!important;max-width:min(420px,92vw)!important}
+  .detail-box{padding:var(--sp-5)!important}
+  .chal-box{padding:var(--sp-6) var(--sp-5)!important}
+  .chal-box .d{font-size:clamp(40px,13vw,58px)!important;letter-spacing:10px!important;text-indent:10px!important}
+  .demo-cap{left:var(--gutter)!important;right:var(--gutter)!important;transform:none!important;max-width:none}
+  .demo-cap.show{transform:none!important}
+  .toast{left:var(--gutter)!important;right:var(--gutter)!important;transform:translateY(16px)!important;width:auto}
+  .toast.show{transform:none!important}
+}
+
+/* 极窄屏（iPhone SE 375 及以下） */
+@media (max-width:380px){
+  :root{--gutter:14px}
+  .dash .dc{grid-template-columns:1fr!important}
+  .m-wall{grid-template-columns:1fr!important}
+}
+
+/* ========== 9. iOS 安全区与拇指热区 ========== */
+/* viewport-fit=cover 已在 head 声明，此处消费 env() 避免内容被刘海/home 条遮挡 */
+body{
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+}
+header{padding-top:calc(env(safe-area-inset-top) + var(--sp-4))!important}
+main{padding-bottom:calc(env(safe-area-inset-bottom) + var(--sp-10))!important}
+.demo-cap,.toast{bottom:calc(env(safe-area-inset-bottom) + 20px)}
+
+/* 移动端把主操作固定到拇指可达区 */
+@media (max-width:900px){
+  .page#p-detect .result-actions{
+    position:sticky;bottom:calc(env(safe-area-inset-bottom) + 8px);
+    z-index:20;padding:var(--sp-3) 0;
+    background:linear-gradient(180deg,transparent,var(--ui-bg) 22%);
+  }
+  .page#p-detect .result-actions .btn{flex:1 1 auto;min-height:46px}
+}
+
+/* ========== 10. 横向溢出兜底 ========== */
+/* iOS Safari 上 flex/grid 子项默认 min-width:auto 会撑破容器 */
+:where(.channels,.m-wall,.dash .dc,.p-chan,.cl-scripts,.demos-grid,
+        .hrow,.live-metrics,.verdict,.vmeta,.hist-toolbar){
+  min-width:0;
+}
+:where(.ch,.m-card,.dk,.pc,.cl-card,.lm,.hrow > *){min-width:0}
+:where(.m-card .l,.dk .l,.pc p,.ch .model,.hrow .n){overflow-wrap:anywhere}
+
+/* ========== 11. 浅色主题底纹调整 ========== */
+/* 暗底的网格线在浅底上会显脏，改为更淡且加大留白 */
+html[data-theme="light"] body{
+  background:
+    linear-gradient(rgba(10,12,14,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(10,12,14,.022) 1px,transparent 1px),
+    var(--ui-bg)!important;
+  background-size:48px 48px!important;
+}
+html[data-theme="light"] body::after{box-shadow:inset 0 0 180px rgba(20,24,28,.07)!important}
+html[data-theme="light"] body::before{
+  background:
+    linear-gradient(180deg,rgba(242,242,247,0),rgba(242,242,247,.9) 80%),
+    radial-gradient(900px 520px at 50% -10%,rgba(10,111,102,.05),transparent 70%)!important;
+}

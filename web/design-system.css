@@ -1,0 +1,173 @@
+/* =========================================================================
+   VeriCall Design System v2
+   -------------------------------------------------------------------------
+   设计原则
+   1. 排版刻度：8 级流体字阶（--fs-1 … --fs-8），杜绝离散半像素字号
+   2. 色彩分工：中性负责结构，金/青/红/绿只负责「数据与结论」
+   3. 间距节奏：4px 基准的间距刻度（--sp-1 … --sp-9）
+   4. 动效语义：三条曲线（--ease-out 进场 / --ease-spring 强调 / --ease-inout 状态）
+   5. 原创母题：声学频谱（--spectrum）—— 真实 FFT 形态生成分隔纹与徽标
+   ========================================================================= */
+
+/* ========== 1. 排版刻度 ========== */
+:root{
+  /* 流体字阶：clamp(最小, 视口加权, 最大) —— 320px → 1600px 全程无跳变。
+     下限刻意不低于 11px：9/9.5/10px 在移动端 Retina 上不可读，
+     是获奖级作品不会出现的取值。 */
+  --fs-1:clamp(11px,0.62vw + 9.2px,12px);    /* 微标注 eyebrow / 角标 */
+  --fs-2:clamp(12px,0.7vw + 9.6px,13.5px);    /* 辅助说明 / meta */
+  --fs-3:clamp(13.5px,0.8vw + 10.2px,15px);  /* 正文小 / 表格 */
+  --fs-4:clamp(15px,0.95vw + 11px,17px);     /* 正文基准 */
+  --fs-5:clamp(18px,1.35vw + 13px,22px);     /* 小标题 / 卡片标题 */
+  --fs-6:clamp(22px,2vw + 15px,30px);        /* 区块标题 */
+  --fs-7:clamp(30px,3.6vw + 18px,52px);      /* 页面主标题 */
+  --fs-8:clamp(44px,6.4vw + 22px,92px);      /* 品牌级数字 / Hero */
+
+  /* 字重：中文正文避免过细，300 仅用于大号数字 */
+  --fw-normal:400;
+  --fw-medium:500;
+  --fw-semi:600;
+
+  /* 行高：随字号增大而收紧（编辑排版原则） */
+  --lh-tight:1.08;
+  --lh-snug:1.32;
+  --lh-normal:1.62;
+  --lh-relaxed:1.9;
+
+  /* 字距：中文标题需正字距，小字需微负字距提升密度 */
+  --ls-mega:0.22em;
+  --ls-wide:0.14em;
+  --ls-base:0.02em;
+  --ls-tight:-0.01em;
+
+  /* 数字：等宽数位，避免分数跳动时布局抖动 */
+  --font-num:var(--font-sans);
+  --font-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+
+/* ========== 2. 间距刻度 ========== */
+:root{
+  --sp-1:4px;   --sp-2:8px;   --sp-3:12px;  --sp-4:16px;  --sp-5:20px;
+  --sp-6:24px;  --sp-7:32px;  --sp-8:44px;  --sp-9:64px;  --sp-10:88px;
+  /* 区块纵向节奏：随视口收缩，保持 8/5 左右的视觉比例 */
+  --rhythm:clamp(48px,7vw,104px);
+  --gutter:clamp(20px,4vw,44px);
+  --measure:66ch;              /* 正文最优行宽 */
+}
+
+/* ========== 3. 动效语义 ========== */
+:root{
+  --ease-out:cubic-bezier(.16,.84,.44,1);       /* 进场：快起慢收 */
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);   /* 强调：轻微回弹 */
+  --ease-inout:cubic-bezier(.65,0,.35,1);       /* 状态切换：对称 */
+  --dur-1:140ms;  /* 微反馈 hover/press */
+  --dur-2:260ms;  /* 组件态变化 */
+  --dur-3:480ms;  /* 区块进场 */
+  --dur-4:900ms;  /* 强调揭示 */
+}
+
+/* ========== 4. 原创母题：声学频谱 ========== */
+/* 真实语音频谱的能量分布：中低频密集、高频稀疏。
+   下方 --spectrum 渐变与 .spectrum-rule 分隔纹均由该形态派生，
+   使品牌视觉有据可依，而非通用渐变光斑。 */
+:root{
+  --spec-1:rgba(212,180,131,.9);
+  --spec-2:rgba(212,180,131,.55);
+  --spec-3:rgba(112,212,198,.4);
+  --spec-4:rgba(236,231,220,.1);
+}
+
+/* 频谱分隔纹：12 根柱，按 1/f 能量衰减分布 */
+.spectrum-rule{
+  display:flex; align-items:flex-end; gap:2px;
+  height:18px; width:100%; opacity:.5;
+}
+.spectrum-rule i{
+  flex:1; background:linear-gradient(180deg,var(--spec-1),var(--spec-4));
+  border-radius:1px 1px 0 0; transform-origin:bottom;
+  animation:spec-breathe 5.5s var(--ease-inout) infinite;
+}
+.spectrum-rule i:nth-child(1){height:100%;animation-delay:0s}
+.spectrum-rule i:nth-child(2){height:72%;animation-delay:.12s}
+.spectrum-rule i:nth-child(3){height:88%;animation-delay:.24s}
+.spectrum-rule i:nth-child(4){height:54%;animation-delay:.36s}
+.spectrum-rule i:nth-child(5){height:66%;animation-delay:.48s}
+.spectrum-rule i:nth-child(6){height:38%;animation-delay:.6s}
+.spectrum-rule i:nth-child(7){height:44%;animation-delay:.72s}
+.spectrum-rule i:nth-child(8){height:26%;animation-delay:.84s}
+.spectrum-rule i:nth-child(9){height:31%;animation-delay:.96s}
+.spectrum-rule i:nth-child(10){height:18%;animation-delay:1.08s}
+.spectrum-rule i:nth-child(11){height:12%;animation-delay:1.2s}
+.spectrum-rule i:nth-child(12){height:7%;animation-delay:1.32s}
+@keyframes spec-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.62)}}
+
+/* ========== 5. 表面与材质 ========== */
+/* 注意：这些变量必须定义在 :root 上，且不能被 ui.css 的浅色主题覆盖，
+   因为 canvas 的 fillStyle 只能取计算后的字符串，取不到会回退成白色。
+   浅色主题下改为半透明黑叠加层（叠在浅底上 = 灰），而非白色。 */
+:root{
+  /* 层级：0 底 → 1 卡片 → 2 浮起 → 3 覆盖 */
+  --surface-0:rgba(255,255,255,.018);
+  --surface-1:rgba(255,255,255,.038);
+  --surface-2:rgba(255,255,255,.06);
+  --surface-3:rgba(255,255,255,.085);
+  /* canvas 可直接使用的实色（不透明），随主题切换 */
+  --ui-canvas-bg:#07090b;
+  --ui-canvas-line:rgba(236,239,235,.1);
+  --ui-canvas-faint:#747c77;
+  --hair:rgba(236,239,235,.085);
+  --hair-strong:rgba(236,239,235,.17);
+  /* 描边渐变：上亮下暗，模拟受光 */
+  --edge-light:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,0) 42%);
+  --lift:0 1px 0 rgba(255,255,255,.05) inset,0 18px 44px -18px rgba(0,0,0,.7);
+  --radius-s:6px; --radius-m:10px; --radius-l:16px; --radius-full:999px;
+}
+/* 浅色主题：canvas 底跟随浅色，线与字加深，保证可见 */
+html[data-theme="light"]{
+  --surface-0:rgba(10,14,18,.018);
+  --surface-1:rgba(10,14,18,.038);
+  --surface-2:rgba(10,14,18,.06);
+  --surface-3:rgba(10,14,18,.085);
+  --ui-canvas-bg:#f7f7fa;
+  --ui-canvas-line:rgba(20,26,32,.16);
+  --ui-canvas-faint:#6b7280;
+  --hair:rgba(20,26,32,.1);
+  --hair-strong:rgba(20,26,32,.2);
+}
+
+/* ========== 6. 焦点与可访问性 ========== */
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{
+  outline:2px solid var(--ui-teal); outline-offset:3px; border-radius:var(--radius-s);
+}
+:where(a,button,input,select,textarea,[tabindex]){
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* 触控设备：所有可点元素至少 44×44（iOS HIG / WCAG 2.5.5） */
+@media (pointer:coarse){
+  :where(button,a,[role="button"],summary,label[for]){
+    min-height:44px; min-width:44px;
+  }
+  /* 视觉上不撑高布局的元素用伪元素扩大热区 */
+  :where(button,a,[role="button"]).tap-expand{position:relative}
+  :where(button,a,[role="button"]).tap-expand::after{
+    content:''; position:absolute; left:50%; top:50%;
+    width:max(100%,44px); height:max(100%,44px);
+    transform:translate(-50%,-50%);
+  }
+}
+
+/* ========== 7. 减弱动效 ========== */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important; animation-iteration-count:1!important;
+    transition-duration:.01ms!important; scroll-behavior:auto!important;
+  }
+  .spectrum-rule i{animation:none!important}
+}
+
+/* ========== 8. 打印 ========== */
+@media print{
+  body{background:#fff!important;color:#000!important}
+  .spectrum-rule,.no-print{display:none!important}
+}

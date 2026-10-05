@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="谛听 VeriCall 面向 AIGC 语音诈骗场景，提供录音与文件鉴真、实时流式监测、声纹登记和检测记录管理。">
 <meta name="theme-color" content="#000000">
-<script src="theme.js?v=22"></script>
+<script src="path.js?v=25"></script>
+<script>window.VeriCallPath=window.VeriCallPath||{base:new URL("./",location.href).href,resolve:function(p){return new URL(String(p||"").replace(/^\/+/,""),new URL("./",location.href)).href},websocket:function(p){var u=new URL(String(p||"").replace(/^\/+/,""),new URL("./",location.href));u.protocol=location.protocol==="https:"?"wss:":"ws:";return u.href}};</script>
+<script src="theme.js?v=25"></script>
 <title>谛听 VeriCall · AIGC 语音鉴真</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
 <style>
@@ -14,9 +16,7 @@
   --gold:#d4b483; --gold2:#e9d3a7;
   --line:rgba(236,231,220,.09); --line2:rgba(236,231,220,.18);
   --ok:#8fb996; --warn:#d4a04a; --bad:#c96a5e;
-  --serif:var(--font-serif);
   --sans:var(--font-sans);
-  --mono:var(--font-mono);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 ::selection{background:rgba(212,180,131,.25)}
@@ -31,7 +31,7 @@ header{max-width:1180px; margin:0 auto; padding:18px 32px 0;
   display:flex; align-items:center; gap:34px}
 .logo{display:flex; align-items:center; gap:12px; cursor:default}
 .logo svg{width:34px; height:34px}
-.logo .cn{font-family:var(--serif); font-size:20px; letter-spacing:6px; font-weight:600}
+.logo .cn{font-family:var(--sans); font-size:20px; letter-spacing:6px; font-weight:600}
 .logo .en{font-family:var(--sans); font-size:10px; letter-spacing:3.5px; color:var(--mut); margin-top:3px}
 .tabs{display:flex; gap:26px; margin-left:18px}
 .tab{font-size:13px; letter-spacing:2px; color:var(--mut); cursor:pointer;
@@ -58,7 +58,7 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
 .hero{text-align:center; padding:38px 0 0}
 .hero h1{font-family:var(--sans); font-size:78px; font-weight:600; letter-spacing:28px;
   text-indent:28px; line-height:1; color:var(--ink)}
-.hero .en{font-family:var(--mono); font-size:12px; letter-spacing:11px; text-indent:11px;
+.hero .en{font-family:var(--sans); font-size:12px; letter-spacing:11px; text-indent:11px;
   color:var(--gold); margin-top:14px}
 .hero .tag{font-size:13.5px; letter-spacing:3px; color:var(--mut); margin-top:12px}
 .waveline{display:block; margin:22px auto 0; width:min(560px,80%); height:36px; overflow:visible}
@@ -80,7 +80,7 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
 .orb.live::after{animation-delay:.9s}
 @keyframes ripple{from{transform:scale(1); opacity:.9} to{transform:scale(1.75); opacity:0}}
 .orb-hint{margin-top:16px; font-size:12px; letter-spacing:2px; color:var(--dim)}
-.orb-hint b{color:var(--bad); font-family:var(--mono); font-weight:500}
+.orb-hint b{color:var(--bad); font-family:var(--sans); font-weight:500}
 .or-line{display:flex; align-items:center; gap:14px; margin-top:26px;
   font-size:12px; color:var(--dim); letter-spacing:1.5px}
 .or-line label{color:var(--mut); border-bottom:1px solid var(--line2); padding-bottom:1px;
@@ -90,7 +90,7 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
 .demos{display:flex; gap:44px; margin-top:26px}
 .demo{background:none; border:none; cursor:pointer; text-align:left; padding:0;
   color:var(--mut); font-family:var(--sans); transition:color .25s}
-.demo i{font-family:var(--mono); font-style:normal; font-size:10px; color:var(--gold);
+.demo i{font-family:var(--sans); font-style:normal; font-size:10px; color:var(--gold);
   letter-spacing:2px; display:block; margin-bottom:5px}
 .demo span{font-size:13px; letter-spacing:2px}
 .demo:hover{color:var(--ink)}
@@ -116,10 +116,10 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
   background:linear-gradient(90deg,transparent,var(--gold),transparent);
   animation:scan 1.6s ease-in-out infinite}
 @keyframes scan{0%{top:0; opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{top:100%; opacity:0}}
-.ch .idx{font-family:var(--mono); font-size:10px; letter-spacing:3px; color:var(--gold)}
+.ch .idx{font-family:var(--sans); font-size:10px; letter-spacing:3px; color:var(--gold)}
 .ch h3{font-family:var(--sans); font-size:19px; font-weight:600; letter-spacing:3px; margin-top:10px}
 .ch .model{font-size:11px; color:var(--dim); letter-spacing:1px; margin-top:6px; font-family:var(--sans)}
-.ch .score{font-family:var(--mono); font-size:38px; font-weight:300; margin-top:16px; line-height:1;
+.ch .score{font-family:var(--sans); font-size:38px; font-weight:300; margin-top:16px; line-height:1;
   color:var(--ink); font-variant-numeric:tabular-nums}
 .ch .score em{font-style:normal; font-size:14px; color:var(--dim); margin-left:4px}
 .ch .track{height:1px; background:var(--line); margin-top:16px; position:relative}
@@ -129,7 +129,7 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
   font-size:11px; letter-spacing:1.5px}
 .ch .lab{font-family:var(--sans); color:var(--mut)}
 .ch .lab.bad{color:var(--bad)} .ch .lab.good{color:var(--ok)} .ch .lab.mid{color:var(--warn)}
-.ch .conf{color:var(--dim); font-family:var(--mono)}
+.ch .conf{color:var(--dim); font-family:var(--sans)}
 .ch .detail{font-size:12px; color:var(--mut); line-height:1.9; margin-top:12px;
   max-height:0; overflow:hidden; transition:max-height .8s ease}
 .ch.done .detail{max-height:150px}
@@ -143,7 +143,7 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
 .gauge .fgc{fill:none; stroke-width:1.5; stroke-linecap:round;
   transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1)}
 .gauge .gtxt{position:absolute; inset:0; display:grid; place-items:center}
-.gauge .gtxt b{font-family:var(--mono); font-size:30px; font-weight:300; font-variant-numeric:tabular-nums}
+.gauge .gtxt b{font-family:var(--sans); font-size:30px; font-weight:300; font-variant-numeric:tabular-nums}
 .gauge .gtxt span{display:block; font-size:10px; letter-spacing:3px; color:var(--dim); margin-top:6px}
 .vword{font-family:var(--sans); font-size:54px; font-weight:600; letter-spacing:18px;
   text-indent:18px; margin-top:30px}
@@ -187,7 +187,7 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
 .vrow{display:flex; align-items:baseline; gap:16px; padding:16px 2px;
   border-bottom:1px solid var(--line)}
 .vrow .nm{font-family:var(--sans); font-size:17px; letter-spacing:3px}
-.vrow .ct{font-family:var(--mono); font-size:11px; color:var(--dim)}
+.vrow .ct{font-family:var(--sans); font-size:11px; color:var(--dim)}
 .vrow .st{margin-left:auto; font-size:10px; letter-spacing:2px; color:var(--ok)}
 .vempty{color:var(--dim); font-size:12.5px; letter-spacing:2px; padding:40px 0; text-align:center}
 
@@ -198,12 +198,12 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
   font-size:13px; animation:rise .5s both}
 .hrow.head{color:var(--dim); font-size:10.5px; letter-spacing:2.5px; font-family:var(--sans);
   border-bottom-color:var(--line2); animation:none}
-.hrow .t{font-family:var(--mono); font-size:11.5px; color:var(--dim)}
+.hrow .t{font-family:var(--sans); font-size:11.5px; color:var(--dim)}
 .hrow .n{letter-spacing:1px}
 .hrow .v{font-size:12px; letter-spacing:3px}
 .hrow .v.allow{color:var(--ok)} .hrow .v.caution{color:var(--warn)} .hrow .v.block{color:var(--bad)}
-.hrow .s{font-family:var(--mono); font-size:11px; color:var(--mut)}
-.hrow .e{font-family:var(--mono); font-size:11px; color:var(--dim); text-align:right}
+.hrow .s{font-family:var(--sans); font-size:11px; color:var(--mut)}
+.hrow .e{font-family:var(--sans); font-size:11px; color:var(--dim); text-align:right}
 .hfilters{display:flex; gap:10px; margin-top:24px; flex-wrap:wrap}
 .hchip{font-size:12px; letter-spacing:2px; color:var(--mut); border:1px solid var(--line2);
   padding:6px 18px; border-radius:16px; cursor:pointer; transition:all .25s; user-select:none}
@@ -231,7 +231,7 @@ main{max-width:1180px; margin:0 auto; padding:0 32px 90px}
 .live-trans{margin-top:14px; font-size:12px; letter-spacing:1px; color:var(--mut);
   max-width:560px; text-align:center; min-height:18px; line-height:1.8}
 .live-tip{margin-top:22px; font-size:11.5px; color:var(--dim); letter-spacing:1px}
-.live-tip b{color:var(--gold2); font-family:var(--mono); font-weight:500}
+.live-tip b{color:var(--gold2); font-family:var(--sans); font-weight:500}
 .tl{display:flex; gap:3px; flex-wrap:wrap; margin-top:22px; max-width:680px; justify-content:center}
 .tl .b{width:13px; height:32px; border-radius:2px; background:var(--dim); opacity:.45; transition:opacity .3s}
 .tl .b.green{background:var(--ok); opacity:1} .tl .b.yellow{background:var(--warn); opacity:1}
@@ -323,20 +323,20 @@ body.elder .share-box .btn{font-size:22px; padding:16px 36px}
 @media(max-width:880px){.m-wall{grid-template-columns:repeat(2,1fr)}}
 .m-card{background:rgba(236,231,220,.03); border:1px solid var(--line); border-radius:10px;
   padding:18px 12px; text-align:center}
-.m-card .n{font-family:var(--mono); font-size:26px; color:var(--gold2); font-weight:300}
+.m-card .n{font-family:var(--sans); font-size:26px; color:var(--gold2); font-weight:300}
 .m-card .l{font-size:11.5px; color:var(--mut); margin-top:6px; letter-spacing:1px; line-height:1.8}
 .m-card .s{display:block; font-size:10px; color:var(--dim); font-family:var(--sans)}
 .p-chan{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:34px}
 @media(max-width:880px){.p-chan{grid-template-columns:1fr}}
 .pc{border-top:1px solid var(--line2); border-bottom:1px solid var(--line); padding:20px 18px; position:relative}
-.pc i{font-family:var(--mono); font-size:10px; letter-spacing:3px; color:var(--gold); font-style:normal}
+.pc i{font-family:var(--sans); font-size:10px; letter-spacing:3px; color:var(--gold); font-style:normal}
 .pc h3{font-family:var(--sans); font-size:20px; letter-spacing:3px; margin-top:10px; font-weight:600}
 .pc p{font-size:12.5px; color:var(--mut); line-height:2; margin-top:10px}
 .red-team{margin-top:34px; border:1px solid rgba(201,106,94,.35); border-radius:10px; padding:22px 24px}
 .rt-t{font-size:13px; letter-spacing:3px; color:var(--bad)}
 .rt-row{display:flex; gap:36px; margin-top:16px; flex-wrap:wrap}
 .rt-row div{font-size:12px; color:var(--mut); letter-spacing:1px; line-height:1.9}
-.rt-row b{font-family:var(--mono); font-size:20px; color:var(--ink); font-weight:300; margin-right:6px}
+.rt-row b{font-family:var(--sans); font-size:20px; color:var(--ink); font-weight:300; margin-right:6px}
 .rt-note{margin-top:12px; font-size:11.5px; color:var(--dim); letter-spacing:1px}
 .dash{margin-top:34px}
 .dash .dt{font-family:var(--sans); font-size:22px; letter-spacing:4px; color:var(--gold2); font-weight:600}
@@ -344,12 +344,12 @@ body.elder .share-box .btn{font-size:22px; padding:16px 36px}
 .dash .dc{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:14px}
 @media(max-width:880px){.dash .dc{grid-template-columns:repeat(2,1fr)}}
 .dash .dk{background:rgba(236,231,220,.03); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center}
-.dash .dk .n{font-family:var(--mono); font-size:30px; color:var(--gold2); font-weight:600}
+.dash .dk .n{font-family:var(--sans); font-size:30px; color:var(--gold2); font-weight:600}
 .dash .dk .l{font-size:11px; color:var(--mut); margin-top:4px; letter-spacing:1.5px}
 .dash .bars{margin-top:14px; display:flex; gap:6px; align-items:flex-end; height:72px}
 .dash .bars .b{flex:1; background:rgba(212,180,131,.28); border-radius:2px 2px 0 0; min-height:2px; position:relative}
-.dash .bars .b span{position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--dim); font-family:var(--mono)}
-.dash .bars .bx{position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--dim); font-family:var(--mono); white-space:nowrap}
+.dash .bars .b span{position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--dim); font-family:var(--sans)}
+.dash .bars .bx{position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--dim); font-family:var(--sans); white-space:nowrap}
 .cta{display:flex; gap:16px; justify-content:center; margin-top:40px; flex-wrap:wrap}
 .cta .btn{width:auto; padding:14px 44px; margin-top:0}
 
@@ -393,7 +393,7 @@ body.elder .demo-cap b{font-size:26px}
 .detail-box .ch2{background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:8px;
   padding:12px 14px; margin-bottom:10px}
 .detail-box .ch2 .top{display:flex; justify-content:space-between; font-size:11px; color:var(--gold); letter-spacing:2px; font-family:var(--sans)}
-.detail-box .ch2 .sc{font-family:var(--mono); font-size:22px; margin-top:8px; font-weight:300}
+.detail-box .ch2 .sc{font-family:var(--sans); font-size:22px; margin-top:8px; font-weight:300}
 .detail-box .ch2 .de{font-size:12px; color:var(--mut); line-height:1.9; margin-top:6px}
 .detail-box .raz{margin-top:14px; border-left:1px solid var(--gold); padding-left:14px;
   font-size:13px; color:var(--ink); line-height:2}
@@ -406,7 +406,7 @@ body.elder .demo-cap b{font-size:26px}
 .chal-box{width:min(430px,100%); text-align:center; padding:34px 28px 30px;
   border:1px solid var(--line2); background:#0d0c0c; border-radius:6px}
 .chal-box .t{font-family:var(--sans); font-size:24px; letter-spacing:6px; color:var(--gold2)}
-.chal-box .d{font-family:var(--mono); font-size:58px; letter-spacing:16px; text-indent:16px;
+.chal-box .d{font-family:var(--sans); font-size:58px; letter-spacing:16px; text-indent:16px;
   color:var(--ink); margin-top:20px}
 .chal-box .h{font-size:13px; color:var(--mut); line-height:2; margin:16px auto 6px; max-width:340px}
 .chal-box .r{font-size:14px; line-height:2; margin-top:16px; min-height:40px}
@@ -476,8 +476,14 @@ body.elder .call-hangup{font-size:22px; padding:18px 56px}
     animation-iteration-count:1!important; transition-duration:.01ms!important}
 }
 </style>
-<link rel="stylesheet" href="ui.css?v=22">
-<script src="ui.js?v=22" defer></script>
+<link rel="stylesheet" href="ui.css?v=26">
+<link rel="stylesheet" href="design-system.css?v=1">
+<link rel="stylesheet" href="typography.css?v=1">
+<link rel="stylesheet" href="narrative.css?v=1">
+<link rel="stylesheet" href="orchestrate.css?v=1">
+<link rel="stylesheet" href="refine.css?v=1">
+<script src="ui.js?v=26" defer></script>
+<script src="enhance.js?v=1" defer></script>
 </head>
 <body data-app="index">
 
@@ -519,6 +525,13 @@ body.elder .call-hangup{font-size:22px; padding:18px 56px}
     <span>快速操作</span><kbd>Ctrl K</kbd>
   </button>
   <div class="header-tools">
+    <a class="entry-link" href="showcase.html" title="项目展示页" aria-label="打开项目展示页">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 5h16v11H4z"></path>
+        <path d="M9 20h6M12 16v4"></path>
+      </svg>
+      <span>展示</span>
+    </a>
     <a class="entry-link" id="entryFromIndex" href="login.html#index" title="返回统一入口" aria-label="返回统一入口">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="m15 18-6-6 6-6"></path>
@@ -539,46 +552,118 @@ body.elder .call-hangup{font-size:22px; padding:18px 56px}
 
 <!-- ================= 关于（叙事首页） ================= -->
 <section class="page" id="p-about">
-  <div class="hero rise" style="padding-top:6px">
+  <div class="hero rise" style="padding-top:0">
+    <div class="spectrum-rule" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <h1>AI 拟声电话诈骗</h1>
-    <div class="en rise" style="animation-delay:.15s">CALL GUARDIAN · 通话守卫</div>
-    <p class="tag rise" style="animation-delay:.3s;line-height:2.2;max-width:760px;margin:18px auto 0">
+    <div class="en rise" style="animation-delay:.12s">CALL GUARDIAN · 通话守卫</div>
+    <p class="tag rise" style="animation-delay:.24s;line-height:2.1;max-width:640px;margin:var(--sp-5) auto 0">
       骗子用 AI 伪造家人的声音向老人要钱。谛听在通话中实时给出三重证据判定——<br>
-      <b style="color:var(--gold2);font-weight:600">这是合成声吗 · 这是家人本人吗 · 这是诈骗话术吗</b>——挡住老人的最后一笔转账。
+      <b>这是合成声吗 · 这是家人本人吗 · 这是诈骗话术吗</b>——挡住老人的最后一笔转账。
     </p>
+    <div class="hero-cta rise" style="animation-delay:.34s">
+      <button class="btn" id="goDetect">开始体验 · 三通道检测</button>
+      <span class="hero-hint">无需准备音频 · 内置 3 个演示场景</span>
+    </div>
   </div>
 
-  <div class="m-wall rise" style="animation-delay:.45s">
-    <div class="m-card"><div class="n">0.745%</div><div class="l">AASIST dev EER<span class="s">best 0.316%</span></div></div>
-    <div class="m-card"><div class="n">0.51%</div><div class="l">声纹合库 EER<span class="s">200 人标定</span></div></div>
-    <div class="m-card"><div class="n">98.6%</div><div class="l">话术语义 F1<span class="s">二分类诈骗/正常</span></div></div>
-    <div class="m-card"><div class="n">0.00%</div><div class="l">红队误拦率<span class="s">适老零误伤</span></div></div>
-<div class="m-card"><div class="n">194ms</div><div class="l">流式单窗 P90<span class="s">本机 HTTP P95 0.71s</span></div></div>
-    <div class="m-card"><div class="n">3.49%</div><div class="l">AASIST eval EER<span class="s">英文基准 · 如实标注</span></div></div>
-    <div class="m-card"><div class="n">81.3%</div><div class="l">语义 8 类加权 F1<span class="s">v4 推荐口径</span></div></div>
-<div class="m-card"><div class="n">166</div><div class="l">回归测试用例<span class="s">Windows 165 passed + 1 POSIX-only</span></div></div>
+  <!-- 核心指标：4 项，各自独立成卡，构成第一视觉层级 -->
+  <div class="m-wall rise" style="animation-delay:.42s" role="list" aria-label="核心性能指标">
+    <div class="m-card" role="listitem">
+      <div class="n">0.745<span class="u">%</span></div>
+      <div class="l">AASIST dev EER</div>
+      <div class="s">伪造声检测 · 越低越好</div>
+    </div>
+    <div class="m-card" role="listitem">
+      <div class="n">0.51<span class="u">%</span></div>
+      <div class="l">声纹合库 EER</div>
+      <div class="s">200 人双信道标定</div>
+    </div>
+    <div class="m-card" role="listitem">
+      <div class="n">98.6<span class="u">%</span></div>
+      <div class="l">话术语义 F1</div>
+      <div class="s">诈骗 / 正常二分类</div>
+    </div>
+    <div class="m-card" role="listitem">
+      <div class="n">194<span class="u">ms</span></div>
+      <div class="l">流式单窗 P90</div>
+      <div class="s">够快，才拦得住</div>
+    </div>
   </div>
+
+  <!-- 补充口径：明确降级为次级信息，视觉权重低于上方 -->
+  <details class="m-more rise" style="animation-delay:.5s">
+    <summary>
+      <span class="m-more-t">补充口径与验证记录</span>
+      <span class="m-more-n">4 项</span>
+      <svg class="m-more-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </summary>
+    <div class="m-more-grid">
+      <div class="m-x"><b>0.00%</b><span>红队误拦率 · 36 样本 6 方言零误伤</span></div>
+      <div class="m-x"><b>3.49%</b><span>AASIST eval EER · 英文基准如实标注</span></div>
+      <div class="m-x"><b>81.3%</b><span>语义 8 类加权 F1 · v4 推荐口径</span></div>
+      <div class="m-x"><b>166</b><span>回归测试用例 · Windows 165 + 1 POSIX</span></div>
+    </div>
+  </details>
 
   <div class="p-chan rise" style="animation-delay:.6s">
-    <div class="pc"><i>CHANNEL · 01</i><h3>声学伪造检测</h3><p>听"这是不是 AI 合成的声音"。AASIST 模型，端侧 ONNX 化，一窗只需毫秒级。</p></div>
-    <div class="pc"><i>CHANNEL · 02</i><h3>家庭声纹核验</h3><p>辨"这是不是家人本人"。CAMPPlus 声纹，本地落盘、双信道注册、科学标定阈值。</p></div>
-    <div class="pc"><i>CHANNEL · 03</i><h3>话术语义理解</h3><p>懂"说的话是不是诈骗"。SenseVoice 转写 + 大模型风险评分，覆盖四类高发话术。</p></div>
+    <div class="pc">
+      <i>CHANNEL · 01</i>
+      <h3>声学伪造检测</h3>
+      <p>听"这是不是 AI 合成的声音"。AASIST 模型，端侧 ONNX 化，一窗只需毫秒级。</p>
+      <div class="pc-metric"><b>0.745%</b><span>EER</span></div>
+    </div>
+    <div class="pc">
+      <i>CHANNEL · 02</i>
+      <h3>家庭声纹核验</h3>
+      <p>辨"这是不是家人本人"。CAMPPlus 声纹，本地落盘、双信道注册、科学标定阈值。</p>
+      <div class="pc-metric"><b>0.51%</b><span>EER</span></div>
+    </div>
+    <div class="pc">
+      <i>CHANNEL · 03</i>
+      <h3>话术语义理解</h3>
+      <p>懂"说的话是不是诈骗"。SenseVoice 转写 + 大模型风险评分，覆盖四类高发话术。</p>
+      <div class="pc-metric"><b>98.6%</b><span>F1</span></div>
+    </div>
   </div>
 
   <div class="red-team rise" style="animation-delay:.75s">
-    <div class="rt-t">我们攻击过自己 · 红队对抗评测</div>
-    <div class="rt-row">
-      <div><b>0.00%</b>误拦率（36 样本 6 方言，零误伤家人）</div>
-      <div><b>100%</b>粤语/闽南漏拦（方言绕过，已诚实暴露）</div>
-      <div><b>100% / 66.7%</b>对抗逃避率（空格改写 / 同音替换）</div>
-      <div><b>13.89%</b>红队方言评测 EER</div>
+    <div class="rt-head">
+      <div class="rt-t">我们攻击过自己</div>
+      <div class="rt-badge">红队对抗评测</div>
     </div>
-    <div class="rt-note">不藏短板：方言泛化与对抗逃逸正是下一阶段路线——完整的攻击面框架见 evaluation/ 红队报告。</div>
+    <div class="rt-grid">
+      <div class="rt-i ok">
+        <b>0.00%</b>
+        <span>误拦率</span>
+        <em>36 样本 6 方言，零误伤家人</em>
+      </div>
+      <div class="rt-i bad">
+        <b>100%</b>
+        <span>粤语 / 闽南漏拦</span>
+        <em>方言绕过，已诚实暴露</em>
+      </div>
+      <div class="rt-i bad">
+        <b>100%<span class="sep">/</span>66.7%</b>
+        <span>对抗逃避率</span>
+        <em>空格改写 / 同音替换</em>
+      </div>
+      <div class="rt-i warn">
+        <b>13.89%</b>
+        <span>红队方言 EER</span>
+        <em>真实攻击面测得</em>
+      </div>
+    </div>
+    <p class="rt-note">不藏短板：方言泛化与对抗逃逸正是下一阶段路线——完整的攻击面框架见 evaluation/ 红队报告。</p>
   </div>
 
   <div class="dash rise" style="animation-delay:.9s">
-    <div class="dt">守护总览</div>
-    <div class="ds">本机实时统计 · 数据来自检测历史（自动刷新） · 子女端同步可见</div>
+    <div class="dash-head">
+      <div>
+        <div class="dt">守护总览</div>
+        <div class="ds">本机实时统计 · 数据来自检测历史（自动刷新） · 子女端同步可见</div>
+      </div>
+      <div class="spectrum-rule dash-spec" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
     <div class="dc" id="dashCards">
       <div class="dk"><div class="n">--</div><div class="l">今日通话</div></div>
       <div class="dk"><div class="n">--</div><div class="l">拦截</div></div>
@@ -589,9 +674,8 @@ body.elder .call-hangup{font-size:22px; padding:18px 56px}
   </div>
 
   <div class="cta rise" style="animation-delay:1.05s">
-    <button class="btn" id="goDetect">开始体验 · 三通道检测</button>
-    <a class="child-link" href="elder.html" target="_blank" style="align-self:center">适老端全屏</a>
-    <a class="child-link" href="child.html" target="_blank" style="align-self:center">子女守护端</a>
+    <a class="child-link" href="elder.html" target="_blank" rel="noopener">适老端全屏</a>
+    <a class="child-link" href="child.html" target="_blank" rel="noopener">子女守护端</a>
   </div>
 </section>
 
@@ -919,6 +1003,29 @@ body.elder .call-hangup{font-size:22px; padding:18px 56px}
 <script src="copy.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+const TOKEN_KEY="vericall_child_token";
+const ELDER_KEY="vericall_elder_access_key";
+let accessRedirecting=false;
+function apiHeaders(extra){
+  let token="", elderKey="";
+  try{token=localStorage.getItem(TOKEN_KEY)||"";}catch(_){}
+  try{elderKey=sessionStorage.getItem(ELDER_KEY)||"";}catch(_){}
+  const headers=Object.assign({},extra||{});
+  if(elderKey)headers["X-Elder-Access-Key"]=elderKey;
+  if(token)headers.Authorization="Bearer "+token;
+  return headers;
+}
+async function apiFetch(path,opt){
+  opt=Object.assign({},opt||{});
+  opt.headers=apiHeaders(opt.headers);
+  const response=await fetch(window.VeriCallPath.resolve(path),opt);
+  if(response.status===401&&!accessRedirecting){
+    accessRedirecting=true;
+    try{localStorage.removeItem(TOKEN_KEY);}catch(_){}
+    location.replace("login.html#index");
+  }
+  return response;
+}
 function openModal(id,options){
   const el=$(id);
   if(window.VeriCallDialog) return window.VeriCallDialog.open(el,options||{});
@@ -976,7 +1083,7 @@ applyElder();
 /* ---------- 状态栏 ---------- */
 async function loadStatus(){
   try{
-    const s=await(await fetch("/api/status")).json();
+    const s=await(await apiFetch("api/status")).json();
     const eer=s.aasist_dev_eer!=null?s.aasist_dev_eer.toFixed(2)+"%":"--";
     const ac=s.acoustic||"aasist";
     const acLabel=ac==="aasist"?"AASIST":(ac==="xlsr_cn"?"XLS-R 中文域":(ac.startsWith("xlsr_cn")?"XLS-R 中文域·宽谱":ac));
@@ -1104,7 +1211,7 @@ async function runAnalyze(fd){
   const chans=["acoustic","voiceprint","semantic"];
   chans.forEach((k,i)=>setTimeout(()=>$("ch-"+k).classList.add("pending"), i*300));
   try{
-    const r=await fetch("/api/analyze",{method:"POST",body:fd});
+    const r=await apiFetch("api/analyze",{method:"POST",body:fd});
     const data=await r.json();
     clearInterval(progTimer); ss.classList.remove("show");
     chans.forEach(k=>$("ch-"+k).classList.remove("pending"));
@@ -1129,11 +1236,19 @@ function resetChannels(){
     $("de-"+k).textContent=""; $("cf-"+k).textContent="";
   });
 }
+function channelCardKey(name){
+  const key=String(name||"").toLowerCase();
+  if(key==="acoustic"||key==="aasist"||key.startsWith("xlsr")) return "acoustic";
+  if(key==="voiceprint") return "voiceprint";
+  if(key==="semantic") return "semantic";
+  return "";
+}
 function revealResult(rec){
   lastRec=rec;
   rec.channels.forEach((c,i)=>{
     setTimeout(()=>{
-      const k=c.name, card=$("ch-"+k);
+      const k=channelCardKey(c.name), card=k?$("ch-"+k):null;
+      if(!card) return;
       card.classList.add("done");
       const bad=c.score>=0.6, mid=c.score>=0.35&&!bad;
       const lab=$("la-"+k); lab.textContent=c.label;
@@ -1186,7 +1301,7 @@ $("enSubmit").onclick=async()=>{
   fd.append("file",enRec.blob,enRec.name);
   $("enSubmit").disabled=true; $("enSubmit").textContent="声纹特征提取中 …";
   try{
-    const r=await fetch("/api/enroll",{method:"POST",body:fd});
+    const r=await apiFetch("api/enroll",{method:"POST",body:fd});
     const d=await r.json();
     if(d.error) toast(d.message||"登记失败",true);
     else{toast(`「${d.name}」声纹登记成功`); enRec=null; $("enName").value=""; $("consent").checked=false; loadStatus()}
@@ -1220,7 +1335,7 @@ async function loadHistory(){
   histLoadState="loading";
   if(!histCache.length) renderHistory();
   try{
-    const r=await fetch("/api/history");
+    const r=await apiFetch("api/history");
     if(!r.ok) throw new Error("HTTP "+r.status);
     const d=await r.json();
     histCache=d.records||[]; renderHistory();
@@ -1341,7 +1456,7 @@ $("liveBtn").onclick=async()=>{
   liveConnecting=true;
   try{
     const streamUrl=window.VeriCallStream?await window.VeriCallStream.websocketUrl():
-      `${location.protocol==="https:"?"wss:":"ws:"}//${location.host}/ws/stream`;
+      window.VeriCallPath.websocket("ws/stream");
     liveWs=new WebSocket(streamUrl);
     liveWs.onopen=()=>{ liveWs.send(JSON.stringify({type:"config",sr:16000})); $("liveBtn").textContent="停止监听"; startLiveMic(); toast("已连接流式接口"); setLive("GREEN"); $("liveTimeline").innerHTML="";
       liveWinCount=0; $("liveWinN").textContent="0"; $("liveFused").textContent="--";
@@ -1409,7 +1524,8 @@ function makeShareCard(o){
   cv.width=W; cv.height=H; const x=cv.getContext("2d");
   x.fillStyle="#0c0b0b"; x.fillRect(0,0,W,H);
   x.strokeStyle="#d4b483"; x.lineWidth=2; x.strokeRect(26,26,W-52,H-52);
-  const cx=W/2, sans="'PingFang SC','Microsoft YaHei',sans-serif";
+  const cx=W/2;
+  const sans=getComputedStyle(document.body).fontFamily||"sans-serif";
   /* 谛听 logo（圆 + 耳形弧线 + 听珠） */
   x.strokeStyle="#d4b483"; x.lineWidth=3;
   x.beginPath(); x.arc(cx,112,44,0,Math.PI*2); x.stroke();
@@ -1422,7 +1538,7 @@ function makeShareCard(o){
   x.font="20px "+sans; x.fillStyle="#8f8a7d";
   x.fillText(COPY.card.subtitle||"",cx,246);
   const t=new Date(), pad=n=>String(n).padStart(2,"0");
-  x.font="20px monospace"; x.fillStyle="#57544c";
+  x.font="20px "+sans; x.fillStyle="#57544c";
   x.fillText("来电时间 "+t.getFullYear()+"-"+pad(t.getMonth()+1)+"-"+pad(t.getDate())
     +" "+pad(t.getHours())+":"+pad(t.getMinutes())+(o.source?" · "+o.source:""),cx,288);
   /* 裁决大字 */
@@ -1431,7 +1547,7 @@ function makeShareCard(o){
     allow:["通话正常","#8fb996"],green:["通话正常","#8fb996"]};
   const [vw,vc]=vmap[o.final]||vmap.red;
   x.font="600 88px "+sans; x.fillStyle=vc; x.fillText(vw,cx,402);
-  x.font="24px monospace"; x.fillStyle="#8f8a7d";
+  x.font="24px "+sans; x.fillStyle="#8f8a7d";
   x.fillText("融合可疑度 "+(typeof o.fused==="number"?o.fused.toFixed(2):"--"),cx,446);
   /* 三通道证据 */
   x.textAlign="left"; let y=508;
@@ -1440,7 +1556,7 @@ function makeShareCard(o){
     const cc=sc>=0.6?"#c96a5e":sc>=0.35?"#d4a04a":"#8fb996";
     x.font="22px "+sans; x.fillStyle="#8f8a7d";
     x.fillText(CHAN_CN[c.name]||c.name,90,y);
-    x.font="24px monospace"; x.fillStyle=cc; x.fillText(sc.toFixed(2),300,y);
+    x.font="24px "+sans; x.fillStyle=cc; x.fillText(sc.toFixed(2),300,y);
     x.font="20px "+sans; x.fillStyle="#57544c"; x.fillText(c.label||"",392,y);
     x.fillStyle="rgba(236,231,220,.1)"; x.fillRect(90,y+14,560,4);
     x.fillStyle=cc; x.fillRect(90,y+14,560*Math.min(1,Math.max(0,sc)),4);
@@ -1525,7 +1641,7 @@ $("copyFromVerdict").onclick=async()=>{
 let chalCode=null;
 async function startChallenge(){
   try{
-    const r=await fetch("/api/challenge/begin",{method:"POST"});
+    const r=await apiFetch("api/challenge/begin",{method:"POST"});
     const d=await r.json();
     if(!r.ok||!d.ok){toast(d.message||"数字复核发起失败",true);return;}
     chalCode=d.code;
@@ -1540,7 +1656,7 @@ makeRecorder("chalRecBtn","chalRecHint",(b)=>{
   if(!chalCode){toast("请先重新发起数字复核",true);return;}
   const fd=new FormData(); fd.append("code",chalCode); fd.append("file",b,"challenge_rec.wav");
   $("chalHint").textContent="比对中 …";
-  fetch("/api/challenge/verify",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
+  apiFetch("api/challenge/verify",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
     if(!d.ok||d.error){$("chalResult").textContent=d.message||d.error;return;}
     const okV=!!(d.verdict&&d.verdict.pass_ok);
     $("chalResult").innerHTML=okV
@@ -1557,8 +1673,11 @@ $("challengeFromVerdict").onclick=()=>startChallenge();
 function drawWave(el,samples){
   if(!el) return;
   const x=el.getContext("2d"), W=el.width, H=el.height;
-  x.fillStyle="rgba(10,10,11,1)"; x.fillRect(0,0,W,H);
-  x.strokeStyle="rgba(212,180,131,.85)"; x.lineWidth=1; x.beginPath();
+  /* 底色与描边跟随主题：原为硬编码 rgba(10,10,11)，浅色主题下会形成突兀白块 */
+  const _cs=getComputedStyle(document.documentElement);
+  x.fillStyle=_cs.getPropertyValue("--ui-canvas-bg").trim()||"#07090b";
+  x.fillRect(0,0,W,H);
+  x.strokeStyle=_cs.getPropertyValue("--ui-gold").trim()||"#d4b483"; x.lineWidth=1; x.beginPath();
   const samples2=(samples&&samples.length)?samples:new Float32Array(0);
   const step=Math.max(1,Math.floor(samples2.length/W));
   for(let i=0;i<W;i++){
@@ -1618,7 +1737,7 @@ $("hmClose").onclick=()=>closeModal("histModal");
 $("histModal").onclick=e=>{if(e.target===$("histModal"))closeModal("histModal")};
 async function loadDashboard(){
   try{
-    const d=await(await fetch("/api/history?limit=200")).json();
+    const d=await(await apiFetch("api/history?limit=200")).json();
     const rs=d.records||[];
     const today=new Date().toISOString().slice(0,10);
     const td=rs.filter(r=>(r.time||"").slice(0,10)===today);
@@ -1643,16 +1762,16 @@ $("goDetect").onclick=()=>{document.querySelector('.tab[data-p="detect"]').click
 let callWs=null, callAC=null, callPlayAC=null, callPlayNext=0, callMicNodes=null, inCall=false;
 async function inviteChild(reason, level, transcript){
   try{
-    const r=await fetch("/api/call/invite",{method:"POST",
+    const r=await apiFetch("api/call/invite",{method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({reason:reason||"谛听检测到可疑来电",level:level||"red",
         transcript:transcript||""})});
     const d=await r.json();
     if(!r.ok||!d.ok){toast("呼叫发起失败",true);return;}
-    openElderCall(d.room_id);
+    openElderCall(d.room_id,d.ws_ticket);
   }catch(e){toast("呼叫失败: "+e.message,true)}
 }
-function openElderCall(roomId){
+function openElderCall(roomId,ticket){
   openModal("callModal",{
     trigger:document.activeElement,
     onEscape:()=>{if(!inCall) closeCall();}
@@ -1661,8 +1780,8 @@ function openElderCall(roomId){
   $("callState").textContent="正在呼叫子女 …";
   $("callSub").innerHTML="谛听已把这次可疑来电推送给子女端<br>子女接听后，你们的声音会实时互通";
   $("callHangup").textContent="取消呼叫";
-  const wsProto=location.protocol==="https:"?"wss:":"ws:";
-  callWs=new WebSocket(`${wsProto}//${location.host}/ws/call/${roomId}?role=elder`);
+  const ticketQuery=ticket?"&ticket="+encodeURIComponent(ticket):"";
+  callWs=new WebSocket(window.VeriCallPath.websocket(`ws/call/${roomId}?role=elder${ticketQuery}`));
   callWs.binaryType="arraybuffer";
   callWs.onmessage=e=>{
     if(typeof e.data==="string"){

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="谛听 VeriCall —— 面向 AIGC 语音诈骗的三通道实时鉴真系统。声学伪造检测、家庭声纹核验、话术语义理解，本地推理，单窗 194ms。">
+<meta name="theme-color" content="#07090b">
+<title>谛听 VeriCall · 挡住最后一笔转账</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='21' fill='none' stroke='%23d4b483' stroke-width='2'/%3E%3Cpath d='M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5' fill='none' stroke='%23d4b483' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23.8' cy='25.8' r='2.5' fill='%23d4b483'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="ui.css?v=26">
+<link rel="stylesheet" href="design-system.css?v=1">
+<link rel="stylesheet" href="typography.css?v=1">
+<link rel="stylesheet" href="refine.css?v=1">
+<link rel="stylesheet" href="orchestrate.css?v=1">
+<link rel="stylesheet" href="showcase.css?v=2">
+<script src="theme.js?v=26"></script>
+</head>
+<body data-app="showcase">
+
+<!-- ===================== 导航 ===================== -->
+<header class="sc-nav">
+  <a class="sc-logo" href="index.html" aria-label="谛听 VeriCall 返回工作台">
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="24" cy="24" r="21.5" stroke="currentColor" stroke-width="1" opacity=".5"/>
+      <path d="M24.5 11.5c6.2 0 10.5 4.6 10.5 10.2 0 4.1-2.5 6.3-4.8 8.2-1.6 1.4-2.3 2.9-2.5 4.8-.2 2.2-1.3 3.5-3.4 3.5"
+            stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M24.5 17.8c3 0 5.2 2.3 5.2 5.1 0 2-1.2 3.1-2.4 4"
+            stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>
+      <circle cx="23.8" cy="25.8" r="1.7" fill="currentColor"/>
+    </svg>
+    <span class="sc-logo-txt"><b>谛听</b><i>VERICALL</i></span>
+  </a>
+  <nav class="sc-navlinks" aria-label="页面导航">
+    <a href="#problem">问题</a>
+    <a href="#system">系统</a>
+    <a href="#evidence">证据</a>
+    <a href="#honesty">边界</a>
+  </nav>
+  <div class="sc-navact">
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换配色" title="切换配色">
+      <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+    <a class="sc-cta" href="index.html">进入工作台</a>
+  </div>
+</header>
+
+<main>
+
+<!-- ===================== 01 · HERO ===================== -->
+<section class="sc-hero" id="top">
+  <!-- 原创母题：实时频谱场。canvas 由 spectrum.js 驱动，
+       波形形态取自语音的 1/f 能量分布，非通用装饰光斑。 -->
+  <canvas class="sc-field" id="scField" aria-hidden="true"></canvas>
+  <div class="sc-hero-inner">
+    <div class="sc-eyebrow" data-vc-in="wipe">
+      <span class="sc-dot"></span>
+      AIGC 语音诈骗 · 实时鉴真
+    </div>
+    <h1 class="sc-h1" data-vc-in="reveal">
+      <span class="sc-l1" data-vc-in="rise">挡住老人的</span>
+      <span class="sc-l2" data-vc-in="rise">最后一笔转账</span>
+    </h1>
+    <p class="sc-lead" data-vc-in="rise">
+      骗子用 AI 伪造家人的声音。谛听在通话进行中给出三重独立证据 ——
+      这是合成声吗、这是家人本人吗、这是诈骗话术吗。
+    </p>
+    <div class="sc-herometric" data-vc-in="rise">
+      <div class="sc-hm"><b>0.745<i>%</i></b><span>AASIST dev EER</span></div>
+      <div class="sc-hm"><b>194<i>ms</i></b><span>流式单窗 P90</span></div>
+      <div class="sc-hm"><b>0.00<i>%</i></b><span>红队误拦率</span></div>
+      <div class="sc-hm"><b>100<i>%</i></b><span>本地推理</span></div>
+    </div>
+    <div class="sc-herocta" data-vc-in="scale">
+      <a class="sc-btn sc-btn-primary" href="index.html">现场体验三通道检测</a>
+      <a class="sc-btn" href="#evidence">查看实测数据</a>
+    </div>
+    <div class="sc-scroll" data-vc-in="fade" aria-hidden="true"><i></i><span>向下</span></div>
+  </div>
+</section>
+
+<!-- ===================== 02 · 问题 ===================== -->
+<section class="sc-sec" id="problem">
+  <div class="sc-sec-head">
+    <div class="sc-sec-num" data-vc-in="wipe">01</div>
+    <h2 data-vc-in="reveal">声音不再可信</h2>
+    <p class="sc-sec-lead">
+      五秒样本、几秒生成、一个电话号码。AI 拟声让「听得出是家人」这件事彻底失效。
+      而承担判断的人，恰好是最难判断的老人。
+    </p>
+  </div>
+
+  <div class="sc-problem">
+    <article class="sc-pcard">
+      <div class="sc-pcard-n">伪造成本</div>
+      <div class="sc-pcard-v">≈ 5 秒</div>
+      <p>商用 TTS 只需数秒参考音频即可克隆音色，且支持跨语言。门槛已降到任何人可及。</p>
+    </article>
+    <article class="sc-pcard">
+      <div class="sc-pcard-n">识别难度</div>
+      <div class="sc-pcard-v">≈ 真人</div>
+      <p>在多数听感评测中，合成语音与真人语音的主观相似度已接近饱和。</p>
+    </article>
+    <article class="sc-pcard sc-pcard-hot">
+      <div class="sc-pcard-n">受害结构</div>
+      <div class="sc-pcard-v">不对称</div>
+      <p>骗子掌握技术优势，老人承担全部后果。子女不在身边时，没有第二道防线。</p>
+    </article>
+  </div>
+</section>
+
+<!-- ===================== 03 · 系统 ===================== -->
+<section class="sc-sec sc-sec-alt" id="system">
+  <div class="sc-sec-head">
+    <div class="sc-sec-num">02</div>
+    <h2 data-vc-in="reveal">三重证据，独立裁决</h2>
+    <p class="sc-sec-lead">
+      单一模型可被绕过。三条通道各自使用不同的物理与语义线索，任何一条失效都不会导致系统失守。
+    </p>
+  </div>
+
+  <div class="sc-chans">
+    <article class="sc-chan" data-chan="1">
+      <div class="sc-chan-top">
+        <span class="sc-chan-idx">CHANNEL 01</span>
+        <span class="sc-chan-tag">声学层</span>
+      </div>
+      <h3>声学伪造检测</h3>
+      <p class="sc-chan-q">「这是不是 AI 合成的声音？」</p>
+      <p class="sc-chan-d">
+        AASIST 直接工作在音频域的伪造痕迹上 —— 声门脉冲间距的微观抖动、频谱高频段的相位异常。
+        端侧 ONNX 化，不依赖网络。
+      </p>
+      <div class="sc-chan-metrics">
+        <div><b>0.745%</b><span>dev EER</span></div>
+        <div><b>3.49%</b><span>eval EER</span></div>
+        <div><b>0.316%</b><span>best</span></div>
+      </div>
+      <div class="sc-spark" data-spark="1" aria-hidden="true"></div>
+    </article>
+
+    <article class="sc-chan" data-chan="2">
+      <div class="sc-chan-top">
+        <span class="sc-chan-idx">CHANNEL 02</span>
+        <span class="sc-chan-tag">身份层</span>
+      </div>
+      <h3>家庭声纹核验</h3>
+      <p class="sc-chan-q">「这是不是家人本人？」</p>
+      <p class="sc-chan-d">
+        CAMPPlus 提取 192 维嵌入，与本地声纹库比对。三个采集场景（朗读 / 方言 / 数字复述）
+        交叉验证阈值，本地落盘不出设备。
+      </p>
+      <div class="sc-chan-metrics">
+        <div><b>0.51%</b><span>合库 EER</span></div>
+        <div><b>200</b><span>标定人数</span></div>
+        <div><b>192</b><span>维嵌入</span></div>
+      </div>
+      <div class="sc-spark" data-spark="2" aria-hidden="true"></div>
+    </article>
+
+    <article class="sc-chan" data-chan="3">
+      <div class="sc-chan-top">
+        <span class="sc-chan-idx">CHANNEL 03</span>
+        <span class="sc-chan-tag">语义层</span>
+      </div>
+      <h3>话术语义理解</h3>
+      <p class="sc-chan-q">「说的话是不是诈骗？」</p>
+      <p class="sc-chan-d">
+        SenseVoice 完成中文转写，大模型对转写内容做风险评分。
+        即使声音合成得完美无缺，台词本身仍会暴露意图。
+      </p>
+      <div class="sc-chan-metrics">
+        <div><b>98.6%</b><span>二分类 F1</span></div>
+        <div><b>81.3%</b><span>8 类加权 F1</span></div>
+        <div><b>4</b><span>高发话术型</span></div>
+      </div>
+      <div class="sc-spark" data-spark="3" aria-hidden="true"></div>
+    </article>
+  </div>
+</section>
+
+<!-- ===================== 04 · 证据 ===================== -->
+<section class="sc-sec" id="evidence">
+  <div class="sc-sec-head">
+    <div class="sc-sec-num">03</div>
+    <h2 data-vc-in="reveal">可复现的实测</h2>
+    <p class="sc-sec-lead">
+      以下数字来自本机真实运行，非目标值。166 个回归测试用例随代码一起提交，任何人都能复算。
+    </p>
+  </div>
+
+  <div class="sc-ev">
+    <div class="sc-ev-table" role="table" aria-label="实测指标表">
+      <div class="sc-ev-row sc-ev-hd" role="row">
+        <span role="columnheader">指标</span>
+        <span role="columnheader">数值</span>
+        <span role="columnheader">口径</span>
+      </div>
+      <div class="sc-ev-row" role="row">
+        <span role="cell">AASIST dev EER</span>
+        <b role="cell">0.745%</b>
+        <span role="cell">开发集，越低越好</span>
+      </div>
+      <div class="sc-ev-row" role="row">
+        <span role="cell">AASIST eval EER</span>
+        <b role="cell">3.49%</b>
+        <span role="cell">英文基准，如实标注</span>
+      </div>
+      <div class="sc-ev-row" role="row">
+        <span role="cell">声纹合库 EER</span>
+        <b role="cell">0.51%</b>
+        <span role="cell">200 人双信道标定</span>
+      </div>
+      <div class="sc-ev-row" role="row">
+        <span role="cell">话术语义 F1</span>
+        <b role="cell">98.6%</b>
+        <span role="cell">诈骗 / 正常二分类</span>
+      </div>
+      <div class="sc-ev-row" role="row">
+        <span role="cell">流式单窗 P90</span>
+        <b role="cell">194ms</b>
+        <span role="cell">端侧单窗处理</span>
+      </div>
+      <div class="sc-ev-row" role="row">
+        <span role="cell">回归测试</span>
+        <b role="cell">166</b>
+        <span role="cell">Windows 165 + 1 POSIX</span>
+      </div>
+    </div>
+
+    <aside class="sc-ev-note">
+      <div class="sc-ev-note-t">怎么读这张表</div>
+      <p>EER 是等错误率：把阈值调到「误拦」与「漏拦」相等时的错误率。对老人场景，我们宁可漏拦也不能误伤家人 —— 所以 0.00% 误拦率是硬指标，EER 只是技术指标。</p>
+      <p>194ms 是流式单窗的 90 分位延迟。够快，才拦得住 —— 一通电话里能做的判断次数，直接由这个数字决定。</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ===================== 05 · 边界 ===================== -->
+<section class="sc-sec sc-sec-alt" id="honesty">
+  <div class="sc-sec-head">
+    <div class="sc-sec-num">04</div>
+    <h2 data-vc-in="reveal">我们攻击过自己</h2>
+    <p class="sc-sec-lead">
+      一个鉴真系统如果只报告成功案例，就失去了参考价值。红队结果同样属于产品指标。
+    </p>
+  </div>
+
+  <div class="sc-honest">
+    <div class="sc-hon-row sc-hon-good">
+      <div class="sc-hon-k"><span class="sc-hon-badge">守住</span></div>
+      <div class="sc-hon-b">
+        <b>0.00%<i>误拦率</i></b>
+        <p>36 个样本、6 种方言，零误伤家人。这条线不可退让。</p>
+      </div>
+    </div>
+    <div class="sc-hon-row sc-hon-bad">
+      <div class="sc-hon-k"><span class="sc-hon-badge">被绕过</span></div>
+      <div class="sc-hon-b">
+        <b>100%<i>粤语 / 闽南漏拦</i></b>
+        <p>方言攻击完全绕过了声学与语义两层。已诚实暴露，非待优化项。</p>
+      </div>
+    </div>
+    <div class="sc-hon-row sc-hon-bad">
+      <div class="sc-hon-k"><span class="sc-hon-badge">被绕过</span></div>
+      <div class="sc-hon-b">
+        <b>100 / 66.7%<i>对抗逃避率</i></b>
+        <p>空格改写与同音替换能显著降低语义通道的判别力。</p>
+      </div>
+    </div>
+    <div class="sc-hon-row sc-hon-warn">
+      <div class="sc-hon-k"><span class="sc-hon-badge">已量化</span></div>
+      <div class="sc-hon-b">
+        <b>13.89%<i>红队方言 EER</i></b>
+        <p>方言场景下的真实错误率，是下一阶段的主攻方向。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc-hon-foot">
+    完整的攻击面框架与逐条复现记录见仓库 <code>evaluation/</code> 目录。
+  </div>
+</section>
+
+<!-- ===================== 06 · 行动 ===================== -->
+<section class="sc-final">
+  <canvas class="sc-field sc-field-dim" id="scField2" aria-hidden="true"></canvas>
+  <div class="sc-final-inner">
+    <h2 data-vc-in="reveal">先听一次，再决定信不信</h2>
+    <p>无需准备音频。三个内置场景，从真人真声到 AI 冒充，一次看完三通道如何给出裁决。</p>
+    <div class="sc-finalcta">
+      <a class="sc-btn sc-btn-primary" href="index.html">进入三通道检测</a>
+      <a class="sc-btn" href="login.html">选择守护端</a>
+    </div>
+    <div class="sc-final-meta">
+      <span>本地推理 · 数据不出本机</span>
+      <span>开源 · 166 项回归测试</span>
+      <span>适老模式 · 大字与语音播报</span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="sc-foot">
+  <div class="sc-foot-in">
+    <span class="sc-foot-l">谛听 VeriCall</span>
+    <span class="sc-foot-c">AIGC 语音鉴真 · 声学伪造 / 家庭声纹 / 话术风险</span>
+    <nav class="sc-foot-n" aria-label="页脚导航">
+      <a href="index.html">工作台</a>
+      <a href="login.html">统一入口</a>
+      <a href="elder.html">适老端</a>
+      <a href="child.html">子女端</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="showcase.js?v=1" defer></script>
+</body>
+</html>

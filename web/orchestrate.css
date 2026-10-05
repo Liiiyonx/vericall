@@ -1,0 +1,91 @@
+/* =========================================================================
+   VeriCall · 滚动编排层
+   -------------------------------------------------------------------------
+   诊断发现：硬指标全绿，但动效编排贫乏 —— 全站只有「淡入 + 上移」一种
+   动作，且同一区块内元素几乎同时进场，没有呼吸感。
+   获奖级作品的动效讲究「编排」：像乐句一样有起承转合。
+
+   本层提供 5 种进场变体，由元素的语义角色决定用哪一种：
+     rise    淡入上移 —— 通用内容
+     fade    纯淡入   —— 已在视口内的静态元素
+     scale   微缩放   —— 卡片、徽标等独立物件
+     wipe    横向擦入 —— 分隔线、进度条等线性元素
+     reveal  遮罩揭开 —— 标题、标语等需要「被揭示」的元素
+
+   编排规则（由 CSS 变量控制时长与错峰）：
+     同一组内元素按 DOM 顺序错峰 60–90ms
+     超过 6 个元素后停止累加（避免长列表末尾等待过久）
+   ========================================================================= */
+
+/* ---------- 变体定义 ---------- */
+@keyframes vc-in-rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes vc-in-fade{from{opacity:0}to{opacity:1}}
+@keyframes vc-in-scale{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@keyframes vc-in-wipe{
+  from{opacity:0;clip-path:inset(0 100% 0 0);transform:translateX(-8px)}
+  to{opacity:1;clip-path:inset(0 0 0 0);transform:none}
+}
+@keyframes vc-in-reveal{
+  from{opacity:0;transform:translateY(12px);filter:blur(6px)}
+  to{opacity:1;transform:none;filter:none}
+}
+
+/* ---------- 默认：所有编排元素先隐藏 ---------- */
+/* 仅在 JS 接管后添加 .vc-orchestrated，避免无 JS 时内容不可见。
+   两种触发方式：
+   ① .is-in     —— 元素进入视口即播（showcase 用，观察器直接加）
+   ② .vc-play   —— 需要在观察器里设 animationDelay 后再播（index 用）
+   未进入视口前保持隐藏，进入后一次性播放，不重复。
+
+   例外：带 .vc-keep-opacity 的元素自行管理透明度（如「待分析」态的 .ch），
+   编排层只做位移/缩放，不接管 opacity，避免抹掉设计态。 */
+.vc-orchestrated [data-vc-in]:not(.vc-keep-opacity){opacity:0}
+.vc-orchestrated [data-vc-in]{animation-fill-mode:both}
+/* ---------- 播放触发 ---------- */
+/* .vc-play / .is-in 出现即播放；两者幂等，重复添加无副作用。
+   .vc-keep-opacity 元素不加 opacity:1 —— 保留其自身的设计透明度。 */
+.vc-orchestrated [data-vc-in].is-in,
+.vc-orchestrated [data-vc-in].vc-play{
+  animation-name:var(--vc-anim);
+}
+.vc-orchestrated [data-vc-in].is-in:not(.vc-keep-opacity),
+.vc-orchestrated [data-vc-in].vc-play:not(.vc-keep-opacity){
+  opacity:1;
+}
+
+/* ---------- 变体映射 ---------- */
+.vc-orchestrated [data-vc-in="rise"]{--vc-anim:vc-in-rise}
+.vc-orchestrated [data-vc-in="fade"]{--vc-anim:vc-in-fade}
+.vc-orchestrated [data-vc-in="scale"]{--vc-anim:vc-in-scale}
+.vc-orchestrated [data-vc-in="wipe"]{--vc-anim:vc-in-wipe}
+.vc-orchestrated [data-vc-in="reveal"]{--vc-anim:vc-in-reveal}
+
+/* 让出 opacity 的元素：用「只位移」的变体，避免起始帧把透明度压到 0
+   （典型场景：.ch 的 0.62 = 「待分析」是设计态，不能被动画覆盖）。 */
+@keyframes vc-in-shift{from{transform:translateY(14px)}to{transform:none}}
+.vc-orchestrated [data-vc-in].vc-keep-opacity{--vc-anim:vc-in-shift}
+
+/* ---------- 时长与缓动 ---------- */
+.vc-orchestrated [data-vc-in]{
+  animation-duration:var(--dur-4);
+  animation-timing-function:var(--ease-out);
+}
+/* 擦入与缩放稍快，标题揭示稍慢 —— 速度本身也参与叙事 */
+.vc-orchestrated [data-vc-in="wipe"]{animation-duration:var(--dur-3)}
+.vc-orchestrated [data-vc-in="scale"]{animation-duration:var(--dur-3)}
+.vc-orchestrated [data-vc-in="reveal"]{animation-duration:calc(var(--dur-4) + 180ms)}
+
+/* ---------- 统一降级：系统偏好减弱动效 ---------- */
+@media (prefers-reduced-motion:reduce){
+  .vc-orchestrated [data-vc-in]{
+    animation:none!important;opacity:1!important;
+    clip-path:none!important;filter:none!important;transform:none!important;
+  }
+}
+
+/* ---------- 无障碍：屏幕阅读器专用文本也走编排但无视觉 ---------- */
+.vc-sr-only{
+  position:absolute;width:1px;height:1px;
+  padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}

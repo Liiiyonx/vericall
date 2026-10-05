@@ -1,0 +1,463 @@
+/* =========================================================================
+   VeriCall · 登录页 v2
+   -------------------------------------------------------------------------
+   两个核心问题：
+   1. 品牌割裂 —— 登录页用 iOS 蓝（--ui-accent: #0a84ff），主站用金色。
+      同一产品两套主色，获奖级作品不可接受。此处统一到金色体系，
+      蓝色仅保留为「演示台」的角色标识色。
+   2. 宽屏失重 —— 1440px 下卡片仅占 32% 宽度，两侧空旷。
+      改为双栏：左侧品牌叙事（声音），右侧表单（操作）。
+   ========================================================================= */
+
+/* ========== 1. 品牌色统一 ========== */
+body[data-app="login"]{
+  /* 主操作色 = 主站金色；青/蓝退为角色标识 */
+  --ui-accent:var(--ui-gold);
+  --ui-accent-deep:var(--ui-gold-soft);
+  background:var(--ui-bg)!important;
+}
+/* 浅色主题：按钮用深金文字反白，保证 4.5:1 以上对比 */
+html[data-theme="light"] body[data-app="login"]{
+  --ui-accent:#8a6318;
+  --ui-accent-deep:#75530f;
+  --ui-btn-ink:#fffdf7;
+}
+
+/* ========== 2. 双栏骨架 ========== */
+.login-main{
+  width:100%!important;
+  max-width:none!important;
+  min-height:100vh;min-height:100dvh;
+  margin:0!important;
+  padding:0!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+  align-items:stretch;
+  gap:0!important;
+}
+
+/* 右侧表单列 */
+.login-side{
+  display:flex;flex-direction:column;justify-content:center;
+  gap:var(--sp-6);
+  padding:max(28px,env(safe-area-inset-top)) clamp(28px,4vw,64px)
+          max(28px,env(safe-area-inset-bottom)) clamp(28px,4vw,56px);
+  min-width:0;
+  max-width:560px;width:100%;
+  justify-self:end;
+}
+
+/* 左侧品牌列 */
+.login-aside{
+  position:relative;
+  display:flex;align-items:center;
+  padding:clamp(40px,6vw,88px);
+  border-right:1px solid var(--ui-line);
+  background:
+    radial-gradient(900px 600px at 20% 15%,rgba(var(--ui-gold-rgb),.07),transparent 65%),
+    linear-gradient(160deg,var(--ui-bg-soft),var(--ui-bg));
+  overflow:hidden;
+  min-width:0;
+}
+/* 底部渐隐，与右侧衔接 */
+.login-aside::after{
+  content:'';position:absolute;inset:auto 0 0 0;height:38%;
+  background:linear-gradient(180deg,transparent,var(--ui-bg));
+  pointer-events:none;
+}
+/* 内容整体上移，为底部页脚留出呼吸 —— 避免大片空旷 */
+.la-inner{
+  position:relative;z-index:1;
+  max-width:520px;min-width:0;
+  width:100%;
+  margin-bottom:clamp(24px,6vh,72px);
+}
+.la-spec{width:180px;height:30px;opacity:.85;margin-bottom:var(--sp-6)}
+.la-spec i{background:linear-gradient(180deg,var(--ui-gold),transparent)}
+.la-eyebrow{
+  font-size:var(--fs-2);letter-spacing:var(--ls-mega);
+  color:var(--ui-gold);margin-bottom:var(--sp-4);
+  animation:vc-rise var(--dur-3) var(--ease-out) both;
+}
+.la-title{
+  font-size:clamp(32px,3.6vw,52px)!important;
+  line-height:1.14!important;
+  font-weight:var(--fw-semi)!important;
+  letter-spacing:-.025em!important;
+  color:var(--ui-text);
+  margin:0;
+  text-wrap:balance;
+  animation:vc-rise var(--dur-3) .08s var(--ease-out) both;
+}
+.la-copy{
+  margin-top:var(--sp-5)!important;
+  font-size:var(--fs-4)!important;
+  line-height:var(--lh-relaxed)!important;
+  color:var(--ui-muted)!important;
+  max-width:34ch;
+  animation:vc-rise var(--dur-3) .16s var(--ease-out) both;
+}
+.la-stats{
+  list-style:none;margin:var(--sp-8) 0 0;padding:0;
+  display:flex;flex-wrap:wrap;gap:var(--sp-7);
+  animation:vc-rise var(--dur-3) .24s var(--ease-out) both;
+}
+.la-stats li{display:flex;flex-direction:column;gap:2px;min-width:0}
+.la-stats b{
+  font-size:var(--fs-6);font-weight:var(--fw-normal);
+  color:var(--ui-gold);letter-spacing:-.03em;line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.la-stats span{font-size:var(--fs-1);color:var(--ui-faint);letter-spacing:var(--ls-base)}
+.la-foot{
+  margin-top:var(--sp-8);padding-top:var(--sp-5);
+  border-top:1px solid var(--ui-line);
+  font-size:var(--fs-2);color:var(--ui-faint);letter-spacing:var(--ls-base);
+  animation:vc-rise var(--dur-3) .32s var(--ease-out) both;
+}
+
+/* ========== 3. 顶栏（右侧列内） ========== */
+.login-topbar{gap:var(--sp-4)!important}
+.login-brand{gap:var(--sp-3)!important}
+.login-brand-mark{
+  color:var(--ui-gold)!important;
+  background:rgba(var(--ui-gold-rgb),.08)!important;
+  border:1px solid rgba(var(--ui-gold-rgb),.22)!important;
+  border-radius:var(--radius-m)!important;
+  width:42px!important;height:42px!important;
+}
+.login-brand-name{
+  font-size:var(--fs-5)!important;letter-spacing:.16em!important;
+  color:var(--ui-text)!important;
+}
+.login-brand-en{
+  font-size:var(--fs-1)!important;   /* 原内联 9px，不可读 */
+  letter-spacing:.24em!important;
+  color:var(--ui-faint)!important;
+  line-height:1.2!important;
+  font-weight:var(--fw-medium);
+}
+.theme-toggle{
+  min-width:44px!important;min-height:44px!important;
+  border-radius:var(--radius-m)!important;
+  border:1px solid var(--ui-line)!important;
+  transition:background-color var(--dur-1) var(--ease-out),border-color var(--dur-1) var(--ease-out);
+}
+.theme-toggle:hover{background:var(--surface-1)!important;border-color:var(--ui-line-strong)!important}
+
+/* ========== 4. 表单卡 ========== */
+.login-card{
+  background:var(--surface-0)!important;
+  border:1px solid var(--ui-line)!important;
+  border-radius:var(--radius-l)!important;
+  padding:var(--sp-7)!important;
+  box-shadow:0 24px 60px -30px rgba(0,0,0,.7)!important;
+  animation:vc-rise var(--dur-3) .1s var(--ease-out) both;
+}
+html[data-theme="light"] .login-card{
+  background:#fff!important;
+  box-shadow:0 20px 50px -28px rgba(20,24,28,.28)!important;
+}
+.login-head h1{
+  font-size:var(--fs-6)!important;
+  line-height:var(--lh-snug)!important;
+  font-weight:var(--fw-semi)!important;
+  letter-spacing:-.02em!important;
+  color:var(--ui-text);
+}
+.login-head p{
+  font-size:var(--fs-3)!important;
+  line-height:var(--lh-relaxed)!important;
+  color:var(--ui-muted)!important;
+  margin-top:var(--sp-3)!important;
+  max-width:44ch;
+  text-wrap:pretty;
+}
+
+/* ========== 5. 角色切换：分段控件 ========== */
+.role-switch{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:2px!important;
+  padding:3px!important;
+  margin:var(--sp-6) 0!important;
+  background:var(--surface-1)!important;
+  border:1px solid var(--ui-line)!important;
+  border-radius:var(--radius-m)!important;
+}
+.role-tab{
+  min-height:42px!important;
+  padding:9px 10px!important;
+  font-size:var(--fs-2)!important;
+  letter-spacing:var(--ls-base)!important;
+  font-weight:var(--fw-medium)!important;
+  color:var(--ui-muted)!important;
+  background:transparent!important;
+  border:none!important;
+  border-radius:var(--radius-s)!important;
+  cursor:pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+  white-space:nowrap;
+}
+.role-tab:hover{color:var(--ui-text)!important;background:var(--surface-2)!important}
+.role-tab.on{
+  background:var(--ui-surface-2)!important;
+  color:var(--ui-text)!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.25);
+}
+/* 选中态悬停用更深底 + 轻微上移，避免「点了没反应」的错觉 */
+.role-tab.on:hover{background:var(--ui-surface-3)!important;transform:translateY(-1px)}
+.role-tab:active{transform:translateY(0) scale(.98)}
+.role-tab:focus-visible{outline:2px solid var(--ui-teal);outline-offset:-2px}
+html[data-theme="light"] .role-tab.on{background:#fff!important;box-shadow:0 1px 3px rgba(20,24,28,.12)!important}
+html[data-theme="light"] .role-tab.on:hover{background:#fff!important;box-shadow:0 2px 6px rgba(20,24,28,.16)!important}
+
+/* 面板切换进场 */
+.role-panel{animation:vc-rise var(--dur-3) var(--ease-out) both}
+
+/* ========== 6. 角色说明块 ========== */
+.role-heading{
+  display:flex;gap:var(--sp-4);align-items:flex-start;
+  padding:var(--sp-4) 0 var(--sp-5);
+  margin-bottom:var(--sp-2);
+  border-bottom:1px solid var(--ui-line);
+}
+.role-icon{
+  width:40px!important;height:40px!important;flex:0 0 auto;
+  border-radius:var(--radius-m)!important;
+  display:grid;place-items:center;
+  background:rgba(var(--ui-teal-rgb),.1)!important;
+  border:1px solid rgba(var(--ui-teal-rgb),.24)!important;
+  color:var(--ui-teal)!important;
+}
+.role-icon.gold{
+  background:rgba(var(--ui-gold-rgb),.1)!important;
+  border-color:rgba(var(--ui-gold-rgb),.26)!important;
+  color:var(--ui-gold)!important;
+}
+.role-icon.green{
+  background:rgba(var(--ui-ok-rgb),.1)!important;
+  border-color:rgba(var(--ui-ok-rgb),.24)!important;
+  color:var(--ui-ok)!important;
+}
+.role-icon svg{width:20px;height:20px}
+.role-heading h2{
+  font-size:var(--fs-5)!important;font-weight:var(--fw-semi)!important;
+  letter-spacing:-.01em!important;line-height:var(--lh-snug)!important;
+}
+.role-heading p{
+  font-size:var(--fs-2)!important;line-height:1.65!important;
+  color:var(--ui-muted)!important;margin-top:3px!important;
+}
+
+/* ========== 7. 表单控件 ========== */
+.field{margin-top:var(--sp-5)!important}
+.field label{
+  font-size:var(--fs-1)!important;
+  letter-spacing:var(--ls-wide)!important;
+  color:var(--ui-faint)!important;
+  margin-bottom:var(--sp-2)!important;
+  display:block;
+}
+.field input{
+  width:100%!important;
+  min-height:48px!important;
+  padding:12px 14px!important;
+  font-size:var(--fs-4)!important;
+  color:var(--ui-text)!important;
+  background:var(--surface-1)!important;
+  border:1px solid var(--ui-line)!important;
+  border-radius:var(--radius-s)!important;
+  transition:border-color var(--dur-1) var(--ease-out),background-color var(--dur-1) var(--ease-out);
+}
+.field input:hover{border-color:var(--ui-line-strong)!important}
+.field input:focus{
+  border-color:var(--ui-gold)!important;
+  background:var(--surface-2)!important;
+  /* 不写 outline:none —— 键盘聚焦必须保留焦点环。
+     输入框靠边框色变化提供视觉反馈，但轮廓是键盘可达性的底线。 */
+}
+.field input:focus-visible{
+  outline:2px solid var(--ui-teal);
+  outline-offset:2px;
+  border-color:var(--ui-gold)!important;
+}
+.field input::placeholder{color:var(--ui-faint);opacity:.75}
+
+/* ========== 8. 提交按钮：金色实心 ========== */
+.login-submit{
+  width:100%!important;
+  min-height:52px!important;
+  margin-top:var(--sp-6)!important;
+  padding:14px 20px!important;
+  border:1px solid var(--ui-gold)!important;
+  border-radius:var(--radius-s)!important;
+  background:var(--ui-gold)!important;
+  color:#16130f!important;
+  font-size:var(--fs-4)!important;
+  font-weight:var(--fw-semi)!important;
+  letter-spacing:var(--ls-base)!important;
+  cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);
+  transition:
+    filter var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-spring),
+    box-shadow var(--dur-1) var(--ease-out);
+  box-shadow:0 8px 24px -12px rgba(var(--ui-gold-rgb),.5);
+}
+/* 浅色主题：金色底 + 近白字，比深金底更清晰 */
+html[data-theme="light"] .login-submit{
+  background:#8a6318!important;
+  border-color:#8a6318!important;
+  color:#fffdf7!important;
+  box-shadow:0 8px 22px -14px rgba(138,99,24,.55)!important;
+}
+html[data-theme="light"] .login-submit:hover{
+  background:#75530f!important;
+  box-shadow:0 12px 28px -14px rgba(138,99,24,.6)!important;
+}
+.login-submit:hover{
+  background:var(--ui-gold-soft)!important;
+  filter:brightness(1.06);
+  box-shadow:0 12px 30px -12px rgba(var(--ui-gold-rgb),.6);
+}
+.login-submit:active{transform:scale(.985)}
+.login-submit[disabled]{cursor:wait;opacity:.6;box-shadow:none}
+.login-submit svg{width:17px;height:17px;transition:transform var(--dur-2) var(--ease-out)}
+.login-submit:hover svg{transform:translateX(3px)}
+
+/* ========== 9. 消息与演示区 ========== */
+.form-message{
+  min-height:24px!important;
+  margin-top:var(--sp-3)!important;
+  font-size:var(--fs-2)!important;
+  line-height:1.6!important;
+  padding-left:var(--sp-3);
+  border-left:2px solid transparent;
+  display:flex;align-items:center;
+  transition:border-color var(--dur-2) var(--ease-out);
+}
+.form-message.error{color:var(--ui-bad)!important;border-left-color:var(--ui-bad)!important}
+.form-message.success{color:var(--ui-ok)!important;border-left-color:var(--ui-ok)!important}
+/* 静态说明文本（非状态消息）不加左侧状态条 */
+#indexMessage{
+  border-left:none!important;
+  padding-left:0!important;
+  color:var(--ui-faint)!important;
+  align-items:flex-start;
+  line-height:1.7!important;
+}
+
+.demo-access{
+  margin-top:var(--sp-5)!important;
+  padding:var(--sp-4)!important;
+  border:1px dashed var(--ui-line-strong)!important;
+  border-radius:var(--radius-m)!important;
+  background:var(--surface-0)!important;
+}
+.demo-copy{
+  font-size:var(--fs-1)!important;letter-spacing:var(--ls-wide)!important;
+  color:var(--ui-faint)!important;margin-bottom:var(--sp-3)!important;
+}
+.demo-credentials{display:flex;gap:var(--sp-2);flex-wrap:wrap}
+.demo-credential{
+  flex:1 1 130px;min-height:44px;
+  display:flex;flex-direction:column;justify-content:center;gap:1px;
+  padding:8px 12px!important;
+  border:1px solid var(--ui-line)!important;
+  border-radius:var(--radius-s)!important;
+  background:var(--surface-1)!important;
+  cursor:pointer;text-align:left;
+  transition:border-color var(--dur-1) var(--ease-out),background-color var(--dur-1) var(--ease-out);
+}
+.demo-credential:hover{border-color:var(--ui-gold)!important;background:var(--surface-2)!important}
+.demo-credential span{font-size:var(--fs-1);color:var(--ui-faint);letter-spacing:var(--ls-base)}
+.demo-credential code{
+  font-family:var(--font-mono)!important;
+  font-size:var(--fs-3);color:var(--ui-gold);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.demo-button{
+  width:100%;min-height:46px;margin-top:var(--sp-3)!important;
+  padding:11px 16px!important;
+  font-size:var(--fs-3)!important;letter-spacing:var(--ls-base)!important;
+  color:var(--ui-text)!important;
+  background:var(--surface-2)!important;
+  border:1px solid var(--ui-line-strong)!important;
+  border-radius:var(--radius-s)!important;
+  cursor:pointer;
+  transition:background-color var(--dur-1) var(--ease-out),border-color var(--dur-1) var(--ease-out);
+}
+.demo-button:hover{background:var(--surface-3)!important;border-color:var(--ui-muted)!important}
+.demo-note{
+  display:flex;gap:var(--sp-3);align-items:flex-start;
+  margin-top:var(--sp-5)!important;
+  padding:var(--sp-3) var(--sp-4)!important;
+  background:var(--surface-0)!important;
+  border-radius:var(--radius-s)!important;
+  font-size:var(--fs-2)!important;line-height:1.65!important;
+  color:var(--ui-faint)!important;
+}
+.demo-note svg{width:16px;height:16px;flex:0 0 auto;margin-top:2px;color:var(--ui-gold)}
+
+.login-footer{
+  font-size:var(--fs-1)!important;
+  color:var(--ui-faint)!important;
+  letter-spacing:var(--ls-base)!important;
+  text-align:left!important;
+  margin:0!important;
+}
+.login-foot-extra{margin:calc(-1 * var(--sp-4)) 0 0!important}
+.login-foot-extra a{
+  display:inline-flex;align-items:center;
+  min-height:32px;padding:4px 0;
+  font-size:var(--fs-1)!important;
+  color:var(--ui-muted)!important;
+  text-decoration:none;letter-spacing:var(--ls-base)!important;
+  transition:color var(--dur-1) var(--ease-out);
+  border-bottom:1px solid transparent;
+}
+.login-foot-extra a:hover{color:var(--ui-gold);border-bottom-color:var(--ui-gold)}
+
+/* ========== 10. 响应式 ========== */
+/* iPad 竖屏：侧栏信息量过大，收窄 */
+@media (max-width:1180px){
+  .login-aside{padding:clamp(32px,4vw,56px)}
+  .la-title{font-size:clamp(28px,3.2vw,40px)!important}
+  .la-stats{gap:var(--sp-6)}
+}
+/* iPad 竖 / 小平板：改为上下布局，侧栏压缩为顶部条 */
+@media (max-width:960px){
+  .login-main{grid-template-columns:1fr!important}
+  .login-aside{
+    border-right:none!important;
+    border-bottom:1px solid var(--ui-line);
+    padding:calc(env(safe-area-inset-top) + 32px) var(--gutter) 32px!important;
+    align-items:flex-start;
+  }
+  .la-inner{max-width:100%}
+  .la-spec{display:none}
+  .la-title{font-size:clamp(26px,6vw,36px)!important}
+  .la-copy{font-size:var(--fs-3)!important;max-width:52ch;margin-top:var(--sp-4)!important}
+  .la-stats{margin-top:var(--sp-6)!important;gap:var(--sp-6)}
+  .la-stats b{font-size:var(--fs-5)}
+  .la-foot{margin-top:var(--sp-6)!important;padding-top:var(--sp-4)!important}
+  .login-side{
+    max-width:100%;justify-self:stretch;
+    padding:var(--sp-7) var(--gutter) calc(env(safe-area-inset-bottom) + 40px)!important;
+    gap:var(--sp-5);
+  }
+}
+/* 手机 */
+@media (max-width:640px){
+  .login-card{padding:var(--sp-5)!important;border-radius:var(--radius-m)!important}
+  .login-head h1{font-size:var(--fs-5)!important}
+  .role-tab{min-height:44px!important;font-size:var(--fs-1)!important;padding:9px 6px!important}
+  .role-switch{margin:var(--sp-5) 0!important}
+  .field input{min-height:50px!important;font-size:16px!important}  /* 16px 防 iOS 聚焦缩放 */
+  .login-submit{min-height:54px!important}
+  .la-stats{gap:var(--sp-5)}
+  .la-stats b{font-size:var(--fs-4)!important}
+}

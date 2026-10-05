@@ -1,0 +1,294 @@
+/* =========================================================================
+   VeriCall · 叙事页重构样式 v2
+   配合 index.html #p-about 新结构：频谱母题 / 指标分级 / 红队矩阵
+   ========================================================================= */
+
+/* ========== Hero ========== */
+#p-about .hero{padding-top:0!important;text-align:center}
+#p-about .hero .spectrum-rule{max-width:220px;margin:0 auto var(--sp-6)}
+#p-about .hero h1{
+  max-width:14ch;
+  margin:0 auto;
+  text-wrap:balance;
+}
+#p-about .hero .en{
+  display:inline-block;
+  font-size:var(--fs-2)!important;
+  letter-spacing:var(--ls-mega)!important;
+  text-indent:0;
+  color:var(--ui-gold)!important;
+  margin-top:var(--sp-4)!important;
+  font-weight:var(--fw-medium);
+}
+#p-about .hero .tag b{color:var(--ui-gold-soft);font-weight:var(--fw-semi)}
+#p-about .hero-cta{
+  display:flex;flex-direction:column;align-items:center;gap:var(--sp-3);
+  margin-top:var(--sp-7);
+}
+#p-about .hero-cta .btn{
+  width:auto;margin-top:0;padding:15px 40px;
+  font-size:var(--fs-3);letter-spacing:var(--ls-wide);
+  position:relative;overflow:hidden;
+}
+/* 主按钮：金色描边 + 悬浮时内侧填充扫过 */
+#p-about .hero-cta .btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 20%,rgba(var(--ui-gold-rgb),.16) 50%,transparent 80%);
+  transform:translateX(-100%);
+  transition:transform var(--dur-3) var(--ease-out);
+}
+#p-about .hero-cta .btn:hover::before{transform:translateX(100%)}
+#p-about .hero-hint{
+  font-size:var(--fs-2);color:var(--ui-faint);letter-spacing:var(--ls-base);
+}
+
+/* ========== 核心指标墙 ========== */
+/* auto-fit 而非固定 4 列：硬断点会让 900–1100px 区间塌陷成 2 列，
+   而每列又拉得很宽，读起来松散。auto-fit 让列宽始终在 240–340px 的
+   舒适区间内，列数随宽度自然增减。 */
+.m-wall{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap:1px;margin:0!important;
+  background:var(--ui-line);
+  border:1px solid var(--ui-line);
+  border-radius:var(--radius-m);
+  overflow:hidden;
+}
+.m-card{
+  background:var(--ui-bg);
+  border:none!important;border-radius:0!important;
+  padding:var(--sp-6) var(--sp-5)!important;
+  text-align:left!important;
+  display:flex;flex-direction:column;gap:var(--sp-2);
+  position:relative;
+}
+.m-card::after{
+  content:'';position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,var(--spec-1),transparent);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform var(--dur-3) var(--ease-out);
+}
+.m-card:hover::after{transform:scaleX(1)}
+.m-card .n{
+  font-size:var(--fs-8)!important;
+  line-height:.92!important;
+  color:var(--ui-gold)!important;
+  font-weight:var(--fw-normal)!important;
+  letter-spacing:-.04em!important;
+  display:flex;align-items:baseline;gap:.06em;
+}
+.m-card .n .u{
+  /* 单位跟随主数字缩放，但设绝对下限 —— 0.36em 在 52px 主数字下是 18.7px，
+     但在 8.2px 场景（iPhone SE + 适老模式组合）会跌到不可读。
+     用 max() 兜底。 */
+  font-size:max(11px, .34em)!important;
+  font-weight:var(--fw-medium);
+  letter-spacing:0;
+  color:var(--ui-gold-soft);
+}
+.m-card .l{
+  font-size:var(--fs-3)!important;color:var(--ui-text)!important;
+  font-weight:var(--fw-medium);line-height:1.4!important;
+  margin:0!important;
+}
+.m-card .s{
+  display:block!important;font-size:var(--fs-1)!important;
+  color:var(--ui-faint)!important;letter-spacing:var(--ls-base)!important;
+  margin-top:auto!important;padding-top:var(--sp-2);
+}
+
+/* ========== 补充口径（折叠） ========== */
+.m-more{
+  margin-top:var(--sp-5)!important;
+  border:1px solid var(--ui-line);
+  border-radius:var(--radius-m);
+  background:var(--surface-0);
+  overflow:hidden;
+}
+.m-more summary{
+  display:flex;align-items:center;gap:var(--sp-3);
+  padding:var(--sp-4) var(--sp-5);
+  cursor:pointer;list-style:none;
+  font-size:var(--fs-3);color:var(--ui-muted);
+  transition:background-color var(--dur-1) var(--ease-out);
+  min-height:44px;
+}
+.m-more summary::-webkit-details-marker{display:none}
+.m-more summary:hover{background:var(--surface-1);color:var(--ui-text)}
+.m-more-t{font-weight:var(--fw-medium)}
+.m-more-n{
+  font-size:var(--fs-1);padding:2px 9px;border-radius:var(--radius-full);
+  background:var(--surface-2);color:var(--ui-faint);letter-spacing:var(--ls-wide);
+}
+.m-more-c{
+  width:16px;height:16px;margin-left:auto;color:var(--ui-faint);
+  transition:transform var(--dur-2) var(--ease-out);
+}
+.m-more[open] .m-more-c{transform:rotate(180deg)}
+.m-more-grid{
+  display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap:1px;background:var(--ui-line);
+  border-top:1px solid var(--ui-line);
+  animation:vc-rise var(--dur-3) var(--ease-out) both;
+}
+.m-x{
+  background:var(--ui-bg);padding:var(--sp-4) var(--sp-5);
+  display:flex;flex-direction:column;gap:2px;
+}
+.m-x b{
+  font-size:var(--fs-5);font-weight:var(--fw-normal);
+  color:var(--ui-muted);letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.m-x span{font-size:var(--fs-2);color:var(--ui-faint);line-height:1.55}
+
+/* ========== 三通道卡 ========== */
+.p-chan{display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 280px), 1fr));gap:var(--sp-4);margin:0!important}
+.pc{
+  border:1px solid var(--ui-line)!important;
+  border-top:1px solid var(--ui-gold)!important;
+  border-radius:var(--radius-m);
+  background:var(--surface-0);
+  padding:var(--sp-6) var(--sp-5)!important;
+  display:flex;flex-direction:column;gap:var(--sp-3);
+  position:relative;overflow:hidden;
+}
+.pc h3{margin:0!important}
+.pc p{margin:0!important;flex:1}
+.pc-metric{
+  display:flex;align-items:baseline;gap:var(--sp-2);
+  padding-top:var(--sp-4);margin-top:var(--sp-2);
+  border-top:1px solid var(--ui-line);
+}
+.pc-metric b{
+  font-size:var(--fs-6);font-weight:var(--fw-normal);
+  color:var(--ui-gold);letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;line-height:1;
+}
+.pc-metric span{font-size:var(--fs-1);color:var(--ui-faint);letter-spacing:var(--ls-wide)}
+
+/* ========== 红队矩阵 ========== */
+.red-team{
+  margin:0!important;
+  border:1px solid rgba(var(--ui-bad-rgb),.28)!important;
+  border-radius:var(--radius-m);
+  background:linear-gradient(180deg,rgba(var(--ui-bad-rgb),.045),transparent 60%);
+  padding:var(--sp-7) var(--sp-6)!important;
+}
+.rt-head{display:flex;align-items:center;gap:var(--sp-4);flex-wrap:wrap}
+.rt-t{
+  font-size:var(--fs-5)!important;font-weight:var(--fw-semi);
+  letter-spacing:var(--ls-tight)!important;color:var(--ui-text)!important;
+}
+.rt-badge{
+  font-size:var(--fs-1);letter-spacing:var(--ls-wide);
+  padding:3px 11px;border-radius:var(--radius-full);
+  border:1px solid rgba(var(--ui-bad-rgb),.4);
+  color:var(--ui-bad);background:rgba(var(--ui-bad-rgb),.08);
+}
+.rt-grid{
+  display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap:var(--sp-4);margin-top:var(--sp-6);
+}
+.rt-i{
+  padding-left:var(--sp-4);
+  border-left:2px solid var(--ui-line);
+  display:flex;flex-direction:column;gap:var(--sp-1);
+}
+.rt-i.ok{border-left-color:var(--ui-ok)}
+.rt-i.bad{border-left-color:var(--ui-bad)}
+.rt-i.warn{border-left-color:var(--ui-warn)}
+.rt-i b{
+  font-size:var(--fs-6);font-weight:var(--fw-normal);
+  letter-spacing:-.03em;line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.rt-i.ok b{color:var(--ui-ok)}
+.rt-i.bad b{color:var(--ui-bad)}
+.rt-i.warn b{color:var(--ui-warn)}
+.rt-i b .sep{color:var(--ui-faint);font-size:.6em;margin:0 .1em}
+.rt-i span{font-size:var(--fs-3);color:var(--ui-text);font-weight:var(--fw-medium)}
+.rt-i em{
+  font-style:normal;font-size:var(--fs-2);color:var(--ui-faint);
+  line-height:1.55;letter-spacing:var(--ls-base);
+}
+.rt-note{
+  margin-top:var(--sp-6)!important;padding-top:var(--sp-5);
+  border-top:1px solid rgba(var(--ui-bad-rgb),.18);
+  font-size:var(--fs-2)!important;color:var(--ui-muted)!important;
+  line-height:var(--lh-relaxed)!important;max-width:78ch;
+}
+
+/* ========== 守护总览 ========== */
+.dash{margin:0!important}
+.dash-head{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:var(--sp-5);flex-wrap:wrap;margin-bottom:var(--sp-5);
+}
+.dash-head .dt{margin:0!important}
+.dash-head .ds{margin-top:var(--sp-1)!important}
+.dash-spec{width:min(180px,40%);height:14px;opacity:.42}
+.dash .dc{
+  /* 4 个数据卡。
+     注意：auto-fit 会按容器宽度算出「能放几列」，
+     1132px / 200px = 5 列 → 出现一个空列。
+     故显式限制上限为 4 列，用 auto-fit + max 折中：
+     窄屏自动降列，桌面恒定 4 列不留空。 */
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap:1px;background:var(--ui-line);
+  border:1px solid var(--ui-line);border-radius:var(--radius-m);
+  overflow:hidden;margin-top:0!important;
+}
+@media (min-width:900px){
+  /* 桌面及以上锁 4 列，消除 auto-fit 的空列问题 */
+  .dash .dc{grid-template-columns:repeat(4, minmax(0,1fr))}
+}
+.dash .dk{
+  background:var(--ui-bg);border:none!important;border-radius:0!important;
+  padding:var(--sp-5) var(--sp-4)!important;text-align:left;
+  display:flex;flex-direction:column;gap:var(--sp-1);
+  transition:background-color var(--dur-2) var(--ease-out);
+}
+.dash .dk:hover{background:var(--surface-1)}
+.dash .dk .n{
+  font-size:var(--fs-7)!important;line-height:1!important;
+  font-weight:var(--fw-normal)!important;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;
+}
+.dash .dk .l{font-size:var(--fs-2)!important;color:var(--ui-faint)!important;margin:0!important}
+.dash .bars{height:88px!important;margin-top:var(--sp-6)!important;gap:var(--sp-2)!important}
+
+/* ========== 底部 CTA ========== */
+.cta{
+  display:flex;gap:var(--sp-4);justify-content:center;
+  margin:0!important;flex-wrap:wrap;align-items:center;
+}
+.cta .child-link{
+  padding:13px 26px;font-size:var(--fs-3);
+  border-radius:var(--radius-full);
+  display:inline-flex;align-items:center;gap:var(--sp-2);
+}
+
+/* ========== 响应式 ========== */
+@media (max-width:1100px){
+  .m-more-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rt-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  .p-chan{grid-template-columns:1fr}
+  .m-wall{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dash .dc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #p-about .hero h1{max-width:100%}
+}
+@media (max-width:640px){
+  .m-more-grid{grid-template-columns:1fr}
+  .rt-grid{grid-template-columns:1fr;gap:var(--sp-5)}
+  .red-team{padding:var(--sp-5)!important}
+  .m-card{padding:var(--sp-5) var(--sp-4)!important}
+  .m-card .n{font-size:clamp(38px,13vw,52px)!important}
+  .dash-spec{display:none}
+  #p-about .hero-cta .btn{width:100%;max-width:320px}
+  .dash .dk .n{font-size:var(--fs-6)!important}
+}

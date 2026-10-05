@@ -544,8 +544,9 @@
   const ELDER_KEY = "vericall_elder_access_key";
 
   async function websocketUrl() {
-    const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-    const directUrl = `${protocol}//${location.host}/ws/stream`;
+    const directUrl = window.VeriCallPath
+      ? window.VeriCallPath.websocket("ws/stream")
+      : "/ws/stream";
     const elderKey = sessionStorage.getItem(ELDER_KEY);
     const token = localStorage.getItem(TOKEN_KEY);
     if (!elderKey && !token) return directUrl;
@@ -554,7 +555,10 @@
       ? {"X-Elder-Access-Key": elderKey}
       : {Authorization: `Bearer ${token}`};
 
-    const response = await fetch("/api/stream/ws-ticket", {
+    const response = await fetch(
+      window.VeriCallPath
+        ? window.VeriCallPath.resolve("api/stream/ws-ticket")
+        : "/api/stream/ws-ticket", {
       method: "POST",
       headers,
       cache: "no-store",
